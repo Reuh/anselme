@@ -945,12 +945,11 @@ formatText = (context, text, yield)
 end
 
 --- Send event to the engine.
+-- root is the root node or an event
 sendEvent = (root)
-	let e = root.event
+	let e = root.event or root
 	root.event = nil
-	if e[1] == "text" then
-		coroutine.yield("text", e[2])
-	elseif e[1] == "choice" then
+	if e[1] == "choice" then
 		let vm = coroutine.yield("choice", e[2])
 		if not vm.state.chosen then
 			error("no choice has been made by the engine, I don't know what to doooooo")
@@ -958,6 +957,8 @@ sendEvent = (root)
 		let c = assert(e[3][vm.state.chosen], "invalid choice %s, expected something in [1,%s]":format(vm.state.chosen, #e[2]))
 		vm.state.chosen = nil
 		runChildren(c)
+	else
+		coroutine.yield(e[1], e[2])
 	end
 end
 
@@ -1005,6 +1006,13 @@ run = (lines, i=1)
 	while i <= #lines do
 		let line = lines[i]
 		i += 1
+		-- Interrupt events
+		if #root.interrupts > 0 then
+			for _, e in ipairs(root.interrupts) do
+				sendEvent(e)
+			end
+			root.interrupts = {}
+		end
 		-- Condition decorator
 		if line.condition then
 			if evalBool(line, line.condition).value == 0 then
@@ -1136,6 +1144,7 @@ end
 
 --- Step the VM. Use in a coroutine.
 step = :()
+	@_coroutine = coroutine.running()
 	while true do
 		@state.lastLine = run(@state.children, @state.lastLine)
 		if @state.event then sendEvent(@state) end
@@ -1242,13 +1251,27 @@ let vm_mt = {
 		return @
 	end,
 
+	--- Throw an interrupt event; i.e., pause the VM and send the event as soon as possible.
+	-- This can be used to trigger custom events that need to be handled outside of Anselme.
+	-- Can be called from an luafunction, or from outside.
+	interrupt = :(name, data)
+		if coroutine.running() == @_coroutine then
+			coroutine.yield(name, data)
+		else
+			table.insert(@state.interrupts, { name, data })
+		end
+	end,
+
 	--- Wrapped coroutine that returns event, data each time it is called.
 	-- Will run all the code at the root element, and then wait for more. It never die.
 	-- "text", message: text to display
 	-- "choice", {message1, message2, ...}: a choice. Anselme will expect an answer to be chosen using the choose method before the next call to step.
 	-- "end", nil: end of the script
 	-- Messages are tables: { text = "string", tags = { tagName = tagValue, ... } }
-	step = nil
+	step = nil,
+
+	--- The VM coroutine. Do not use this directly, use :step.
+	_coroutine = nil
 }
 vm_mt.__index = vm_mt
 
@@ -1265,6 +1288,7 @@ let newVM = (state)
 		-- Useful stuff that's only on root
 		chosen = nil, -- chosen answer. See the choose method.
 		event = nil, -- event buffer - contains { event(str), data, other } if an event is waiting to be sent.
+		interrupts = {}, -- list of interrupt events; they will be sent as soon as possible, regardless of the current event buffer
 		lastLine = 1, -- The last line run in the root element. Used to always resume at the exact right spot™ in the step method.
 		tags = {}, -- Currently active tags.
 		aliases = {}, -- Name aliases
