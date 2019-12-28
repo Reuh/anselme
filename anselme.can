@@ -1,4 +1,4 @@
-let VERSION = "0.11.0"
+let VERSION = "0.11.1"
 
 --## Amazing constants ##--
 
@@ -24,7 +24,7 @@ let unopPriority = {
 -- +inf priority: parantheses, function calls
 
 --## Runtime functions ##--
-let expression, eval, evalBool, evalAddress, luaToAns, findVariable, lookupVariable, runFunction, formatText, sendEvent, parse, run, tryPotentialFunction, pushTags, readable, evalList, evalNoParagraph, defineVariable, runChildren, step, evalFlatListNoParagraph
+let expression, eval, evalBool, evalAddress, luaToAns, findVariable, lookupVariable, runFunction, formatText, sendEvent, parse, run, tryPotentialFunction, pushTags, readable, evalList, evalNoParagraph, defineVariable, runChildren, step, evalFlatListNoParagraph, insertAnselmsScriptsFromDirectory
 
 --- Parse code.
 parse = (context, code, origin="a unnamed chunk", temporary)
@@ -492,19 +492,20 @@ lookupVariable = (context, address)
 		end
 		parentParagraph = parentParagraph.parentParagraph
 	end
-	-- Source directories
+	-- Pending scripts (source directories)
 	let root = context.root
-	for _, dir in ipairs(root.directories) do
-		for j=#address, 1, -1 do
-			let filename = table.concat(address, "/", 1, j)
-			let f = io.open("%s/%s.ans":format(dir, filename), "r")
-			if f then
-				let code = "§ %s\n":format(table.concat(address, " ", 1, j))
+	for j=#address, 1, -1 do -- search from most specific to less
+		let searchingForAddress = table.concat(address, " ", 1, j)
+		for i, pending in ipairs(root.pendingScripts) do
+			if pending.address == searchingForAddress then
+				let code = "§ %s\n":format(pending.address)
+				let f = io.open(pending.path, "r")
 				for l in f:lines("*l") do
 					code ..= "\t%s\n":format(l)
 				end
 				f:close()
-				parse(root, code, filename)
+				parse(root, code, pending.path)
+				table.remove(root.pendingScripts, i)
 				return findVariable(root, address)
 			end
 		end
@@ -1152,6 +1153,42 @@ step = :()
 	end
 end
 
+--- Various filesystem manipulation compatibility thingies.
+let isFile = (path)
+	if love then
+		return love.filesystem.getInfo(path, "file")
+	else
+		return require("lfs").attributes(path, "mode") == "file"
+	end
+end
+let isDir = (path)
+	if love then
+		return love.filesystem.getInfo(path, "directory")
+	else
+		return require("lfs").attributes(path, "mode") == "directory"
+	end
+end
+let listDir = (path)
+	if love then
+		return love.filesystem.getDirectoryItems(path)
+	else
+		return [for item in require("lfs").dir(path) do item end]
+	end
+end
+--- Search recursively for Anselme scripts in a directory and add them to a list of { path = "file path", address = "text address" }
+insertAnselmsScriptsFromDirectory = (list, dir, addressPrefix="")
+	for _, f in ipairs(listDir(dir)) do
+		let path = "%s/%s":format(dir, f)
+		if isFile(path) then
+			if path:match("%.ans$") then
+				table.insert(list, { path = path, address = "%s%s":format(addressPrefix, f:match("^(.*)%.ans$")) })
+			end
+		elseif isDir(path) then
+			insertAnselmsScriptsFromDirectory(list, path, "%s ":format(f))
+		end
+	end
+end
+
 --## Public interface ##--
 
 --- Anselme VM method and properties.
@@ -1207,8 +1244,9 @@ let vm_mt = {
 	end,
 	--- Load a directory.
 	-- When a  variable is not found, it will be searched in the source directories.
+	-- Requires luafilesystem or LÖVE.
 	loaddirectory = :(path)
-		table.insert(@state.directories, path)
+		insertAnselmsScriptsFromDirectory(@state.pendingScripts, path)
 		return @
 	end,
 	--- Load some text into the VM and append it at the end of the root element.
@@ -1285,14 +1323,14 @@ let newVM = (state)
 		variables = {},
 		line = 0,
 		origin = "root",
-		-- Useful stuff that's only on root
+		-- Useful stuff that's only on root.
 		chosen = nil, -- chosen answer. See the choose method.
 		event = nil, -- event buffer - contains { event(str), data, other } if an event is waiting to be sent.
 		interrupts = {}, -- list of interrupt events; they will be sent as soon as possible, regardless of the current event buffer
 		lastLine = 1, -- The last line run in the root element. Used to always resume at the exact right spot™ in the step method.
 		tags = {}, -- Currently active tags.
-		aliases = {}, -- Name aliases
-		directories = {} -- Source directories
+		aliases = {}, -- Name aliases.
+		pendingScripts = {} -- List of files that are waiting to be loaded.
 	}
 	root.root = root
 
