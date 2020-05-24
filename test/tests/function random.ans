@@ -1,0 +1,14 @@
+$ f
+	$ a
+		a
+	$ b
+		b
+	$ c
+		c
+	~ random("a","b","c")
+
+~ f
+~ f
+~ f
+~ f
+~ f

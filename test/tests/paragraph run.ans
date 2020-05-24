@@ -1,0 +1,14 @@
+$ f
+	x
+	§ p
+		a
+	b
+
+No checkpoint:
+~ f
+
+From checkpoint:
+~ f
+
+Force no checkpoint:
+~ f()

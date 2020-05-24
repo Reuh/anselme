@@ -1,0 +1,20 @@
+$ bar
+	:5 var
+
+	~ var := 2
+
+	before: {var}
+
+	~ run("parallel")
+
+	§ foo
+		checkpoint
+
+	after: {var}
+
+	~ run("parallel")
+
+$ parallel
+	parallel: {bar.var}
+
+~ bar

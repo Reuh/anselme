@@ -1,0 +1,14 @@
+$ f
+	x
+	§ p
+		a
+	b
+
+Force run checkpoint:
+~ f.p()
+
+From checkpoint:
+~ f
+
+Force no checkpoint:
+~ f()

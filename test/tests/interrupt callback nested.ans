@@ -1,0 +1,20 @@
+$ leave
+	in interrupt: {oh.bar.var}
+
+$ oh
+	no
+	$ bar
+		:5 var
+
+		~ var := 2
+
+		before: {var}
+
+		~ interrupt("leave")
+
+		§ foo
+			checkpoint
+
+		after: {var}
+
+~ oh.bar
