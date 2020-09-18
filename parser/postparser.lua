@@ -10,8 +10,8 @@ local function parse(state)
 		if line.condition then
 			if line.condition:match("[^%s]") then
 				local exp, rem = expression(line.condition, state, namespace)
-				if not exp then return nil, ("%s; at line %s"):format(rem, line.line) end
-				if rem:match("[^%s]") then return nil, ("expected end of expression before %q in condition decorator; at line %s"):format(rem, line.line) end
+				if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
+				if rem:match("[^%s]") then return nil, ("expected end of expression before %q in condition decorator; at %s"):format(rem, line.source) end
 				line.condition = exp
 			else
 				line.condition = nil
@@ -20,8 +20,8 @@ local function parse(state)
 		if line.tag then
 			if line.tag:match("[^%s]") then
 				local exp, rem = expression(line.tag, state, namespace)
-				if not exp then return nil, ("%s; at line %s"):format(rem, line.line) end
-				if rem:match("[^%s]") then return nil, ("expected end of expression before %q in condition decorator; at line %s"):format(rem, line.line) end
+				if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
+				if rem:match("[^%s]") then return nil, ("expected end of expression before %q in condition decorator; at %s"):format(rem, line.source) end
 				line.tag = exp
 			else
 				line.tag = nil
@@ -31,8 +31,8 @@ local function parse(state)
 		if line.expression then
 			if line.expression:match("[^%s]") then
 				local exp, rem = expression(line.expression, state, namespace)
-				if not exp then return nil, ("%s; at line %s"):format(rem, line.line) end
-				if rem:match("[^%s]") then return nil, ("expected end of expression before %q; at line %s"):format(rem, line.line) end
+				if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
+				if rem:match("[^%s]") then return nil, ("expected end of expression before %q; at %s"):format(rem, line.source) end
 				line.expression = exp
 			else
 				line.expression = nil
@@ -45,7 +45,7 @@ local function parse(state)
 					if not variant.return_type then
 						variant.return_type = return_type
 					elseif variant.return_type ~= return_type then
-						return nil, ("trying to return a %s in a function that returns a %s; at line %s"):format(return_type, variant.return_type, line.line)
+						return nil, ("trying to return a %s in a function that returns a %s; at %s"):format(return_type, variant.return_type, line.source)
 					end
 				end
 			end
@@ -53,7 +53,7 @@ local function parse(state)
 		-- text
 		if line.text then
 			local txt, err = parse_text(line.text, state, namespace)
-			if err then return nil, ("%s; at line %s"):format(err, line.line) end
+			if err then return nil, ("%s; at %s"):format(err, line.source) end
 			line.text = txt
 		end
 	end

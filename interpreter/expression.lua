@@ -3,6 +3,8 @@ local flush_state, to_lua, from_lua, eval_text
 
 local run, run_block
 
+local unpack = table.unpack or unpack
+
 --- evaluate an expression
 -- returns evaluated value if success
 -- returns nil, error if error

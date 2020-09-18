@@ -7,6 +7,12 @@ local anselme = {
 }
 package.loaded[...] = anselme
 
+-- TODO: for type checking functions:
+-- pour éliminer totalement les undefined
+-- ne type checker/compiler les fonctions que lorsqu'elles sont apppelées, en déterminant leur type à ce moment là selon les arguments donnés
+-- (du coup la surcharge ne se fera que selon l'arité. Mais ça sera 100% type checké)
+-- PB: les listes ont des types mixés (cf les varargs) + afficher des warnings dans le selecteur de variante lorsqu'un type de retour manque
+
 -- load libs
 local preparse = require((...):gsub("anselme$", "parser.preparser"))
 local postparse = require((...):gsub("anselme$", "parser.postparser"))
@@ -60,7 +66,7 @@ local interpreter_methods = {
 				local namespace = self:current_namespace()
 				-- replace state with interrupted state
 				local exp, err = expression(expr, self.state.interpreter.global_state, namespace or "")
-				if not exp then return "error", ("%s; during interrupt %q at line %s"):format(err, expr, line and line.line or 0) end
+				if not exp then return "error", ("%s; during interrupt %q at %s"):format(err, expr, line and line.source or "unknown") end
 				local r, e = self.vm:run(exp)
 				if not r then return "error", e end
 				self.state = r.state
@@ -157,15 +163,15 @@ local vm_mt = {
 	--- load code
 	-- return self in case of success
 	-- returns nil, err in case of error
-	loadstring = function(self, str, name)
-		local s, e = preparse(self.state, str, name or "")
+	loadstring = function(self, str, name, source)
+		local s, e = preparse(self.state, str, name or "", source)
 		if not s then return s, e end
 		return self
 	end,
 	loadfile = function(self, path, name)
 		local f, e = io.open(path, "r")
 		if not f then return f, e end
-		local s, err = self:loadstring(f:read("*a"), name or "")
+		local s, err = self:loadstring(f:read("*a"), name, path)
 		f:close()
 		if not s then return s, err end
 		return self

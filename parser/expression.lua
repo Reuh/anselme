@@ -91,27 +91,6 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 		elseif s:match("^"..identifier_pattern) then
 			local name, r = s:match("^("..identifier_pattern..")(.-)$")
 			name = format_identifier(name, state)
-			-- functions
-			local funcs, ffqm = find(state.functions, namespace, name)
-			if funcs then
-				local args, explicit_call
-				if r:match("^%b()") then
-					explicit_call = true
-					local content, rem = r:match("^(%b())(.*)$")
-					content = content:gsub("^%(", ""):gsub("%)$", "")
-					r = rem
-					-- get arguments
-					if content:match("[^%s]") then
-						local err
-						args, err = expression(content, state, namespace)
-						if not args then return args, err end
-					end
-				end
-				-- find compatible variant
-				local variant, err = find_function_variant(ffqm, state, args, explicit_call)
-				if not variant then return variant, err end
-				return expression(r, state, namespace, currentPriority, variant)
-			end
 			-- variables
 			local var, vfqm = find(state.variables, namespace, name)
 			if var then
@@ -132,6 +111,27 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 						name = svfqm
 					})
 				end
+			end
+			-- functions
+			local funcs, ffqm = find(state.functions, namespace, name)
+			if funcs then
+				local args, explicit_call
+				if r:match("^%b()") then
+					explicit_call = true
+					local content, rem = r:match("^(%b())(.*)$")
+					content = content:gsub("^%(", ""):gsub("%)$", "")
+					r = rem
+					-- get arguments
+					if content:match("[^%s]") then
+						local err
+						args, err = expression(content, state, namespace)
+						if not args then return args, err end
+					end
+				end
+				-- find compatible variant
+				local variant, err = find_function_variant(ffqm, state, args, explicit_call)
+				if not variant then return variant, err end
+				return expression(r, state, namespace, currentPriority, variant)
 			end
 			return nil, ("unknown identifier %q"):format(name)
 		end

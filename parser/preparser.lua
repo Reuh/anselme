@@ -7,7 +7,7 @@ local eval
 local function parse_line(line, state, namespace)
 	local l = line.content
 	local r = {
-		line = line.line
+		source = line.source
 	}
 	-- comment
 	if l:match("^%(") then
@@ -113,7 +113,7 @@ local function parse_line(line, state, namespace)
 		-- define function and variables
 		r.namespace = fqm.."."
 		r.name = fqm
-		if state.variables[fqm] then return nil, ("trying to define %s %s, but a variable with the same name exists; at line %s"):format(r.type, fqm, line.line) end
+		if state.variables[fqm] then return nil, ("trying to define %s %s, but a variable with the same name exists; at %s"):format(r.type, fqm, line.source) end
 		r.variant = {
 			arity = arity,
 			types = {},
@@ -144,13 +144,13 @@ local function parse_line(line, state, namespace)
 					min, max = variant.arity, r.variant.arity
 				end
 				if min == vmin and max == vmax then
-					return nil, ("trying to define %s %s with arity [%s;%s], but another function with the arity exist; at line %s"):format(r.type, fqm, min, max, line.line)
+					return nil, ("trying to define %s %s with arity [%s;%s], but another function with the arity exist; at %s"):format(r.type, fqm, min, max, line.source)
 				end
 			end
 			-- add
 			table.insert(state.functions[fqm], r.variant)
 		end
-		-- set type check information
+		-- define args and set type check information
 		for i, param in ipairs(r.params) do
 			if not state.variables[param] then
 				state.variables[param] = {
@@ -166,9 +166,9 @@ local function parse_line(line, state, namespace)
 		r.type = "definition"
 		r.remove_from_block_ast = true
 		local exp, rem = expression(l:match("^:(.*)$"), state, namespace) -- expression parsing is done directly to get type information
-		if not exp then return nil, ("%s; at line %s"):format(rem, line.line) end
+		if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
 		local fqm = ("%s%s"):format(namespace, format_identifier(rem, state))
-		if state.functions[fqm] then return nil, ("trying to define variable %s, but a function with the same name exists; at line %s"):format(fqm, line.line) end
+		if state.functions[fqm] then return nil, ("trying to define variable %s, but a function with the same name exists; at %s"):format(fqm, line.source) end
 		if not state.variables[fqm] or state.variables[fqm].type == "undefined argument" then
 			local v, e = eval(state, exp)
 			if not v then return v, e end
@@ -179,7 +179,7 @@ local function parse_line(line, state, namespace)
 			end
 			state.variables[fqm] = v
 		elseif state.variables[fqm].type ~= exp.type then
-			return nil, ("trying to define variable %s of type %s but a it is already defined with type %s; at line %s"):format(fqm, exp.type, state.variables[fqm].type, line.line)
+			return nil, ("trying to define variable %s of type %s but a it is already defined with type %s; at %s"):format(fqm, exp.type, state.variables[fqm].type, line.source)
 		end
 	-- tag
 	elseif l:match("^%#") then
@@ -200,7 +200,7 @@ local function parse_line(line, state, namespace)
 	else
 		r.type = "flush_events"
 	end
-	if not r.type then return nil, ("unknown line %s type"):format(line.line) end
+	if not r.type then return nil, ("unknown line %s type"):format(line.source) end
 	return r
 end
 
@@ -224,7 +224,7 @@ local function parse_block(indented, state, namespace, parent_function, last_eve
 				if ast.type == "flush" then last_event = nil end
 				if ast.push_event then
 					if last_event and ast.push_event ~= last_event then
-						table.insert(block, { line = l.line, type = "flush_events" })
+						table.insert(block, { source = l.source, type = "flush_events" })
 					end
 					last_event = ast.push_event
 				end
@@ -232,9 +232,9 @@ local function parse_block(indented, state, namespace, parent_function, last_eve
 				ast.parent_position = #block+1
 				if ast.replace_with then
 					if indented[i+1].content then
-						table.insert(indented, i+1, { content = ast.replace_with, line = l.line })
+						table.insert(indented, i+1, { content = ast.replace_with, source = l.source })
 					else
-						table.insert(indented, i+2, { content = ast.replace_with, line = l.line }) -- if line has children
+						table.insert(indented, i+2, { content = ast.replace_with, source = l.source }) -- if line has children
 					end
 				else
 					table.insert(block, ast)
@@ -247,7 +247,7 @@ local function parse_block(indented, state, namespace, parent_function, last_eve
 		-- indented (ignore block comments)
 		elseif lastLine.type ~= "comment" then
 			if not lastLine.child then
-				return nil, ("line %s (%s) can't have children"):format(lastLine.line, lastLine.type)
+				return nil, ("line %s (%s) can't have children"):format(lastLine.source, lastLine.type)
 			else
 				local r, e = parse_block(l, state, lastLine.namespace or namespace, lastLine.type == "function" and lastLine or parent_function, last_event)
 				if not r then return r, e end
@@ -262,7 +262,7 @@ end
 --- returns the nested list of lines {content="", line=1}, grouped by indentation
 -- multiple empty lines are merged
 -- * list, last line
-local function parse_indent(lines, i, indentLevel, insert_empty_line)
+local function parse_indent(lines, source, i, indentLevel, insert_empty_line)
 	i = i or 1
 	indentLevel = indentLevel or 0
 	local indented = {}
@@ -271,13 +271,13 @@ local function parse_indent(lines, i, indentLevel, insert_empty_line)
 			local indent, line = lines[i]:match("^(%s*)(.*)$")
 			if #indent == indentLevel then
 				if insert_empty_line then
-					table.insert(indented, { content = "", line = insert_empty_line })
+					table.insert(indented, { content = "", source = ("%s:%s"):format(source, insert_empty_line) })
 					insert_empty_line = false
 				end
-				table.insert(indented, { content = line, line = i })
+				table.insert(indented, { content = line, source = ("%s:%s"):format(source, i) })
 			elseif #indent > indentLevel then
 				local t
-				t, i = parse_indent(lines, i, #indent, insert_empty_line)
+				t, i = parse_indent(lines, source, i, #indent, insert_empty_line)
 				table.insert(indented, t)
 			else
 				return indented, i-1
@@ -303,17 +303,17 @@ end
 -- (wait for other files to be parsed before doing this with postparse)
 -- * state: in case of success
 -- * nil, err: in case of error
-local function parse(state, s, name)
+local function parse(state, s, name, source)
 	-- parse lines
 	local lines = parse_lines(s)
-	local indented = parse_indent(lines)
+	local indented = parse_indent(lines, source or name)
 	-- wrap in named function if neccessary
 	if name ~= "" then
 		if not name:match("^"..identifier_pattern.."$") then
 			return nil, ("invalid function name %q"):format(name)
 		end
 		indented = {
-			{ content = "$ "..name, line = 0 },
+			{ content = "$ "..name, source = ("%s:%s"):format(source or name, 0) },
 			indented
 		}
 	end

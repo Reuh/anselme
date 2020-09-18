@@ -41,21 +41,21 @@ local function run_line(state, line)
 	local skipped = false
 	if line.condition then
 		local v, e = eval(state, line.condition)
-		if not v then return v, ("%s; at line %s"):format(e, line.line) end
+		if not v then return v, ("%s; at %s"):format(e, line.source) end
 		skipped = not truthy(v)
 	end
 	if not skipped then
 		-- tag decorator
 		if line.tag then
 			local v, e = eval(state, line.tag)
-			if not v then return v, ("%s; in tag decorator at line %s"):format(e, line.line) end
+			if not v then return v, ("%s; in tag decorator at %s"):format(e, line.source) end
 			tags:push(state, v)
 		end
 		-- line types
 		if line.type == "condition" then
 			state.interpreter.last_condition_success = nil
 			local v, e = eval(state, line.expression)
-			if not v then return v, ("%s; at line %s"):format(e, line.line) end
+			if not v then return v, ("%s; at %s"):format(e, line.source) end
 			if truthy(v) then
 				state.interpreter.last_condition_success = true
 				v, e = run_block(state, line.child)
@@ -65,7 +65,7 @@ local function run_line(state, line)
 		elseif line.type == "else-condition" then
 			if not state.interpreter.last_condition_success then
 				local v, e = eval(state, line.expression)
-				if not v then return v, ("%s; at line %s"):format(e, line.line) end
+				if not v then return v, ("%s; at %s"):format(e, line.source) end
 				if truthy(v) then
 					state.interpreter.last_condition_success = true
 					v, e = run_block(state, line.child)
@@ -81,7 +81,7 @@ local function run_line(state, line)
 		elseif line.type == "tag" then
 			if line.expression then
 				local v, e = eval(state, line.expression)
-				if not v then return v, ("%s; at line %s"):format(e, line.line) end
+				if not v then return v, ("%s; at %s"):format(e, line.source) end
 				tags:push(state, v)
 			end
 			local v, e = run_block(state, line.child)
@@ -92,12 +92,12 @@ local function run_line(state, line)
 			local v, e
 			if line.expression then
 				v, e = eval(state, line.expression)
-				if not v then return v, ("%s; at line %s"):format(e, line.line) end
+				if not v then return v, ("%s; at %s"):format(e, line.source) end
 			end
 			return v
 		elseif line.type == "text" then
 			local t, er = eval_text(state, line.text)
-			if not t then return t, ("%s; at line %s"):format(er, line.line) end
+			if not t then return t, ("%s; at %s"):format(er, line.source) end
 			write_event(state, "text", t)
 		elseif line.type == "flush_events" then
 			while state.interpreter.event_buffer do
@@ -122,7 +122,7 @@ local function run_line(state, line)
 				end
 			end
 		elseif line.type ~= "paragraph" then
-			return nil, ("unknown line type %q; line %s"):format(line.type, line.line)
+			return nil, ("unknown line type %q; at %s"):format(line.type, line.source)
 		end
 		-- tag decorator
 		if line.tag then

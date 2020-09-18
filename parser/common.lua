@@ -5,7 +5,7 @@ local escapeCache = {}
 local common
 common = {
 	--- valid identifier pattern
-	identifier_pattern = "[^%%%/%*%+%-%(%)%!%&%|%=%$%?%>%<%:%{%}%[%]%,]+",
+	identifier_pattern = "[^%%%/%*%+%-%(%)%!%&%|%=%$%?%>%<%:%{%}%[%]%,%\"]+",
 	--- escape a string to be used as an exact match pattern
 	escape = function(str)
 		if not escapeCache[str] then

@@ -182,6 +182,7 @@ else
 						print(inspect(result))
 						print("is not equal to")
 						print(inspect(output))
+						print("")
 					end
 				else
 					success = success + 1
@@ -192,6 +193,7 @@ else
 					print(e)
 					print("result was:")
 					print(inspect(result))
+					print("")
 				end
 			end
 		end
