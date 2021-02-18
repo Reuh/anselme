@@ -56,7 +56,7 @@ types.lua = {
 			end
 			return {
 				type = "list",
-				value = val
+				value = l
 			}
 		end
 	}
