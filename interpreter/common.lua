@@ -29,7 +29,7 @@ common = {
 			return nil, ("no formatter for type %q"):format(val.type)
 		end
 	end,
-	-- lua value: if success
+	-- lua value: if success (may be nil!)
 	-- * nil, err: if error
 	to_lua = function(val)
 		if atypes[val.type] and atypes[val.type].to_lua then

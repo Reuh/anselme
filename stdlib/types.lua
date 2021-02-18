@@ -102,13 +102,13 @@ types.anselme = {
 			for _, v in ipairs(val) do
 				if v.type == "pair" then
 					local k, ke = to_lua(v.value[1])
-					if not k then return k, ke end
+					if not k and ke then return k, ke end
 					local x, xe = to_lua(v.value[2])
-					if not x then return x, xe end
+					if not x and xe then return x, xe end
 					l[k] = x
 				else
 					local s, e = to_lua(v)
-					if not s then return s, e end
+					if not s and e then return s, e end
 					table.insert(l, s)
 				end
 			end
@@ -125,9 +125,9 @@ types.anselme = {
 		end,
 		to_lua = function(val)
 			local k, ke = to_lua(val[1])
-			if not k then return k, ke end
+			if not k and ke then return k, ke end
 			local v, ve = to_lua(val[2])
-			if not v then return v, ve end
+			if not v and ve then return v, ve end
 			return { [k] = v }
 		end
 	}
