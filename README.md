@@ -27,8 +27,12 @@ And most stuff you'd expect from such a language:
 * can pause the interpreter when needed
 * can save and restore state
 
-And things that are halfway there but *should* be there eventually:
+And things that are halfway there but *should* be there eventually (i.e., TODO):
 * language independant; scripts should (hopefully) be easily localizable into any language (it's possible, but doesn't provide any batteries for this right now)
+    Defaults variables use emoji and then it's expected to alias them; works but not the most satisfying solution.
+* a good documentation
+    Need to work on consistent naming (paragraphs/checkpoints/commit, call syntaxes)
+    A step by step tutorial
 
 Things that Anselme is not:
 * a game engine. It's very specific to dialogs and text, so unless you make a text game you will need to do a lot of other stuff.
@@ -64,6 +68,8 @@ TODO: stupidly complex script
 Language reference
 ------------------
 
+### Main structure
+
 Anselme will read a bunch of different scripts files and execute them afterward. Like you would expect of... any? scripting language. We use the `.ans` file extension for files.
 
 Scripts are read line per line, from top to bottom. Some lines can have children; children lines are indented with some sort of whitespace, whether it's tabs or space (as long as it's consistent), like in Python.
@@ -79,6 +85,41 @@ Another line.
 
                 random line whith indentation which makes no sense at all.
 ```
+
+#### Commiting / checkpoints
+
+When executing a piece of Anselme code, it will not directly modify the global state (i.e. the values of variables used by every script), but only locally, in this execution.
+
+Right after reaching a checkpoint (a paragraph line), Anselme will commit its local state into the global one, i.e., make every change accessible to other scripts.
+
+```
+$ main
+    :5 var
+
+    ~ var := 2
+
+    before: {var}=2, because the value has been changed in the current execution context
+
+    (But if we run the script "parallel" in parallel at this point, it will still think var=5)
+
+    § foo
+        But the variable will be commited to the global state on a checkpoint
+
+    after: {var}=2, still, as expected
+
+    (And if we run the script "parallel" in parallel at this point, it will now think var=2)
+
+$ parallel
+    parallel: {main.var}
+
+~ main
+```
+
+The purpose of this system is both to allow several scripts to run at the same time with an easy way to avoid interferences, and to make sure the global state is always in a consistent (and not in the middle of a calculation): since scripts can be interrupted at any time, when it is interrupted, anything that was changed between the last checkpoint and the interruption will be discarded. When running the script again, it will resume correctly at the last reached checkpoint. See [function calls](#function-calls) for more details on how to call/resume a function.
+
+Checkpoints are set per function. Paragraphs are expected to be defined inside functions only.
+
+Commiting also happens after a function or paragraph has been manually called.
 
 ### Lines types
 
@@ -123,11 +164,80 @@ There's different types of lines, depending on their first character(s) (after i
 > Last choice
 ```
 
-* `$`: function line. Followed by an [identifier](#identifiers). Define a function. TODO
+* `$`: function line. Followed by an [identifier](#identifiers), and eventually a parameter list. Define a function using its children as function body.
 
-* `§`: paragraph. Followed by an [identifier](#identifiers). Define a paragraph. A paragraph act as a checkpoint. TODO
+The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
-* `#`: tag line. Can be followed by an [expression](#expressions). The results of the [expression](#expressions) will be added to the tags send along with any event sent from its children. Can be nested.
+A parameter list can be optionally given after the identifier. It is enclosed with paranthesis and contain a comma-separated list of identifiers:
+
+```
+$ f(a, b, c)
+    first argument: {a}
+    second argument: {b}
+    third argument: {c}
+```
+
+Functions can also have a variable number of arguments. By adding `...` after the last argument identifier, it will be considered a variable length argument ("vararg"), and will contain a list of every extraneous argument.
+
+```
+$ f(a, b...)
+    {b}
+
+
+(will print [1])
+~ f("discarded", 1)
+
+(will print [1,2,3])
+~ f("discarded", 1, 2, 3)
+
+(will print [])
+~ f("discarded")
+```
+
+Functions with the same name can be defined, as long as they have a different number of argument.
+
+```
+$ f(a, b)
+    a
+
+$ f(x)
+    b
+
+(will print a)
+~ f(1,2)
+
+(will print b)
+~ f(1)
+```
+
+Functions can return a value using a [return line](#lines-that-can-t-have-children).
+
+Functions always have the following variables defined in its namespace by default:
+
+`👁️`: number, number of times the function was executed before
+`🏁`: string, name of last reached checkpoint/paragraph
+
+* `§`: paragraph. Followed by an [identifier](#identifiers). Define a paragraph. A paragraph act as a checkpoint.
+
+The function body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#paragraph-calls) to see the different ways of calling a paragraph.
+
+It is a checkpoint and will commit variables when the line is reached. See [committing](#committing-checkpoints).
+
+When executing the parent function after this checkpoint has been reached (using the paranthesis-less function call syntax), the function will resume from this checkpoint, and the paragraph's children will be run. This is meant to be used as a way to restart the conversation from this point after it was interrupted, providing necessary context.
+
+```
+$ inane dialog
+    Hello George. Nice weather we're having today?
+    § interrupted
+        What was I saying? Ah yes, the weather...
+    (further dialog here)
+```
+
+Paragraphs always have the following variable defined in its namespace by default:
+
+`👁️`: number, number of times the paragraph was reached or executed before
+
+* `#`: tag line. Can be followed by an [expression](#expressions); otherwise empty expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any event sent from its children. Can be nested.
 
 ```
 # "color": "red"
@@ -139,10 +249,10 @@ There's different types of lines, depending on their first character(s) (after i
 
 #### Lines that can't have children:
 
-* `:`: variable declaration. Followed by an [expression](#expressions) and an [identifier](#identifiers). Defines a variable with this identifier and default value in the current [namespace]("identifiers").
+* `:`: variable declaration. Followed by an [expression](#expressions) and an [identifier](#identifiers). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). Once defined, the type of a variable can not change.
 
 ```
-:foo 42
+:42 foo
 ```
 
 * `@`: return line. Can be followed by an [expression](#expressions). Exit the current function and returns the expression's value.
@@ -201,6 +311,7 @@ Some text.
 Another text.
 
 (the above flush line will cause Anselme to send two text events containing the two previous lines)
+Text in another event.
 ```
 
 Beyond theses pragmatic reasons, the event buffering also serves as a way to group together several lines. For example, choice A and B will be sent to the game at the same time and can therefore be assumed to be part of the same "choice block", as opposed to choice C wich will be sent alone:
@@ -212,6 +323,17 @@ Beyond theses pragmatic reasons, the event buffering also serves as a way to gro
 > Choice C
 ```
 
+In practise, this is mostly useful to provide some choice or text from another function:
+
+```
+$ reusable choice
+    > Reusable choice
+
+> Choice A
+~ reusable choice
+> Choice C
+```
+
 Anselme will also flush events when the current event type change, so your game only has to handle a single event of a single type at a time. For example, this will send a text event, flush it, and then buffer a choice event:
 
 ```
@@ -219,7 +341,7 @@ Text
 > Choice
 ```
 
-Every event have a type, and consist of a `data` field, containing its contents, and a `tags` field, containing the tags at the time the event was created.
+Every event have a type (`text`, `choice`, `return` or `error` by default, custom types can also be defined), and consist of a `data` field, containing its contents, and a `tags` field, containing the tags at the time the event was created.
 
 ### Identifiers
 
@@ -273,19 +395,215 @@ Default types are:
 
 * `pair`: a couple of values. Types can be mixed. Can be defined using colon `"key":5`.
 
-TODO: conversion table to/from Lua. See stdlib/types.lua
+How conversions are handled from Anselme to Lua:
+
+* `nil` -> `nil`
+
+* `number` -> `number`
+
+* `string` -> `string`
+
+* `list` -> `table`. Pair elements in the list will be assigned as a key-value pair in the Lua list and its index skipped in the sequential part, e.g. `[1,2,"key":"value",3]` -> `{1,2,3,key="value"}`.
+
+* `pair` -> `table`, with a signle key-value pair.
+
+How conservions are handled from Lua to Anselme:
+
+* `nil` -> `nil`
+
+* `number` -> `number`
+
+* `string` -> `string`
+
+* `table` -> `list`. First add the sequential part of the table in the list, then add pairs for the remaining elements, e.g. `{1,2,key="value",3}` -> `[1,2,3,"key":"value"]`
+
+* `boolean` -> `number`, 0 for false, 1 for true.
 
 #### Truethness
 
-Only `0` is false. Everything else is considered true.
+Only `0` and `nil` are false. Everything else is considered true.
+
+#### Function calls
+
+The simplest way to call a function is simply to use its name. If the function has no arguments, parantheses are optional:
+
+```
+$ f
+    called
+
+~ f
+
+$ f(a)
+    called with {a}
+
+~ f("an argument")
+```
+
+Please note, however, that if the function contains checkpoints/paragraphs, these two syntaxes behave differently. Without parantheses, the function will resume from the last reached checkpoint; with parantheses, the function always restart from its beginning:
+
+```
+$ f
+    a
+    § checkpoint
+        b
+    c
+
+No checkpoint reached, will write "a" and "c":
+~ f
+
+Checkpoint is now reached, will write "b" and "c":
+~ f
+
+Force no checkpoint, will write "a" and "c":
+~ f()
+
+```
+
+Functions with arguments can also be called with a "method-like" syntax (though Anselme has no concept of classes and methods):
+
+```
+$ f(a)
+    called with {a}
+
+"an argument".f
+
+$ f(a, b)
+    called with {a} and {b}
+
+"an argument".f("another argument")
+```
+
+If the function has a return value, any of these calls will of course return the value.
+
+```
+$ f
+    @"text"
+
+this is text: {f}
+```
+
+Functions commit variables after a call.
+
+#### Paragraph calls
+
+Most of the time, you should'nt need to call paragraphs yourself - they will be automatically be set as the active checkpoint when the interperter reach their line, and they will be automatically called when resuming its parent function.
+
+But in the cases when you want to manually set the current checkpoint, you can call it with a similar syntax to paranthesis-less function calls:
+
+```
+$ f
+    a
+    § checkpoint
+        b
+    c
+
+Force run from checkpoint, will write "b" and "c" and set the current checkpoint to "checkpoint":
+~ f.checkpoint
+
+Will correctly resumes from the checkpoint, and write "b" and "c":
+~ f
+
+Function can always be restarted from the begining using parantheses:
+~ f()
+```
+
+You can also only execute the paragraphs' children code only by using a parantheses-syntax:
+
+```
+$ f
+    a
+    § checkpoint
+        b
+    c
+
+Run the checkpoint only, will only write "b" and set the current checkpoint to "checkpoint":
+~ f.checkpoint()
+
+And will resume from the checkpoint like before:
+~ f
+```
+
+Method style calling is also possible, like with functions.
+
+Paragraphs commit variables after a call.
 
 #### Operators
 
-TODO See stdlib/functions.lua
+Built-in operators:
+
+##### Assignement
+
+`a := b`: evaluate b, assign its value to identifier `a`. Returns the new value.
+
+`a += b`: evaluate b, assign its the current value of a `+` the value of b to a. Returns the new value.
+
+`-=`, `*=`, `/=`, `//=`, `%=`, `^=`: same with other arithmetic operators.
+
+##### Comparaison
+
+`a = b`: returns `1` if a and b have the same value (will recursively compare list and pairs), `0` otherwise
+
+`a != b`: returns `1` if a and b do not have the same value, `0` otherwise
+
+These only work on numbers:
+
+`a > b`: returns `1` if a is greater than b are different, `0` otherwise
+
+`<`, `>=`, `<=`: same with lower, greater or equal, lower or equal
+
+##### Arithmetic
+
+These only work on numbers.
+
+`a + b`: evaluate a and b, returns their sum.
+
+`-`, `*`, `/`, `//`, `^`: same for substraction, multiplication, division, integer division, exponentiation
+
+`-a`: evaluate a, returns its opposite
+
+This only works on strings:
+
+`a + b`: evaluate a and b, concatenate them.
+
+##### Logic operators
+
+`!a`: evaluate a, returns `0` if it is true, `1` otherwise
+
+`a & b`: and operator, lazy
+
+`a | b`: or operator, lazy
+
+##### Various
+
+`a ; b`: evaluate a, discard its result, then evaluate b. Returns the result of b.
+
+`a : b`: evaluate a and b, returns a new pair with a as key and b as value.
+
+`a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing.
 
 #### Built-in functions
 
-TODO See stdlib/functions.lua
+##### List methods
+
+`len(list)`: returns length of the list
+
+`insert(list[, position], value)`: insert a value at position (by default, the end of the list)
+
+`remove(list, [position])`: remove the list element at position (by default, the end of the list)
+
+`find(list, value)`: returns the index of the first element equal to value in the list; returns 0 if no such element found.
+
+##### Sequential execution
+
+`cycle(...)`: given function/paragraph identifiers as string as arguments, will execute them in the order given each time the function is ran; e.g., `cycle("a", "b")` will execute a on the first execution, then b, then a again, etc.
+
+`next(...)`: same as cycle, but will not cycle; once the end of sequence is reached, will keep executing the last element.
+
+`random(...)`: same arguments as before, but execute a random element at every execution.
+
+##### Various
+
+`rand([m[, n]])`: when called whitout arguments, returns a random float in [0,1). Otherwise, returns a random number in [m,n]; m=1 if not given.
 
 API reference
 -------------
