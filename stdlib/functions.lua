@@ -133,12 +133,14 @@ functions = {
 	-- arithmetic
 	["+"] = {
 		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a + b end
-		},
-		{
-			arity = 2, types = { "string", "string" }, return_type = "string",
-			value = function(a, b) return a .. b end
+			arity = 2,
+			value = function(a, b)
+				if type(a) == "string" then
+					return a .. b
+				else
+					return a + b
+				end
+			end
 		}
 	},
 	["-"] = {

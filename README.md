@@ -194,7 +194,7 @@ $ f(a, b...)
 ~ f("discarded")
 ```
 
-Functions with the same name can be defined, as long as they have a different number of argument.
+Functions with the same name can be defined, as long as they have a different number of argument. Functions will be selected based on the number of arguments given:
 
 ```
 $ f(a, b)

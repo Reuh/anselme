@@ -7,11 +7,11 @@ local anselme = {
 }
 package.loaded[...] = anselme
 
--- TODO: for type checking functions:
--- pour éliminer totalement les undefined
--- ne type checker/compiler les fonctions que lorsqu'elles sont apppelées, en déterminant leur type à ce moment là selon les arguments donnés
--- (du coup la surcharge ne se fera que selon l'arité. Mais ça sera 100% type checké)
--- PB: les listes ont des types mixés (cf les varargs) + afficher des warnings dans le selecteur de variante lorsqu'un type de retour manque
+-- TODO: improve type checking.
+-- Right now, there is some basic type checking done at parsing - but since Lua and Anselme functions may not always define the type of
+-- their parameters and return value, a lot of checks are skipped ("undefined argument" type).
+-- Probably won't be able to remove them completely (since lists can have mixed types, etc.), but would be good to limit them.
+-- Ideally, we'd avoid runtime type checking.
 
 -- load libs
 local preparse = require((...):gsub("anselme$", "parser.preparser"))
