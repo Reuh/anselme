@@ -64,9 +64,9 @@ table.sort(files)
 -- test script
 if args.script then
 	local vm = anselme()
-	local state, err = vm:loadfile("test.ans", "test")
+	local state, err = vm:loadfile(args.script, "script")
 	if state then
-		local istate, e = vm:run("test")
+		local istate, e = vm:run("script")
 		if not istate then
 			print("error", e)
 		else
