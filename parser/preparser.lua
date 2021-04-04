@@ -144,7 +144,7 @@ local function parse_line(line, state, namespace)
 					min, max = variant.arity, r.variant.arity
 				end
 				if min == vmin and max == vmax then
-					return nil, ("trying to define %s %s with arity [%s;%s], but another function with the arity exist; at %s"):format(r.type, fqm, min, max, line.source)
+					return nil, ("trying to define %s %s with arity [%s;%s], but another function with the same name and arity exist; at %s"):format(r.type, fqm, min, max, line.source)
 				end
 			end
 			-- add

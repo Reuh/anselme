@@ -110,11 +110,14 @@ local function eval(state, exp)
 						flush_state(state)
 						if r then
 							return r, e
+						-- resume function from paragraph
 						elseif not exp.explicit_call then
 							r, e = run(state, fn.value.parent_block, true, fn.value.parent_position+1)
 						else
 							r = { type = "nil", value = nil }
 						end
+					-- paragraph decorators: run single line or resume from it.
+					-- checkpoint & seen variables will be updated from the interpreter usual paragraph-reaching code.
 					elseif exp.explicit_call then
 						r, e = run(state, fn.value.parent_block, false, fn.value.parent_position, fn.value.parent_position)
 					else

@@ -3,10 +3,10 @@ _[17]={}
 _[16]={}
 _[15]={}
 _[14]={}
-_[13]={data="parallel: 2",tags=_[17]}
-_[12]={data="after: 2",tags=_[16]}
-_[11]={data="parallel: 5",tags=_[15]}
-_[10]={data="before: 2",tags=_[14]}
+_[13]={tags=_[17],data="parallel: 2"}
+_[12]={tags=_[16],data="after: 2"}
+_[11]={tags=_[15],data="parallel: 5"}
+_[10]={tags=_[14],data="before: 2"}
 _[9]={_[13]}
 _[8]={_[12]}
 _[7]={_[11]}

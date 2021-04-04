@@ -8,6 +8,27 @@ local function rewrite_assignement(fqm, state, arg, explicit_call)
 	return ass
 end
 
+local function compare(a, b)
+	if a.type ~= b.type then
+		return false
+	end
+	if a.type == "pair" then
+		return compare(a.value[1], b.value[1]) and compare(a.value[2], b.value[2])
+	elseif a.type == "list" then
+		if #a.value ~= #b.value then
+			return false
+		end
+		for i, v in ipairs(a.value) do
+			if not compare(v, b.value[i]) then
+				return false
+			end
+		end
+		return true
+	else
+		return a.value == b.value
+	end
+end
+
 local functions
 functions = {
 	-- discard left
@@ -69,7 +90,7 @@ functions = {
 			value = function(a, b)
 				return {
 					type = "number",
-					value = (a.type == b.type and a.value == b.value) and 1 or 0
+					value = compare(a, b) and 1 or 0
 				}
 			end
 		}
@@ -80,7 +101,7 @@ functions = {
 			value = function(a, b)
 				return {
 					type = "number",
-					value = (a.type == b.type and a.value == b.value) and 0 or 1
+					value = compare(a, b) and 0 or 1
 				}
 			end
 		}
@@ -170,10 +191,11 @@ functions = {
 		{
 			arity = 2, return_type = "number", mode = "custom",
 			value = function(state, exp)
-				local left, lefte = eval(state, exp.left)
+				local arg = exp.argument
+				local left, lefte = eval(state, arg.left)
 				if not left then return left, lefte end
 				if truthy(left) then
-					local right, righte = eval(state, exp.right)
+					local right, righte = eval(state, arg.right)
 					if not right then return right, righte end
 					if truthy(right) then
 						return {
@@ -191,9 +213,10 @@ functions = {
 	},
 	["|"] = {
 		{
-			arity = 2, return_type = "number", mode = "raw",
+			arity = 2, return_type = "number", mode = "custom",
 			value = function(state, exp)
-				local left, lefte = eval(state, exp.left)
+				local arg = exp.argument
+				local left, lefte = eval(state, arg.left)
 				if not left then return left, lefte end
 				if truthy(left) then
 					return {
@@ -201,7 +224,7 @@ functions = {
 						value = 1
 					}
 				end
-				local right, righte = eval(state, exp.right)
+				local right, righte = eval(state, arg.right)
 				if not right then return right, righte end
 				return {
 					type = "number",
@@ -275,6 +298,20 @@ functions = {
 			end
 		}
 	},
+	find = {
+		{
+			arity = 2, types = { "list" }, return_type = "number", mode = "raw",
+			value = function(a, v)
+				for i, x in ipairs(v.value) do
+					if compare(v, x) then
+						return i
+					end
+				end
+				return 0
+			end
+		},
+	},
+	-- other methods
 	rand = {
 		{
 			arity = 0, return_type = "number",
