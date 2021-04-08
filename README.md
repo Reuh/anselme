@@ -137,9 +137,9 @@ There's different types of lines, depending on their first character(s) (after i
     here
 ```
 
-* `~`: condition line. Can be followed by an [expression](#expressions); otherwise the expression `1` is assumed. If the expression evaluates to [true](#truethness), run its children.
+* `~`: expression line. Can be followed by an [expression](#expressions); otherwise the expression `1` is assumed. If the expression evaluates to [true](#truethness), run its children.
 
-* `~~`: else condition. Same as a condition line, but is only run if the last condition or else-condition line failed (regardless of line distance).
+* `~~`: else expression. Same as an expression line, but is only run if the last expression or else-expression line was false (regardless of line distance).
 
 ```
 ~ 1
@@ -279,7 +279,7 @@ And this is more text, in a different event.
 
 Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour.
 
-* `~`: condition decorator. Same as a condition line, behaving as if this line was it sole child.
+* `~`: expression decorator. Same as an expression line, behaving as if this line was it sole child. Typically used to conditionally execute line.
 
 * `§`: paragraph decorator. Same as a paragraph line, behaving as if this line was it sole child.
 
@@ -345,7 +345,7 @@ Every event have a type (`text`, `choice`, `return` or `error` by default, custo
 
 ### Identifiers
 
-Valid identifiers must be at least 1 caracters long and can contain anything except the caracters `%/*+-()!&|=$?><:{}[],\`. They can contain spaces.
+Valid identifiers must be at least 1 caracters long and can contain anything except the caracters `%/*+-()!&|=$§?><:{}[],\`. They can contain spaces.
 
 When defining an identifier (using a function, paragraph or variable delcaration line), it will be defined into the current namespace (defined by the parent function/paragraph). When evaluating an expression, Anselme will look for variables into the current line's namespace, then go up a level if it isn't found, and so on.
 

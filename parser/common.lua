@@ -5,7 +5,7 @@ local escapeCache = {}
 local common
 common = {
 	--- valid identifier pattern
-	identifier_pattern = "[^%%%/%*%+%-%(%)%!%&%|%=%$%?%>%<%:%{%}%[%]%,%\"]+",
+	identifier_pattern = "[^%%%/%*%+%-%(%)%!%&%|%=%$%§%?%>%<%:%{%}%[%]%,%\"]+",
 	--- escape a string to be used as an exact match pattern
 	escape = function(str)
 		if not escapeCache[str] then
@@ -39,7 +39,7 @@ common = {
 		end
 		return nil, ("can't find %q in namespace %s"):format(name, namespace)
 	end,
-	--- transform an identifier into a clean version
+	--- transform an identifier into a clean version (trim & alias)
 	format_identifier = function(identifier, state)
 		local r = identifier:gsub("[^%.]+", function(str)
 			str = common.trim(str)
