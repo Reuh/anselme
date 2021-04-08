@@ -194,19 +194,6 @@ local vm_mt = {
 		return self
 	end,
 
-	--- set aliases
-	-- return self
-	loadalias = function(self, name, dest)
-		if type(name) == "table" then
-			for k, v in pairs(name) do
-				self:loadalias(k, v)
-			end
-		else
-			self.state.aliases[name] = dest
-		end
-		return self
-	end,
-
 	--- define functions
 	-- return self
 	loadfunction = function(self, name, fn)
@@ -234,6 +221,14 @@ local vm_mt = {
 				table.insert(self.state.functions[name], fn)
 			end
 		end
+		return self
+	end,
+
+	--- set aliases for built-in variables 👁️ and 🏁 that will be defined on every new paragraph and function
+	-- return self
+	setaliases = function(self, seen, checkpoint)
+		self.state.builtin_aliases["👁️"] = seen
+		self.state.builtin_aliases["🏁"] = checkpoint
 		return self
 	end,
 
@@ -268,6 +263,7 @@ local vm_mt = {
 		local interpreter
 		interpreter = {
 			state = {
+				builtin_aliases = self.builtin_aliases,
 				aliases = self.state.aliases,
 				functions = self.state.functions,
 				variables = setmetatable({}, { __index = self.state.variables }),
@@ -310,9 +306,12 @@ return setmetatable(anselme, {
 	__call = function()
 		-- global state
 		local state = {
+			builtin_aliases = {
+				-- ["👁️"] = "seen",
+				-- ["🏁"] = "checkpoint"
+			},
 			aliases = {
-				-- seen = "👁️",
-				-- checkpoint = "🏁"
+				-- ["bonjour.salutation"] = "hello.greeting",
 			},
 			functions = {
 				-- [":="] = {

@@ -164,7 +164,7 @@ There's different types of lines, depending on their first character(s) (after i
 > Last choice
 ```
 
-* `$`: function line. Followed by an [identifier](#identifiers), and eventually a parameter list. Define a function using its children as function body.
+* `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body.
 
 The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
@@ -217,7 +217,7 @@ Functions always have the following variables defined in its namespace by defaul
 `👁️`: number, number of times the function was executed before
 `🏁`: string, name of last reached checkpoint/paragraph
 
-* `§`: paragraph. Followed by an [identifier](#identifiers). Define a paragraph. A paragraph act as a checkpoint.
+* `§`: paragraph. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a paragraph. A paragraph act as a checkpoint.
 
 The function body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#paragraph-calls) to see the different ways of calling a paragraph.
 
@@ -249,7 +249,7 @@ Paragraphs always have the following variable defined in its namespace by defaul
 
 #### Lines that can't have children:
 
-* `:`: variable declaration. Followed by an [expression](#expressions) and an [identifier](#identifiers). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). Once defined, the type of a variable can not change.
+* `:`: variable declaration. Followed by an [expression](#expressions) and an [identifier](#identifiers), then eventually an [alias](#aliases). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). Once defined, the type of a variable can not change.
 
 ```
 :42 foo
@@ -374,6 +374,38 @@ Var1 in the fn1 namespace = 2: {fn1.var1}
 (Weird, but valid, and also the reason I'm not talking of scoping:)
 ~ fn1.var1 = 3
 ```
+
+#### Aliases
+
+When defining identifiers (in variables, functions or paragraph definitions), they can be followed by a colon and another identifier. This identifier can be used as a new way to access the identifier (i.e., an alias).
+
+```
+:42 name: alias
+
+{name} is the same as {alias}
+```
+
+Note that alias have priority over normal identifiers; if both an identifier and an alias have the same name, the alias will be used.
+
+The main purpose of aliases is translation. When saving the state of your game's script, Anselme will store the name of the variables and their contents, and require the name to be the same when loading the save later, in order to correctly restore their values.
+
+This behaviour is fine if you only have one language; but if you want to translate your game, this means the translations will need to keep using the original, untranslated variables and functions names if it wants to be compatible with saves in differents languages. Which is not very practical or nice to read.
+
+Anselme's solution is to keep the original name in the translated script file, but alias them with a translated name. This way, the translated script can be written withou constantly switching languages:
+
+```
+(in the original, english script)
+:"John Pizzapone" player name
+
+Hi {player name}!
+
+(in a translated, french script)
+:"John Pizzapone" player name : nom du joueur
+
+Salut {nom du joueur} !
+```
+
+Variables that are defined automatically by Anselme (`👁️` and `🏁` in paragraphs and functions) can be automatically aliased using `vm:setaliases("👁️alias", "🏁alias")`. See [API](#api-reference).
 
 ### Expressions
 

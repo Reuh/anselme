@@ -29,9 +29,25 @@ local function parse_line(line, state, namespace)
 			l, name = l:match("^(.-)%s*§(.-)$")
 			local identifier, rem = name:match("^("..identifier_pattern..")(.-)$")
 			if not identifier then return nil, ("no valid identifier in paragraph decorator %q; at %s"):format(identifier, line.source) end
-			if rem:match("[^%s]") then return nil, ("expected end-of-line after identifier in paragraph decorator, but got %q; at %s"):format(rem, line.source) end
 			-- format identifier
 			local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
+			-- get alias
+			if rem:match("^%:") then
+				local content = rem:sub(2)
+				local alias, rem2 = content:match("^("..identifier_pattern..")(.-)$")
+				if not alias then return nil, ("expected an identifier in alias in paragraph decorator, but got %q; at %s"):format(content, line.source) end
+				if rem2:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in paragraph decorator, but got %q; at %s"):format(rem2, line.source) end
+				-- format alias
+				local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias, state))
+				-- define alias
+				if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
+					return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
+				end
+				state.aliases[aliasfqm] = fqm
+			elseif rem:match("[^%s]") then
+				return nil, ("expected end-of-line after identifier in paragraph decorator, but got %q; at %s"):format(rem, line.source)
+			end
+			-- define paragraph
 			namespace = fqm.."."
 			r.paragraph = true
 			r.parent_function = true
@@ -49,6 +65,15 @@ local function parse_line(line, state, namespace)
 						type = "number",
 						value = 0
 					}
+				end
+				-- define alias for 👁️
+				local seen_alias = state.builtin_aliases["👁️"]
+				if seen_alias then
+					local alias = ("%s.%s"):format(fqm, seen_alias)
+					if state.aliases[alias] ~= nil and state.aliases[alias] then
+						return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(alias, fqm..".👁️", state.aliases[alias], line.source)
+					end
+					state.aliases[alias] = fqm..".👁️"
 				end
 			else
 				table.insert(state.functions[fqm], {
@@ -89,6 +114,20 @@ local function parse_line(line, state, namespace)
 		if not identifier then return nil, ("no valid identifier in paragraph/function definition line %q; at %s"):format(lc, line.source) end
 		-- format identifier
 		local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
+		-- get alias
+		if rem:match("^%:") then
+			local content = rem:sub(2)
+			local alias
+			alias, rem = content:match("^("..identifier_pattern..")(.-)$")
+			if not alias then return nil, ("expected an identifier in alias in paragraph/function definition line, but got %q; at %s"):format(content, line.source) end
+			-- format alias
+			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias, state))
+			-- define alias
+			if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
+				return nil, ("trying to define alias %q for function/paragraph %q, but already exist and refer to %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
+			end
+			state.aliases[aliasfqm] = fqm
+		end
 		-- get params
 		r.params = {}
 		if r.type == "function" and rem:match("^%b()$") then
@@ -113,12 +152,6 @@ local function parse_line(line, state, namespace)
 		-- don't keep function node in block AST
 		if r.type == "function" then
 			r.remove_from_block_ast = true
-			if not state.variables[fqm..".🏁"] then
-				state.variables[fqm..".🏁"] = {
-					type = "string",
-					value = ""
-				}
-			end
 		end
 		-- define function and variables
 		r.namespace = fqm.."."
@@ -130,14 +163,44 @@ local function parse_line(line, state, namespace)
 			vararg = vararg,
 			value = r
 		}
+		-- new function (no overloading yet)
 		if not state.functions[fqm] then
 			state.functions[fqm] = { r.variant }
+			-- define 👁️ variable
 			if not state.variables[fqm..".👁️"] then
 				state.variables[fqm..".👁️"] = {
 					type = "number",
 					value = 0
 				}
 			end
+			-- define alias for 👁️
+			local seen_alias = state.builtin_aliases["👁️"]
+			if seen_alias then
+				local alias = ("%s.%s"):format(fqm, seen_alias)
+				if state.aliases[alias] ~= nil and state.aliases[alias] then
+					return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(alias, fqm..".👁️", state.aliases[alias], line.source)
+				end
+				state.aliases[alias] = fqm..".👁️"
+			end
+			if r.type == "function" then
+				-- define 🏁 variable
+				if not state.variables[fqm..".🏁"] then
+					state.variables[fqm..".🏁"] = {
+						type = "string",
+						value = ""
+					}
+				end
+				-- define alias for 🏁
+				local checkpoint_alias = state.builtin_aliases["🏁"]
+				if checkpoint_alias then
+					local alias = ("%s.%s"):format(fqm, checkpoint_alias)
+					if state.aliases[alias] ~= nil and state.aliases[alias] then
+						return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(alias, fqm..".🏁", state.aliases[alias], line.source)
+					end
+					state.aliases[alias] = fqm..".🏁"
+				end
+			end
+		-- overloading
 		else
 			-- check for arity conflict
 			for _, variant in ipairs(state.functions[fqm]) do
@@ -181,9 +244,25 @@ local function parse_line(line, state, namespace)
 		-- get identifier
 		local identifier, rem2 = rem:match("^("..identifier_pattern..")(.-)$")
 		if not identifier then return nil, ("no valid identifier after expression in definition line %q; at %s"):format(rem, line.source) end
-		if rem2:match("[^%s]") then return nil, ("expected end-of-line after identifier in definition line, but got %q; at %s"):format(rem2, line.source) end
-		-- format identifier & define
+		-- format identifier
 		local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
+		-- get alias
+		if rem2:match("^%:") then
+			local content = rem2:sub(2)
+			local alias, rem3 = content:match("^("..identifier_pattern..")(.-)$")
+			if not alias then return nil, ("expected an identifier in alias in definition line, but got %q; at %s"):format(content, line.source) end
+			if rem3:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in definition line, but got %q; at %s"):format(rem3, line.source) end
+			-- format alias
+			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias, state))
+			-- define alias
+			if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
+				return nil, ("trying to define alias %s for variable %s, but already exist and refer to different variable %s; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
+			end
+			state.aliases[aliasfqm] = fqm
+		elseif rem2:match("[^%s]") then
+			return nil, ("expected end-of-line after identifier in definition line, but got %q; at %s"):format(rem2, line.source)
+		end
+		-- define identifier
 		if state.functions[fqm] then return nil, ("trying to define variable %s, but a function with the same name exists; at %s"):format(fqm, line.source) end
 		if not state.variables[fqm] or state.variables[fqm].type == "undefined argument" then
 			local v, e = eval(state, exp)

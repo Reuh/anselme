@@ -92,7 +92,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 			local name, r = s:match("^("..identifier_pattern..")(.-)$")
 			name = format_identifier(name, state)
 			-- variables
-			local var, vfqm = find(state.variables, namespace, name)
+			local var, vfqm = find(state.aliases, state.variables, namespace, name)
 			if var then
 				return expression(r, state, namespace, currentPriority, {
 					type = "variable",
@@ -103,7 +103,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 			-- suffix call: detect if prefix is valid variable, suffix call is handled in the binop section below
 			local sname, suffix = name:match("^(.*)(%."..identifier_pattern..")$")
 			if sname then
-				local svar, svfqm = find(state.variables, namespace, sname)
+				local svar, svfqm = find(state.aliases, state.variables, namespace, sname)
 				if svar then
 					return expression(suffix..r, state, namespace, currentPriority, {
 						type = "variable",
@@ -113,7 +113,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 				end
 			end
 			-- functions
-			local funcs, ffqm = find(state.functions, namespace, name)
+			local funcs, ffqm = find(state.aliases, state.functions, namespace, name)
 			if funcs then
 				local args, explicit_call
 				if r:match("^%b()") then
@@ -162,7 +162,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 						if op == "." and sright:match("^"..identifier_pattern) then
 							local name, r = sright:match("^("..identifier_pattern..")(.-)$")
 							name = format_identifier(name, state)
-							local funcs, ffqm = find(state.functions, namespace, name)
+							local funcs, ffqm = find(state.aliases, state.functions, namespace, name)
 							if funcs then
 								local args, explicit_call
 								if r:match("^%b()") then

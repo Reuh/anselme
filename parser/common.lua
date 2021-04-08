@@ -3,6 +3,21 @@ local expression
 local escapeCache = {}
 
 local common
+
+--- rewrite name to use defined aliases (under namespace only)
+-- namespace should not contain aliases
+local replace_aliases = function(aliases, namespace, name)
+	namespace = namespace == "" and "" or namespace.."."
+	local name_list = common.split(name)
+	for i=1, #name_list, 1 do
+		local n = ("%s%s"):format(namespace, table.concat(name_list, ".", 1, i))
+		if aliases[n] then
+			name_list[i] = aliases[n]:match("[^%.]+$")
+		end
+	end
+	return table.concat(name_list, ".")
+end
+
 common = {
 	--- valid identifier pattern
 	identifier_pattern = "[^%%%/%*%+%-%(%)%!%&%|%=%$%§%?%>%<%:%{%}%[%]%,%\"]+",
@@ -26,24 +41,27 @@ common = {
 		return address
 	end,
 	--- find a variable/function in a list, going up through the namespace hierarchy
-	find = function(list, namespace, name)
+	-- will apply aliases
+	find = function(aliases, list, namespace, name)
 		local ns = common.split(namespace)
 		for i=#ns, 1, -1 do
-			local fqm = ("%s.%s"):format(table.concat(ns, ".", 1, i), name)
+			local current_namespace = table.concat(ns, ".", 1, i)
+			local fqm = ("%s.%s"):format(current_namespace, replace_aliases(aliases, current_namespace, name))
 			if list[fqm] then
 				return list[fqm], fqm
 			end
 		end
+		-- root namespace
+		name = replace_aliases(aliases, "", name)
 		if list[name] then
 			return list[name], name
 		end
 		return nil, ("can't find %q in namespace %s"):format(name, namespace)
 	end,
-	--- transform an identifier into a clean version (trim & alias)
+	--- transform an identifier into a clean version (trim each part)
 	format_identifier = function(identifier, state)
 		local r = identifier:gsub("[^%.]+", function(str)
-			str = common.trim(str)
-			return state.aliases[str] or str
+			return common.trim(str)
 		end)
 		return r
 	end,
