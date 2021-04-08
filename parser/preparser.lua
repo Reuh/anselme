@@ -274,7 +274,7 @@ local function parse_line(line, state, namespace)
 			end
 			state.variables[fqm] = v
 		elseif state.variables[fqm].type ~= exp.type then
-			return nil, ("trying to define variable %s of type %s but a it is already defined with type %s; at %s"):format(fqm, exp.type, state.variables[fqm].type, line.source)
+			return nil, ("trying to define variable %s of type %s but it is already defined with type %s; at %s"):format(fqm, exp.type, state.variables[fqm].type, line.source)
 		end
 	-- tag
 	elseif l:match("^%#") then
