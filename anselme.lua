@@ -1,17 +1,11 @@
 -- anselme module
 local anselme = {
 	-- version
-	version = "0.12.0",
+	version = "0.13.0",
 	--- currently running interpreter
 	running = nil
 }
 package.loaded[...] = anselme
-
--- TODO: improve type checking.
--- Right now, there is some basic type checking done at parsing - but since Lua and Anselme functions may not always define the type of
--- their parameters and return value, a lot of checks are skipped ("undefined argument" type).
--- Probably won't be able to remove them completely (since lists can have mixed types, etc.), but would be good to limit them.
--- Ideally, we'd avoid runtime type checking.
 
 -- load libs
 local preparse = require((...):gsub("anselme$", "parser.preparser"))
