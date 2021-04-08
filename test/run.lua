@@ -82,6 +82,9 @@ if args.script then
 				end
 			until t == "return" or t == "error"
 		end
+		if args.save then
+			print(inspect(vm:save()))
+		end
 	else
 		print("error", err)
 	end

@@ -24,9 +24,14 @@ local function parse_line(line, state, namespace)
 			r.condition = expr
 		-- paragraph
 		elseif l:match("^..+§.-$") then
+			-- get identifier
 			local name
 			l, name = l:match("^(.-)%s*§(.-)$")
-			local fqm = ("%s%s"):format(namespace, format_identifier(name, state))
+			local identifier, rem = name:match("^("..identifier_pattern..")(.-)$")
+			if not identifier then return nil, ("no valid identifier in paragraph decorator %q; at %s"):format(identifier, line.source) end
+			if rem:match("[^%s]") then return nil, ("expected end-of-line after identifier in paragraph decorator, but got %q; at %s"):format(rem, line.source) end
+			-- format identifier
+			local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
 			namespace = fqm.."."
 			r.paragraph = true
 			r.parent_function = true
@@ -78,16 +83,21 @@ local function parse_line(line, state, namespace)
 	elseif l:match("^%$") or l:match("^§") then -- § is a 2-bytes caracter, DO NOT USE LUA PATTERN OPERATORS as they operate on single bytes
 		r.type = l:match("^%$") and "function" or "paragraph"
 		r.child = true
-		local fqm = ("%s%s"):format(namespace, format_identifier(l:match("^%$(.*)$") or l:match("^§(.*)$"), state))
+		-- get identifier
+		local lc = l:match("^%$(.*)$") or l:match("^§(.*)$")
+		local identifier, rem = lc:match("^("..identifier_pattern..")(.-)$")
+		if not identifier then return nil, ("no valid identifier in paragraph/function definition line %q; at %s"):format(lc, line.source) end
+		-- format identifier
+		local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
 		-- get params
 		r.params = {}
-		if r.type == "function" and fqm:match("%b()$") then
-			local content
-			fqm, content = fqm:match("^(.-)(%b())$")
-			content = content:gsub("^%(", ""):gsub("%)$", "")
+		if r.type == "function" and rem:match("^%b()$") then
+			local content = rem:gsub("^%(", ""):gsub("%)$", "")
 			for param in content:gmatch("[^%,]+") do
 				table.insert(r.params, format_identifier(("%s.%s"):format(fqm, param), state))
 			end
+		elseif rem:match("[^%s]") then
+			return nil, ("expected end-of-line at end of paragraph/function definition line, but got %q; at %s"):format(rem, line.source)
 		end
 		local arity, vararg = #r.params, nil
 		if arity > 0 and r.params[arity]:match("%.%.%.$") then -- varargs
@@ -165,9 +175,15 @@ local function parse_line(line, state, namespace)
 	elseif l:match("^:") then
 		r.type = "definition"
 		r.remove_from_block_ast = true
+		-- get expression
 		local exp, rem = expression(l:match("^:(.*)$"), state, namespace) -- expression parsing is done directly to get type information
 		if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
-		local fqm = ("%s%s"):format(namespace, format_identifier(rem, state))
+		-- get identifier
+		local identifier, rem2 = rem:match("^("..identifier_pattern..")(.-)$")
+		if not identifier then return nil, ("no valid identifier after expression in definition line %q; at %s"):format(rem, line.source) end
+		if rem2:match("[^%s]") then return nil, ("expected end-of-line after identifier in definition line, but got %q; at %s"):format(rem2, line.source) end
+		-- format identifier & define
+		local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
 		if state.functions[fqm] then return nil, ("trying to define variable %s, but a function with the same name exists; at %s"):format(fqm, line.source) end
 		if not state.variables[fqm] or state.variables[fqm].type == "undefined argument" then
 			local v, e = eval(state, exp)
