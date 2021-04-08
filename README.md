@@ -168,7 +168,7 @@ There's different types of lines, depending on their first character(s) (after i
 
 The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
-A parameter list can be optionally given after the identifier. It is enclosed with paranthesis and contain a comma-separated list of identifiers:
+A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias. It is enclosed with paranthesis and contain a comma-separated list of identifiers:
 
 ```
 $ f(a, b, c)

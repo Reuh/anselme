@@ -133,7 +133,30 @@ local function parse_line(line, state, namespace)
 		if r.type == "function" and rem:match("^%b()$") then
 			local content = rem:gsub("^%(", ""):gsub("%)$", "")
 			for param in content:gmatch("[^%,]+") do
-				table.insert(r.params, format_identifier(("%s.%s"):format(fqm, param), state))
+				-- get identifier
+				local param_identifier, param_rem = param:match("^("..identifier_pattern..")(.-)$")
+				if not identifier then return nil, ("no valid identifier in function parameter %q; at %s"):format(param, line.source) end
+				-- format identifier
+				local param_fqm = ("%s.%s"):format(fqm, format_identifier(param_identifier, state))
+				-- get alias
+				if param_rem:match("^%:") then
+					local param_content = param_rem:sub(2)
+					local alias
+					alias, param_rem = param_content:match("^("..identifier_pattern..")(.-)$")
+					if not alias then return nil, ("expected an identifier in alias in parameter, but got %q; at %s"):format(param_content, line.source) end
+					-- format alias
+					local aliasfqm = ("%s.%s"):format(fqm, format_identifier(alias, state))
+					-- define alias
+					if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= param_fqm then
+						return nil, ("trying to define alias %q for parameter %q, but already exist and refer to %q; at %s"):format(aliasfqm, param_fqm, state.aliases[aliasfqm], line.source)
+					end
+					state.aliases[aliasfqm] = param_fqm
+				end
+				if param_rem:match("[^%s]") then
+					return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param_fqm, param_rem, line.source)
+				end
+				-- add parameter
+				table.insert(r.params, param_fqm)
 			end
 		elseif rem:match("[^%s]") then
 			return nil, ("expected end-of-line at end of paragraph/function definition line, but got %q; at %s"):format(rem, line.source)
