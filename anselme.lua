@@ -43,6 +43,14 @@ local function is_directory(path)
 		return lfs.attributes(path, "mode") == "directory"
 	end
 end
+local function is_file(path)
+	if love then
+		return not not love.filesystem.getInfo(path, "file")
+	else
+		local lfs = require("lfs")
+		return lfs.attributes(path, "mode") == "file"
+	end
+end
 
 --- interpreter methods
 local interpreter_methods = {
@@ -160,7 +168,48 @@ interpreter_methods.__index = interpreter_methods
 
 --- vm methods
 local vm_mt = {
+	--- wrapper for loading a whole set of scripts
+	-- should be preferred to other loading functions if possible
+	-- will load in path, in order:
+	-- * config.ans, which contains various optional configuration options:
+	--   * alias 👁️: string, default alias for 👁️
+	--   * alias 🏁: string, default alias for 🏁
+	--   * main file: string, name (without .ans extension) of a file that will be loaded into the root namespace
+	-- * main file, if defined in config.ans
+	-- * every other file in the path and subdirectories, using their path as namespace (i.e., contents of path/world1/john.ans will be defined in a function world1.john)
+	loadgame = function(self, path)
+		-- get config
+		if is_file(path.."/config.ans") then
+			self:loadfile(path.."/config.ans", "config")
+		end
+		local seen_alias = self:eval("config.alias 👁️")
+		local checkpoint_alias = self:eval("config.alias 🏁")
+		local main_file = assert(self:eval("config.main file"))
+		-- set aliases
+		self:setaliases(seen_alias, checkpoint_alias)
+		-- load main file
+		if main_file then
+			self:loadfile(path.."/"..main_file..".ans")
+		end
+		-- load other files
+		for _, item in ipairs(list_directory(path)) do
+			if item:match("[^%.]") and item ~= "config.ans" and item ~= main_file then
+				local p = path.."/"..item
+				local s, e
+				if is_directory(p) then
+					s, e = self:loaddirectory(p, item)
+				elseif item:match("%.ans$") then
+					s, e = self:loadfile(p, item:gsub("%.ans$", ""))
+				end
+				if not s then return s, e end
+			end
+		end
+		return self
+	end,
+
 	--- load code
+	-- similar to Lua's code loading functions.
+	-- name(default=""): namespace to load the code in. Will define a new function if needed.
 	-- return self in case of success
 	-- returns nil, err in case of error
 	loadstring = function(self, str, name, source)
@@ -194,7 +243,18 @@ local vm_mt = {
 		return self
 	end,
 
-	--- define functions
+	--- set aliases for built-in variables 👁️ and 🏁 that will be defined on every new paragraph and function
+	-- nil for no alias
+	-- return self
+	setaliases = function(self, seen, checkpoint)
+		self.state.builtin_aliases["👁️"] = seen
+		self.state.builtin_aliases["🏁"] = checkpoint
+		return self
+	end,
+
+	--- define functions from Lua
+	-- name: full name of the function
+	-- fn: function (Lua function or table, see examples in stdlib/functions.lua)
 	-- return self
 	loadfunction = function(self, name, fn)
 		if type(name) == "table" then
@@ -224,15 +284,8 @@ local vm_mt = {
 		return self
 	end,
 
-	--- set aliases for built-in variables 👁️ and 🏁 that will be defined on every new paragraph and function
-	-- return self
-	setaliases = function(self, seen, checkpoint)
-		self.state.builtin_aliases["👁️"] = seen
-		self.state.builtin_aliases["🏁"] = checkpoint
-		return self
-	end,
-
-	--- save/load
+	--- save/load script state
+	-- only saves variables full names and values, so make sure to not change important variables, paragraphs and functions names between a save and a load
 	load = function(self, data)
 		assert(data.anselme_version == anselme.version, ("trying to load a save from Anselme %s but current Anselme version is %s"):format(data.anselme_version, anselme.version))
 		for k, v in pairs(data.variables) do
@@ -248,6 +301,9 @@ local vm_mt = {
 	end,
 
 	--- run code
+	-- expr: expression to evaluate
+	-- namespace(default=""): namespace to evaluate the expression in
+	-- tags(default={}): defaults tag when evaluating the expression
 	-- return interpreter in case of success
 	-- returns nil, err in case of error
 	run = function(self, expr, namespace, tags)
@@ -291,10 +347,14 @@ local vm_mt = {
 		return setmetatable(interpreter, interpreter_methods)
 	end,
 	--- eval code
+	-- unlike :run, this does not support events and will return the result of the expression directly.
+	-- expr: expression to evaluate
+	-- namespace(default=""): namespace to evaluate the expression in
+	-- tags(default={}): defaults tag when evaluating the expression
 	-- return value in case of success
 	-- returns nil, err in case of error
 	eval = function(self, expr, namespace, tags)
-		local interpreter, err = self:run("@", namespace, tags)
+		local interpreter, err = self:run("0", namespace, tags)
 		if not interpreter then return interpreter, err end
 		return interpreter:eval(expr, namespace)
 	end
