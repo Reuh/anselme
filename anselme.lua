@@ -171,19 +171,23 @@ local vm_mt = {
 	--   * main file: string, name (without .ans extension) of a file that will be loaded into the root namespace
 	-- * main file, if defined in config.ans
 	-- * every other file in the path and subdirectories, using their path as namespace (i.e., contents of path/world1/john.ans will be defined in a function world1.john)
+	-- returns self in case of success
+	-- returns nil, err in case of error
 	loadgame = function(self, path)
 		-- get config
 		if is_file(path.."/config.ans") then
-			self:loadfile(path.."/config.ans", "config")
+			local s, e = self:loadfile(path.."/config.ans", "config")
+			if not s then return s, e end
 		end
 		local seen_alias = self:eval("config.alias 👁️")
 		local checkpoint_alias = self:eval("config.alias 🏁")
-		local main_file = assert(self:eval("config.main file"))
+		local main_file = self:eval("config.main file")
 		-- set aliases
 		self:setaliases(seen_alias, checkpoint_alias)
 		-- load main file
 		if main_file then
-			self:loadfile(path.."/"..main_file..".ans")
+			local s, e = self:loadfile(path.."/"..main_file..".ans")
+			if not s then return s, e end
 		end
 		-- load other files
 		for _, item in ipairs(list_directory(path)) do
@@ -212,10 +216,18 @@ local vm_mt = {
 		return self
 	end,
 	loadfile = function(self, path, name)
-		local f, e = io.open(path, "r")
-		if not f then return f, e end
-		local s, err = self:loadstring(f:read("*a"), name, path)
-		f:close()
+		local content
+		if love then
+			local e
+			content, e = love.filesystem.read(path)
+			if not content then return content, e end
+		else
+			local f, e = io.open(path, "r")
+			if not f then return f, e end
+			content = f:read("*a")
+			f:close()
+		end
+		local s, err = self:loadstring(content, name, path)
 		if not s then return s, err end
 		return self
 	end,

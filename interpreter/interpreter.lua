@@ -3,7 +3,7 @@ local truthy, flush_state, to_lua, eval_text
 
 local function write_event(state, type, data)
 	if state.interpreter.event_buffer and state.interpreter.event_type ~= type then
-		error("previous event has not been flushed")
+		error(("previous event of type %q has not been flushed, can't write new %q event"):format(state.interpreter.event_type, type))
 	end
 	if not state.interpreter.event_buffer then
 		state.interpreter.event_type = type
