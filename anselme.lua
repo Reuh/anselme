@@ -293,16 +293,23 @@ local vm_mt = {
 	--- save/load script state
 	-- only saves variables full names and values, so make sure to not change important variables, paragraphs and functions names between a save and a load
 	load = function(self, data)
-		assert(data.anselme_version == anselme.version, ("trying to load a save from Anselme %s but current Anselme version is %s"):format(data.anselme_version, anselme.version))
+		local saveMajor, currentMajor = data.anselme_version:match("^[^%.]*"), anselme.version:match("^[^%.]*")
+		assert(saveMajor == currentMajor, ("trying to load data from an incompatible version of Anselme; save was done using %s but current version is %s"):format(data.anselme_version, anselme.version))
 		for k, v in pairs(data.variables) do
 			self.state.variables[k] = v
 		end
 		return self
 	end,
 	save = function(self)
+		local vars = {}
+		for k, v in pairs(self.state.variables) do
+			if v.type ~= "undefined argument" then
+				vars[k] = v
+			end
+		end
 		return {
 			anselme_version = anselme.version,
-			variables = self.state.variables
+			variables = vars
 		}
 	end,
 
