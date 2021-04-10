@@ -1,0 +1,77 @@
+$ f
+	> a
+		-> a
+		§ p
+		> aa
+			-> aa
+		> ab
+			-> ab
+	> b
+		-> b
+	~ choose(2)
+
+	> c
+		-> c
+	~ choose(1)
+
+~ f
+
+~ f.p
+
+$ g
+	> a
+		-> a
+		§ p
+		> aa
+			-> aa
+		> ab
+			-> ab
+	> b
+		-> b
+	~ choose(2)
+	autoflush
+	> c
+		-> c
+	~ choose(1)
+
+~ g
+
+~ g.p
+
+$ h
+	~ 1
+		> a
+			-> a
+			§ p
+			> aa
+				-> aa
+			> ab
+				-> ab
+			~ choose(1)
+		> b
+			-> b
+	> c
+		-> c
+	~ choose(1)
+
+~ h
+
+~ h.p
+
+$ i
+	> a
+		-> a
+		§ p
+		> aa
+			-> aa
+		> ab
+			-> ab
+	> b
+		-> b
+	~ 1
+		> c
+			-> c
+
+~ i
+
+~ i.p

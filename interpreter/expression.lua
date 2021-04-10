@@ -97,7 +97,7 @@ local function eval(state, exp)
 				if fn.value.type == "paragraph" or fn.value.paragraph then
 					local r, e
 					if fn.value.type == "paragraph" then
-						r, e = run_block(state, fn.value.child, false)
+						r, e = run_block(state, fn.value.child)
 						if e then return r, e end
 						state.variables[fn.value.namespace.."👁️"] = {
 							type = "number",

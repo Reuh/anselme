@@ -139,7 +139,7 @@ There's different types of lines, depending on their first character(s) (after i
 
 * `~`: expression line. Can be followed by an [expression](#expressions); otherwise the expression `1` is assumed. If the expression evaluates to [true](#truethness), run its children.
 
-* `~~`: else expression. Same as an expression line, but is only run if the last expression or else-expression line was false (regardless of line distance).
+* `~~`: else expression. Same as an expression line, but is only run if the last expression or else-expression line (in the same indentation block) was false (regardless of line distance).
 
 ```
 ~ 1

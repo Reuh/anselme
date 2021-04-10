@@ -335,6 +335,8 @@ local vm_mt = {
 					-- events
 					event_type = nil,
 					event_buffer = nil,
+					-- skip next choices until next event change (to skip currently running choice block when resuming from a paragraph)
+					skip_choices_until_flush = nil,
 					-- status
 					running_line = nil,
 					-- choice
@@ -342,8 +344,6 @@ local vm_mt = {
 					choice_available = {},
 					-- interrupt
 					interrupt = nil,
-					-- conditions
-					last_condition_success = nil,
 					-- tags
 					tags = tags or {},
 				}

@@ -1,0 +1,19 @@
+~ 1
+	yes
+	~ 0
+		no
+~~
+	nope
+	~ 1
+		hai
+		~ 0
+			still no
+~~
+	nein
+
+~ 0
+	nah
+~~
+	ye
+	~~
+		da

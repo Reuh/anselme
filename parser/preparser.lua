@@ -30,7 +30,7 @@ local function parse_line(line, state, namespace)
 			local identifier, rem = name:match("^("..identifier_pattern..")(.-)$")
 			if not identifier then return nil, ("no valid identifier in paragraph decorator %q; at %s"):format(identifier, line.source) end
 			-- format identifier
-			local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
+			local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
 			-- get alias
 			if rem:match("^%:") then
 				local content = rem:sub(2)
@@ -38,7 +38,7 @@ local function parse_line(line, state, namespace)
 				if not alias then return nil, ("expected an identifier in alias in paragraph decorator, but got %q; at %s"):format(content, line.source) end
 				if rem2:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in paragraph decorator, but got %q; at %s"):format(rem2, line.source) end
 				-- format alias
-				local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias, state))
+				local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
 				-- define alias
 				if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
 					return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
@@ -113,7 +113,7 @@ local function parse_line(line, state, namespace)
 		local identifier, rem = lc:match("^("..identifier_pattern..")(.-)$")
 		if not identifier then return nil, ("no valid identifier in paragraph/function definition line %q; at %s"):format(lc, line.source) end
 		-- format identifier
-		local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
+		local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
 		-- get alias
 		if rem:match("^%:") then
 			local content = rem:sub(2)
@@ -121,7 +121,7 @@ local function parse_line(line, state, namespace)
 			alias, rem = content:match("^("..identifier_pattern..")(.-)$")
 			if not alias then return nil, ("expected an identifier in alias in paragraph/function definition line, but got %q; at %s"):format(content, line.source) end
 			-- format alias
-			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias, state))
+			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
 			-- define alias
 			if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
 				return nil, ("trying to define alias %q for function/paragraph %q, but already exist and refer to %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
@@ -137,7 +137,7 @@ local function parse_line(line, state, namespace)
 				local param_identifier, param_rem = param:match("^("..identifier_pattern..")(.-)$")
 				if not identifier then return nil, ("no valid identifier in function parameter %q; at %s"):format(param, line.source) end
 				-- format identifier
-				local param_fqm = ("%s.%s"):format(fqm, format_identifier(param_identifier, state))
+				local param_fqm = ("%s.%s"):format(fqm, format_identifier(param_identifier))
 				-- get alias
 				if param_rem:match("^%:") then
 					local param_content = param_rem:sub(2)
@@ -145,7 +145,7 @@ local function parse_line(line, state, namespace)
 					alias, param_rem = param_content:match("^("..identifier_pattern..")(.-)$")
 					if not alias then return nil, ("expected an identifier in alias in parameter, but got %q; at %s"):format(param_content, line.source) end
 					-- format alias
-					local aliasfqm = ("%s.%s"):format(fqm, format_identifier(alias, state))
+					local aliasfqm = ("%s.%s"):format(fqm, format_identifier(alias))
 					-- define alias
 					if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= param_fqm then
 						return nil, ("trying to define alias %q for parameter %q, but already exist and refer to %q; at %s"):format(aliasfqm, param_fqm, state.aliases[aliasfqm], line.source)
@@ -268,7 +268,7 @@ local function parse_line(line, state, namespace)
 		local identifier, rem2 = rem:match("^("..identifier_pattern..")(.-)$")
 		if not identifier then return nil, ("no valid identifier after expression in definition line %q; at %s"):format(rem, line.source) end
 		-- format identifier
-		local fqm = ("%s%s"):format(namespace, format_identifier(identifier, state))
+		local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
 		-- get alias
 		if rem2:match("^%:") then
 			local content = rem2:sub(2)
@@ -276,7 +276,7 @@ local function parse_line(line, state, namespace)
 			if not alias then return nil, ("expected an identifier in alias in definition line, but got %q; at %s"):format(content, line.source) end
 			if rem3:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in definition line, but got %q; at %s"):format(rem3, line.source) end
 			-- format alias
-			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias, state))
+			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
 			-- define alias
 			if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
 				return nil, ("trying to define alias %s for variable %s, but already exist and refer to different variable %s; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
@@ -324,7 +324,7 @@ end
 
 -- * block: in case of success
 -- * nil, err: in case of error
-local function parse_block(indented, state, namespace, parent_function, last_event)
+local function parse_block(indented, state, namespace, parent_function)
 	local block = { type = "block" }
 	local lastLine -- last line AST
 	for i, l in ipairs(indented) do
@@ -338,14 +338,6 @@ local function parse_block(indented, state, namespace, parent_function, last_eve
 			-- add to block AST
 			if not ast.remove_from_block_ast then
 				ast.parent_block = block
-				-- insert flush on event type change
-				if ast.type == "flush" then last_event = nil end
-				if ast.push_event then
-					if last_event and ast.push_event ~= last_event then
-						table.insert(block, { source = l.source, type = "flush_events" })
-					end
-					last_event = ast.push_event
-				end
 				-- add ast node
 				ast.parent_position = #block+1
 				if ast.replace_with then
@@ -367,7 +359,7 @@ local function parse_block(indented, state, namespace, parent_function, last_eve
 			if not lastLine.child then
 				return nil, ("line %s (%s) can't have children"):format(lastLine.source, lastLine.type)
 			else
-				local r, e = parse_block(l, state, lastLine.namespace or namespace, lastLine.type == "function" and lastLine or parent_function, last_event)
+				local r, e = parse_block(l, state, lastLine.namespace or namespace, lastLine.type == "function" and lastLine or parent_function)
 				if not r then return r, e end
 				r.parent_line = lastLine
 				lastLine.child = r
@@ -395,17 +387,17 @@ local function parse_indent(lines, source, i, indentLevel, insert_empty_line)
 				table.insert(indented, { content = line, source = ("%s:%s"):format(source, i) })
 			elseif #indent > indentLevel then
 				local t
-				t, i = parse_indent(lines, source, i, #indent, insert_empty_line)
+				t, i, insert_empty_line = parse_indent(lines, source, i, #indent, insert_empty_line)
 				table.insert(indented, t)
 			else
-				return indented, i-1
+				return indented, i-1, insert_empty_line
 			end
 		elseif not insert_empty_line then
 			insert_empty_line = i
 		end
 		i = i + 1
 	end
-	return indented, i-1
+	return indented, i-1, insert_empty_line
 end
 
 --- return the list of raw lines of s

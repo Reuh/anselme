@@ -51,23 +51,29 @@ local function run_line(state, line)
 			if not v then return v, ("%s; in tag decorator at %s"):format(e, line.source) end
 			tags:push(state, v)
 		end
+		-- if line intend to push an event, flush buffer it it's a different event
+		if line.push_event and state.interpreter.event_buffer and state.interpreter.event_type ~= line.push_event then
+			local v, e = run_line(state, { source = line.source, type = "flush_events" })
+			if e then return v, e end
+			if v then return v end
+		end
 		-- line types
 		if line.type == "condition" then
-			state.interpreter.last_condition_success = nil
+			line.parent_block.last_condition_success = nil
 			local v, e = eval(state, line.expression)
 			if not v then return v, ("%s; at %s"):format(e, line.source) end
 			if truthy(v) then
-				state.interpreter.last_condition_success = true
+				line.parent_block.last_condition_success = true
 				v, e = run_block(state, line.child)
 				if e then return v, e end
 				if v then return v end
 			end
 		elseif line.type == "else-condition" then
-			if not state.interpreter.last_condition_success then
+			if not line.parent_block.last_condition_success then
 				local v, e = eval(state, line.expression)
 				if not v then return v, ("%s; at %s"):format(e, line.source) end
 				if truthy(v) then
-					state.interpreter.last_condition_success = true
+					line.parent_block.last_condition_success = true
 					v, e = run_block(state, line.child)
 					if e then return v, e end
 					if v then return v end
@@ -146,19 +152,40 @@ end
 -- returns var in case of success and there is a return
 -- return nil in case of success and there is no return
 -- return nil, err in case of error
-run_block = function(state, block, run_whole_function, i, j)
+run_block = function(state, block, resume_from_there, i, j)
 	i = i or 1
-	local len = math.min(#block, j or math.huge)
-	while i <= len do
-		local v, e = run_line(state, block[i])
-		if e then return v, e end
-		if v then return v end
+	local max = math.min(#block, j or math.huge)
+	while i <= max do
+		local line = block[i]
+		local skip = false
+		-- skip current choice block if enabled
+		if state.interpreter.skip_choices_until_flush then
+			if line.type == "choice" then
+				skip = true
+			elseif line.type == "flush_events" or (line.push_event and line.push_event ~= "choice") then
+				state.interpreter.skip_choices_until_flush = nil
+			end
+		end
+		-- run line
+		if not skip then
+			local v, e = run_line(state, line)
+			if e then return v, e end
+			if v then return v end
+		end
 		i = i + 1
 	end
-	-- go up hierarchy if asked to run the whole function
-	if run_whole_function and block.parent_line and block.parent_line.type ~= "function" then
+	-- go up hierarchy if asked to resume
+	-- will stop at function boundary
+	-- if parent is a choice, will ignore choices that belong to the same block (like the whole block was executed naturally from a higher parent)
+	-- if parent if a condition, will mark it as a success (skipping following else-conditions) (for the same reasons as for choices)
+	if resume_from_there and block.parent_line and block.parent_line.type ~= "function" then
 		local parent_line = block.parent_line
-		local v, e = run_block(state, parent_line.parent_block, run_whole_function, parent_line.parent_position+1)
+		if parent_line.type == "choice" then
+			state.interpreter.skip_choices_until_flush = true
+		elseif parent_line.type == "condition" or parent_line.type == "else-condition" then
+			parent_line.parent_block.last_condition_success = true
+		end
+		local v, e = run_block(state, parent_line.parent_block, resume_from_there, parent_line.parent_position+1)
 		if e then return v, e end
 		if v then return v, e end
 	end
@@ -167,9 +194,9 @@ end
 
 -- returns var in case of success
 -- return nil, err in case of error
-local function run(state, block, run_whole_function, i, j)
+local function run(state, block, resume_from_there, i, j)
 	-- run
-	local v, e = run_block(state, block, run_whole_function, i, j)
+	local v, e = run_block(state, block, resume_from_there, i, j)
 	if e then return v, e end
 	if v then
 		return v

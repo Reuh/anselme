@@ -59,7 +59,7 @@ common = {
 		return nil, ("can't find %q in namespace %s"):format(name, namespace)
 	end,
 	--- transform an identifier into a clean version (trim each part)
-	format_identifier = function(identifier, state)
+	format_identifier = function(identifier)
 		local r = identifier:gsub("[^%.]+", function(str)
 			return common.trim(str)
 		end)

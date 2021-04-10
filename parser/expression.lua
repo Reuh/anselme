@@ -90,7 +90,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 		-- identifier
 		elseif s:match("^"..identifier_pattern) then
 			local name, r = s:match("^("..identifier_pattern..")(.-)$")
-			name = format_identifier(name, state)
+			name = format_identifier(name)
 			-- variables
 			local var, vfqm = find(state.aliases, state.variables, namespace, name)
 			if var then
@@ -161,7 +161,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 						-- suffix call
 						if op == "." and sright:match("^"..identifier_pattern) then
 							local name, r = sright:match("^("..identifier_pattern..")(.-)$")
-							name = format_identifier(name, state)
+							name = format_identifier(name)
 							local funcs, ffqm = find(state.aliases, state.functions, namespace, name)
 							if funcs then
 								local args, explicit_call
