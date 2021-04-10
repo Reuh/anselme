@@ -1,7 +1,7 @@
 -- anselme module
 local anselme = {
 	-- version
-	version = "0.13.0",
+	version = "0.13.1",
 	--- currently running interpreter
 	running = nil
 }
