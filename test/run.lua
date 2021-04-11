@@ -9,7 +9,7 @@ local function format_text(t, prefix)
 	for _, l in ipairs(t) do
 		r = r .. prefix
 		local tags = ""
-		for k, v in ipairs(l.tags) do
+		for k, v in pairs(l.tags) do
 			tags = tags .. ("[%q]=%q"):format(k, v)
 		end
 		if tags ~= "" then
@@ -37,6 +37,17 @@ local function compare(a, b)
 	else
 		return a == b
 	end
+end
+
+local function write_result(filebase, result)
+	local o = assert(io.open(filebase..".lua", "w"))
+	o:write(ser(result))
+	o:write("\n--[[\n")
+	for _, v in ipairs(result) do
+		o:write(inspect(v).."\n")
+	end
+	o:write("]]--")
+	o:close()
 end
 
 -- parse args
@@ -163,15 +174,8 @@ else
 			table.insert(result, { "error", err })
 		end
 
-		if args.write then
-			local o = assert(io.open(filebase..".lua", "w"))
-			o:write(ser(result))
-			o:write("\n--[[\n")
-			for _, v in ipairs(result) do
-				o:write(inspect(v).."\n")
-			end
-			o:write("]]--")
-			o:close()
+		if args["write-all"] then
+			write_result(filebase, result)
 		else
 			local o, e = loadfile(filebase..".lua")
 			if o then
@@ -188,7 +192,10 @@ else
 					success = success + 1
 				end
 			else
-				if not args.silent then
+				if args["write-new"] and e:match("No such file") then
+					write_result(filebase, result)
+					print("Written result file for "..filebase)
+				elseif not args.silent then
 					print("> "..namespace)
 					print(e)
 					print("result was:")

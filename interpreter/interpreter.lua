@@ -1,17 +1,6 @@
 local eval
 local truthy, flush_state, to_lua, eval_text
 
-local function write_event(state, type, data)
-	if state.interpreter.event_buffer and state.interpreter.event_type ~= type then
-		error(("previous event of type %q has not been flushed, can't write new %q event"):format(state.interpreter.event_type, type))
-	end
-	if not state.interpreter.event_buffer then
-		state.interpreter.event_type = type
-		state.interpreter.event_buffer = {}
-	end
-	table.insert(state.interpreter.event_buffer, { data = data, tags = state.interpreter.tags[#state.interpreter.tags] or {} })
-end
-
 local tags = {
 	push = function(self, state, val)
 		local new = {}
@@ -26,8 +15,25 @@ local tags = {
 	end,
 	pop = function(self, state)
 		table.remove(state.interpreter.tags)
+	end,
+	current = function(self, state)
+		return state.interpreter.tags[#state.interpreter.tags] or {}
+	end,
+	push_ignore_past = function(self, state, tags)
+		table.insert(state.interpreter.tags, tags)
 	end
 }
+
+local function write_event(state, type, data)
+	if state.interpreter.event_buffer and state.interpreter.event_type ~= type then
+		error(("previous event of type %q has not been flushed, can't write new %q event"):format(state.interpreter.event_type, type))
+	end
+	if not state.interpreter.event_buffer then
+		state.interpreter.event_type = type
+		state.interpreter.event_buffer = {}
+	end
+	table.insert(state.interpreter.event_buffer, { data = data, tags = tags:current(state) })
+end
 
 local run_block
 
@@ -82,7 +88,10 @@ local function run_line(state, line)
 		elseif line.type == "choice" then
 			local t, er = eval_text(state, line.text)
 			if not t then return t, er end
-			table.insert(state.interpreter.choice_available, line.child)
+			table.insert(state.interpreter.choice_available, {
+				tags = tags:current(state),
+				block = line.child
+			})
 			write_event(state, "choice", t)
 		elseif line.type == "tag" then
 			if line.expression then
@@ -118,7 +127,9 @@ local function run_line(state, line)
 					else
 						local choice = state.interpreter.choice_available[sel]
 						state.interpreter.choice_available = {}
-						local v, e = run_block(state, choice)
+						tags:push_ignore_past(state, choice.tags)
+						local v, e = run_block(state, choice.block)
+						tags:pop(state)
 						if e then return v, e end
 						if v then return v end
 					end

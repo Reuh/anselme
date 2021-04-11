@@ -337,21 +337,22 @@ local vm_mt = {
 				functions = self.state.functions,
 				variables = setmetatable({}, { __index = self.state.variables }),
 				interpreter = {
+					-- constant
 					global_state = self.state,
 					coroutine = coroutine.create(function() return "return", interpreter:run(expr, namespace) end),
+					-- status
+					running_line = nil,
 					-- events
 					event_type = nil,
 					event_buffer = nil,
-					-- skip next choices until next event change (to skip currently running choice block when resuming from a paragraph)
-					skip_choices_until_flush = nil,
-					-- status
-					running_line = nil,
-					-- choice
+					-- choice event
 					choice_selected = nil,
 					choice_available = {},
+					-- skip next choices until next event change (to skip currently running choice block when resuming from a paragraph)
+					skip_choices_until_flush = nil,
 					-- interrupt
 					interrupt = nil,
-					-- tags
+					-- tag stack
 					tags = tags or {},
 				}
 			},
