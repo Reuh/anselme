@@ -63,9 +63,15 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 		elseif s:match("^%b()") then
 			local content, r = s:match("^(%b())(.*)$")
 			content = content:gsub("^%(", ""):gsub("%)$", "")
-			local exp, r_paren = expression(content, state, namespace)
-			if not exp then return nil, "invalid expression inside parentheses: "..r_paren end
-			if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of parenthesis expression"):format(r_paren) end
+			local exp
+			if content:match("[^%s]") then
+				local r_paren
+				exp, r_paren = expression(content, state, namespace)
+				if not exp then return nil, "invalid expression inside parentheses: "..r_paren end
+				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of parenthesis expression"):format(r_paren) end
+			else
+				exp = { type = "nil", return_type = "nil", value = nil }
+			end
 			return expression(r, state, namespace, currentPriority, {
 				type = "parentheses",
 				return_type = exp.return_type,

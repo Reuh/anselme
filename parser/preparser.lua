@@ -303,12 +303,22 @@ local function parse_line(line, state, namespace)
 	elseif l:match("^%#") then
 		r.type = "tag"
 		r.child = true
-		r.expression = l:match("^%#(.*)$")
+		local expr = l:match("^%#(.*)$")
+		if expr:match("[^%s]") then
+			r.expression = expr
+		else
+			r.expression = nil
+		end
 	-- return
 	elseif l:match("^%@") then
 		r.type = "return"
 		r.parent_function = true
-		r.expression = l:match("^%@(.*)$")
+		local expr = l:match("^%@(.*)$")
+		if expr:match("[^%s]") then
+			r.expression = expr
+		else
+			r.expression = "()"
+		end
 	-- text
 	elseif l:match("[^%s]") then
 		r.type = "text"

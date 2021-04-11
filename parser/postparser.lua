@@ -29,14 +29,10 @@ local function parse(state)
 		end
 		-- expressions
 		if line.expression then
-			if line.expression:match("[^%s]") then
-				local exp, rem = expression(line.expression, state, namespace)
-				if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
-				if rem:match("[^%s]") then return nil, ("expected end of expression before %q; at %s"):format(rem, line.source) end
-				line.expression = exp
-			else
-				line.expression = nil
-			end
+			local exp, rem = expression(line.expression, state, namespace)
+			if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
+			if rem:match("[^%s]") then return nil, ("expected end of expression before %q; at %s"):format(rem, line.source) end
+			line.expression = exp
 			-- function return type information
 			if line.type == "return" then
 				local variant = line.parent_function.variant

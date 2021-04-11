@@ -1,0 +1,9 @@
+$ hey
+	§ foo
+		@2
+		@3
+	@5
+	u
+
+{hey}
+{hey.foo}

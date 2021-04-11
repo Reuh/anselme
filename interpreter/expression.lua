@@ -9,8 +9,14 @@ local unpack = table.unpack or unpack
 -- returns evaluated value if success
 -- returns nil, error if error
 local function eval(state, exp)
+	-- nil
+	if exp.type == "nil" then
+		return {
+			type = "nil",
+			value = nil
+		}
 	-- number
-	if exp.type == "number" then
+	elseif exp.type == "number" then
 		return {
 			type = "number",
 			value = exp.value

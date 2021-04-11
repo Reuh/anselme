@@ -255,7 +255,7 @@ Paragraphs always have the following variable defined in its namespace by defaul
 :42 foo
 ```
 
-* `@`: return line. Can be followed by an [expression](#expressions). Exit the current function and returns the expression's value.
+* `@`: return line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. Exit the current function and returns the expression's value.
 
 ```
 $ hey
@@ -417,7 +417,7 @@ Note that these are *not* Lua expressions.
 
 Default types are:
 
-* `nil`: nil.
+* `nil`: nil. Can be defined using empty parantheses `()`.
 
 * `number`: a number. Can be defined similarly to Lua number literals.
 

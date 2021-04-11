@@ -95,11 +95,8 @@ local function run_line(state, line)
 			if e then return v, e end
 			if v then return v end
 		elseif line.type == "return" then
-			local v, e
-			if line.expression then
-				v, e = eval(state, line.expression)
-				if not v then return v, ("%s; at %s"):format(e, line.source) end
-			end
+			local v, e = eval(state, line.expression)
+			if not v then return v, ("%s; at %s"):format(e, line.source) end
 			return v
 		elseif line.type == "text" then
 			local t, er = eval_text(state, line.text)
