@@ -143,7 +143,8 @@ local function run_line(state, line)
 						local v, e = run_block(state, choice.block)
 						tags:pop(state)
 						if e then return v, e end
-						if v then return v end
+						-- discard return value from choice block as the execution is delayed until an event flush
+						-- and we don't want to stop the execution of another function unexpectedly
 					end
 				end
 			end

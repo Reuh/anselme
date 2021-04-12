@@ -264,6 +264,25 @@ $ hey
 {hey} = 5
 ```
 
+Be careful when using `@` in a choice block. Choice blocks are not ran right as they are read, but at the next event flush (i.e. empty line). This means that if there is no flush in the function itself, the choice will be ran *after* the function has already been executed and returning a value at this point makes no sense:
+
+```
+$ f
+    > a
+        @1
+    @2
+
+(f will return 2 since the choice is run after the @2 line)
+~ f = 2
+
+    Yes.
+
+(Choice block is actually ran right before the "Yes" line, when the choice event is flushed.)
+
+```
+
+For this reason, Anselme will discard returns values sent from within a choice block. Returns inside choice block still have the expected behaviour of stopping the execution of the block.
+
 * empty line: flush events, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.
 
 * regular text: write some text into the event buffer. Support [text interpolation](#text-interpolation).
