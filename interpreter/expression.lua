@@ -1,7 +1,7 @@
 local expression
-local flush_state, to_lua, from_lua, eval_text
+local to_lua, from_lua, eval_text
 
-local run, run_block
+local run
 
 local unpack = table.unpack or unpack
 
@@ -134,7 +134,6 @@ local function eval(state, exp)
 						type = "number",
 						value = state.variables[fn.value.namespace.."👁️"].value + 1
 					}
-					flush_state(state)
 					return r
 				else
 					return nil, ("unknown function type %q"):format(fn.value.type)
@@ -169,9 +168,8 @@ end
 
 package.loaded[...] = eval
 run = require((...):gsub("expression$", "interpreter")).run
-run_block = require((...):gsub("expression$", "interpreter")).run_block
 expression = require((...):gsub("interpreter%.expression$", "parser.expression"))
 local common = require((...):gsub("expression$", "common"))
-flush_state, to_lua, from_lua, eval_text = common.flush_state, common.to_lua, common.from_lua, common.eval_text
+to_lua, from_lua, eval_text = common.to_lua, common.from_lua, common.eval_text
 
 return eval

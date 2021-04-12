@@ -119,7 +119,7 @@ The purpose of this system is both to allow several scripts to run at the same t
 
 Checkpoints are set per function. Paragraphs are expected to be defined inside functions only.
 
-Commiting also happens after a function or paragraph has been manually called.
+Commiting also happens after a paragraph has been manually called or resumed from.
 
 ### Lines types
 
@@ -533,8 +533,6 @@ $ f
 this is text: {f}
 ```
 
-Functions commit variables after a call.
-
 #### Paragraph calls
 
 Most of the time, you should'nt need to call paragraphs yourself - they will be automatically be set as the active checkpoint when the interperter reach their line, and they will be automatically called when resuming its parent function.
@@ -576,7 +574,7 @@ And will resume from the checkpoint like before:
 
 Method style calling is also possible, like with functions.
 
-Paragraphs commit variables after a call.
+Paragraphs commit variables after being called (either manually or automatically from resuming a function). The commit always happen after the paragraph's child block has been ran.
 
 Please also be aware that when resuming from a paragraph, Anselme will try to restore the interpreter state as if the function was correctly executed from the start up to this paragraph. This includes:
 
