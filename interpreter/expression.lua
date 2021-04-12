@@ -103,25 +103,7 @@ local function eval(state, exp)
 				if fn.value.type == "paragraph" or fn.value.paragraph then
 					local r, e
 					if fn.value.type == "paragraph" then
-						r, e = run_block(state, fn.value.child)
-						if e then return r, e end
-						state.variables[fn.value.namespace.."👁️"] = {
-							type = "number",
-							value = state.variables[fn.value.namespace.."👁️"].value + 1
-						}
-						state.variables[fn.value.parent_function.namespace.."🏁"] = {
-							type = "string",
-							value = fn.value.name
-						}
-						flush_state(state)
-						if r then
-							return r, e
-						-- resume function from paragraph
-						elseif not exp.explicit_call then
-							r, e = run(state, fn.value.parent_block, true, fn.value.parent_position+1)
-						else
-							r = { type = "nil", value = nil }
-						end
+						r, e = run(state, fn.value.child, not exp.explicit_call)
 					-- paragraph decorators: run single line or resume from it.
 					-- checkpoint & seen variables will be updated from the interpreter usual paragraph-reaching code.
 					elseif exp.explicit_call then

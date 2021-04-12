@@ -237,7 +237,7 @@ Paragraphs always have the following variable defined in its namespace by defaul
 
 `👁️`: number, number of times the paragraph was reached or executed before
 
-* `#`: tag line. Can be followed by an [expression](#expressions); otherwise empty expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any event sent from its children. Can be nested.
+* `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any event sent from its children. Can be nested.
 
 ```
 # "color": "red"
@@ -279,7 +279,7 @@ And this is more text, in a different event.
 
 Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour.
 
-* `~`: expression decorator. Same as an expression line, behaving as if this line was it sole child. Typically used to conditionally execute line.
+* `~`: expression decorator. Same as an expression line, behaving as if this line was it sole child. Typically used to conditionally execute line. Does not affect following else-conditions.
 
 * `§`: paragraph decorator. Same as a paragraph line, behaving as if this line was it sole child.
 
@@ -558,6 +558,12 @@ And will resume from the checkpoint like before:
 Method style calling is also possible, like with functions.
 
 Paragraphs commit variables after a call.
+
+Please also be aware that when resuming from a paragraph, Anselme will try to restore the interpreter state as if the function was correctly executed from the start up to this paragraph. This includes:
+
+* if the paragraph is in a expression block, it will assume the expression was true (but will not re-evaluate it)
+* if the paragraph is in a choice block, it will assume this choice was selected (but will not re-evaluate any of the choices from the same choice group)
+* will try to re-add every tag from parent lines; this require Anselme to re-evaluate every tag line and decorator that's a parent of the paragraph in the function. Be careful if your tag expressions have side-effects.
 
 #### Operators
 

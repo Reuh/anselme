@@ -1,0 +1,26 @@
+$ f
+	x
+	§ p
+		a
+
+		§ q
+			b
+
+		c
+
+	d
+
+From start:
+~ f
+
+From p checkpoint:
+~ f
+
+From q checkpoint:
+~ f
+
+From q checkpoint again:
+~ f
+
+Force p checkpoint:
+~ f.p()

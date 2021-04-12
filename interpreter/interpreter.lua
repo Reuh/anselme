@@ -1,11 +1,12 @@
 local eval
-local truthy, flush_state, to_lua, eval_text
+local truthy, flush_state, to_lua, eval_text, escape
 
 local tags = {
+	--- push new tags on top of the stack, from Anselme values
 	push = function(self, state, val)
 		local new = {}
 		-- copy
-		local last = state.interpreter.tags[#state.interpreter.tags] or {}
+		local last = self:current(state)
 		for k,v in pairs(last) do new[k] = v end
 		-- merge with new values
 		if val.type ~= "list" then val = { type = "list", value = { val } } end
@@ -13,14 +14,27 @@ local tags = {
 		-- add
 		table.insert(state.interpreter.tags, new)
 	end,
+	--- same but do not merge with last stack item
+	push_lua_no_merge = function(self, state, val)
+		table.insert(state.interpreter.tags, val)
+	end,
+	-- pop tag table on top of the stack
 	pop = function(self, state)
 		table.remove(state.interpreter.tags)
 	end,
+	--- return current lua tags table
 	current = function(self, state)
 		return state.interpreter.tags[#state.interpreter.tags] or {}
 	end,
-	push_ignore_past = function(self, state, tags)
-		table.insert(state.interpreter.tags, tags)
+	--- returns length of tags stack
+	len = function(self, state)
+		return #state.interpreter.tags
+	end,
+	--- pop item until we reached desired stack length
+	trim = function(self, state, len)
+		while #state.interpreter.tags > len do
+			self:pop(state)
+		end
 	end
 }
 
@@ -94,13 +108,11 @@ local function run_line(state, line)
 			})
 			write_event(state, "choice", t)
 		elseif line.type == "tag" then
-			if line.expression then
-				local v, e = eval(state, line.expression)
-				if not v then return v, ("%s; at %s"):format(e, line.source) end
-				tags:push(state, v)
-			end
-			local v, e = run_block(state, line.child)
-			if line.expression then tags:pop(state) end
+			local v, e = eval(state, line.expression)
+			if not v then return v, ("%s; at %s"):format(e, line.source) end
+			tags:push(state, v)
+			v, e = run_block(state, line.child)
+			tags:pop(state)
 			if e then return v, e end
 			if v then return v end
 		elseif line.type == "return" then
@@ -127,7 +139,7 @@ local function run_line(state, line)
 					else
 						local choice = state.interpreter.choice_available[sel]
 						state.interpreter.choice_available = {}
-						tags:push_ignore_past(state, choice.tags)
+						tags:push_lua_no_merge(state, choice.tags)
 						local v, e = run_block(state, choice.block)
 						tags:pop(state)
 						if e then return v, e end
@@ -142,7 +154,7 @@ local function run_line(state, line)
 		if line.tag then
 			tags:pop(state)
 		end
-		-- paragraph decorator
+		-- paragraph decorator and line
 		if line.paragraph then
 			state.variables[line.namespace.."👁️"] = {
 				type = "number",
@@ -182,16 +194,40 @@ run_block = function(state, block, resume_from_there, i, j)
 		end
 		i = i + 1
 	end
+	-- if we are exiting a paragraph block, mark it as ran and update checkpoint
+	-- (when resuming from a checkpoint, execution is resumed from inside the paragraph, the line.paragraph check in run_line is never called)
+	-- (and we want this to be done after executing the checkpoint block anyway)
+	if block.parent_line and block.parent_line.paragraph then
+		local parent_line = block.parent_line
+		state.variables[parent_line.namespace.."👁️"] = {
+			type = "number",
+			value = state.variables[parent_line.namespace.."👁️"].value + 1
+		}
+		-- don't update checkpoint if an already more precise checkpoint is set
+		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
+		local current_checkpoint = state.variables[parent_line.parent_function.namespace.."🏁"].value
+		if not current_checkpoint:match("^"..escape(parent_line.name)) then
+			state.variables[parent_line.parent_function.namespace.."🏁"] = {
+				type = "string",
+				value = parent_line.name
+			}
+		end
+		flush_state(state)
+	end
 	-- go up hierarchy if asked to resume
 	-- will stop at function boundary
 	-- if parent is a choice, will ignore choices that belong to the same block (like the whole block was executed naturally from a higher parent)
 	-- if parent if a condition, will mark it as a success (skipping following else-conditions) (for the same reasons as for choices)
+	-- if parent pushed a tag, will pop it (tags from parents are added to the stack in run())
 	if resume_from_there and block.parent_line and block.parent_line.type ~= "function" then
 		local parent_line = block.parent_line
 		if parent_line.type == "choice" then
 			state.interpreter.skip_choices_until_flush = true
 		elseif parent_line.type == "condition" or parent_line.type == "else-condition" then
 			parent_line.parent_block.last_condition_success = true
+		end
+		if parent_line.type == "tag" or parent_line.tag then
+			tags:pop(state)
 		end
 		local v, e = run_block(state, parent_line.parent_block, resume_from_there, parent_line.parent_position+1)
 		if e then return v, e end
@@ -203,8 +239,39 @@ end
 -- returns var in case of success
 -- return nil, err in case of error
 local function run(state, block, resume_from_there, i, j)
+	-- restore tags from parents when resuming
+	local tags_len = tags:len(state)
+	if resume_from_there then
+		local tags_to_add = {}
+		-- go up in hierarchy in ascending order until function boundary
+		local parent_line = block.parent_line
+		while parent_line and parent_line.type ~= "function" do
+			if parent_line.type == "tag" then
+				local v, e = eval(state, parent_line.expression)
+				if not v then return v, ("%s; at %s"):format(e, parent_line.source) end
+				table.insert(tags_to_add, v)
+			end
+			if parent_line.tag then
+				local v, e = eval(state, parent_line.tag)
+				if not v then return v, ("%s; in tag decorator at %s"):format(e, parent_line.source) end
+				table.insert(tags_to_add, v)
+			end
+			parent_line = parent_line.parent_block.parent_line
+		end
+		-- re-add tag in desceding order
+		for k=#tags_to_add, 1, -1 do
+			tags:push(state, tags_to_add[k])
+		end
+	end
 	-- run
 	local v, e = run_block(state, block, resume_from_there, i, j)
+	-- return to previous tag state
+	-- tag stack pop when resuming is done when exiting the tag block
+	-- stray elements may be left on the stack if there is a return before we exit all the tag block, so we trim them
+	if resume_from_there then
+		tags:trim(state, tags_len)
+	end
+	-- return
 	if e then return v, e end
 	if v then
 		return v
@@ -227,5 +294,6 @@ package.loaded[...] = interpreter
 eval = require((...):gsub("interpreter$", "expression"))
 local common = require((...):gsub("interpreter$", "common"))
 truthy, flush_state, to_lua, eval_text = common.truthy, common.flush_state, common.to_lua, common.eval_text
+escape = require((...):gsub("interpreter%.interpreter$", "parser.common")).escape
 
 return interpreter

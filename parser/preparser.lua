@@ -307,7 +307,7 @@ local function parse_line(line, state, namespace)
 		if expr:match("[^%s]") then
 			r.expression = expr
 		else
-			r.expression = nil
+			r.expression = "()"
 		end
 	-- return
 	elseif l:match("^%@") then
