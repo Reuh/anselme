@@ -14,6 +14,7 @@ local expression = require((...):gsub("anselme$", "parser.expression"))
 local eval = require((...):gsub("anselme$", "interpreter.expression"))
 local run_line = require((...):gsub("anselme$", "interpreter.interpreter")).run_line
 local to_lua = require((...):gsub("anselme$", "interpreter.common")).to_lua
+local flush_state = require((...):gsub("anselme$", "interpreter.common")).flush_state
 local stdfuncs = require((...):gsub("anselme$", "stdlib.functions"))
 
 -- wrappers for love.filesystem / luafilesystem
@@ -48,10 +49,13 @@ end
 
 --- interpreter methods
 local interpreter_methods = {
+	-- interpreter state
+	state = nil,
 	-- VM this interpreter belongs to
 	vm = nil,
 
 	--- run the VM until the next event
+	-- will commit changed variables on successful script end
 	-- returns event, data; if event is "return" or "error", the interpreter must not be stepped further
 	step = function(self)
 		-- check status
@@ -80,6 +84,7 @@ local interpreter_methods = {
 		local success, event, data = coroutine.resume(self.state.interpreter.coroutine)
 		anselme.running = previous
 		if not success then return "error", event end
+		if event == "return" then flush_state(self.state) end
 		return event, data
 	end,
 
