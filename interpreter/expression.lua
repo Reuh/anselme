@@ -112,11 +112,11 @@ local function eval(state, exp)
 					end
 					-- eval function
 					local r, e
-					if exp.explicit_call or state.variables[fn.value.namespace.."🏁"].value == "" then
+					if exp.explicit_call or state.variables[fn.value.namespace.."🔖"].value == "" then
 						r, e = run(state, fn.value.child)
 					-- resume at last checkpoint
 					else
-						local expr, err = expression(state.variables[fn.value.namespace.."🏁"].value, state, "")
+						local expr, err = expression(state.variables[fn.value.namespace.."🔖"].value, state, "")
 						if not expr then return expr, err end
 						r, e = eval(state, expr)
 					end

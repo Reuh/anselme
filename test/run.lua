@@ -107,7 +107,7 @@ else
 		local namespace = filebase:match("([^/]*)$")
 		math.randomseed(0)
 		local vm = anselme()
-		vm:setaliases("seen", "checkpoint")
+		vm:setaliases("seen", "checkpoint", "reached")
 		vm:loadfunction {
 			-- custom event test
 			["wait"] = {

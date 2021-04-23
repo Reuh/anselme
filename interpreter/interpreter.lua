@@ -135,11 +135,11 @@ local function run_line(state, line)
 			end
 		end
 	elseif line.type == "checkpoint" then
-		state.variables[line.namespace.."👁️"] = {
+		state.variables[line.namespace.."🏁"] = {
 			type = "number",
-			value = state.variables[line.namespace.."👁️"].value + 1
+			value = state.variables[line.namespace.."🏁"].value + 1
 		}
-		state.variables[line.parent_function.namespace.."🏁"] = {
+		state.variables[line.parent_function.namespace.."🔖"] = {
 			type = "string",
 			value = line.name
 		}
@@ -183,11 +183,15 @@ run_block = function(state, block, resume_from_there, i, j)
 			type = "number",
 			value = state.variables[parent_line.namespace.."👁️"].value + 1
 		}
+		state.variables[parent_line.namespace.."🏁"] = {
+			type = "number",
+			value = state.variables[parent_line.namespace.."🏁"].value + 1
+		}
 		-- don't update checkpoint if an already more precise checkpoint is set
 		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
-		local current_checkpoint = state.variables[parent_line.parent_function.namespace.."🏁"].value
+		local current_checkpoint = state.variables[parent_line.parent_function.namespace.."🔖"].value
 		if not current_checkpoint:match("^"..escape(parent_line.name)) then
-			state.variables[parent_line.parent_function.namespace.."🏁"] = {
+			state.variables[parent_line.parent_function.namespace.."🔖"] = {
 				type = "string",
 				value = parent_line.name
 			}

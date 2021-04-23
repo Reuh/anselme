@@ -173,6 +173,7 @@ local vm_mt = {
 	-- * config.ans, which contains various optional configuration options:
 	--   * alias 👁️: string, default alias for 👁️
 	--   * alias 🏁: string, default alias for 🏁
+	--   * alias 🔖: string, default alias for 🔖
 	--   * main file: string, name (without .ans extension) of a file that will be loaded into the root namespace
 	-- * main file, if defined in config.ans
 	-- * every other file in the path and subdirectories, using their path as namespace (i.e., contents of path/world1/john.ans will be defined in a function world1.john)
@@ -185,10 +186,11 @@ local vm_mt = {
 			if not s then return s, e end
 		end
 		local seen_alias = self:eval("config.alias 👁️")
-		local checkpoint_alias = self:eval("config.alias 🏁")
+		local checkpoint_alias = self:eval("config.alias 🔖")
+		local reached_alias = self:eval("config.alias 🏁")
 		local main_file = self:eval("config.main file")
 		-- set aliases
-		self:setaliases(seen_alias, checkpoint_alias)
+		self:setaliases(seen_alias, checkpoint_alias, reached_alias)
 		-- load main file
 		if main_file then
 			local s, e = self:loadfile(path.."/"..main_file..".ans")
@@ -254,12 +256,13 @@ local vm_mt = {
 		return self
 	end,
 
-	--- set aliases for built-in variables 👁️ and 🏁 that will be defined on every new checkpoint and function
+	--- set aliases for built-in variables 👁️, 🔖 and 🏁 that will be defined on every new checkpoint and function
 	-- nil for no alias
 	-- return self
-	setaliases = function(self, seen, checkpoint)
+	setaliases = function(self, seen, checkpoint, reached)
 		self.state.builtin_aliases["👁️"] = seen
-		self.state.builtin_aliases["🏁"] = checkpoint
+		self.state.builtin_aliases["🔖"] = checkpoint
+		self.state.builtin_aliases["🏁"] = reached
 		return self
 	end,
 
@@ -387,7 +390,8 @@ return setmetatable(anselme, {
 		local state = {
 			builtin_aliases = {
 				-- ["👁️"] = "seen",
-				-- ["🏁"] = "checkpoint"
+				-- ["🔖"] = "checkpoint",
+				-- ["🏁"] = "reached"
 			},
 			aliases = {
 				-- ["bonjour.salutation"] = "hello.greeting",

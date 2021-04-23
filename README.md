@@ -215,7 +215,7 @@ Functions can return a value using a [return line](#lines-that-can-t-have-childr
 Functions always have the following variables defined in its namespace by default:
 
 `👁️`: number, number of times the function was executed before
-`🏁`: string, name of last reached checkpoint
+`🔖`: string, name of last reached checkpoint
 
 * `§`: checkpoint. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
 
@@ -235,7 +235,8 @@ $ inane dialog
 
 Checkpoints always have the following variable defined in its namespace by default:
 
-`👁️`: number, number of times the checkpoint was reached or executed before
+`👁️`: number, number of times the checkpoint was executed before
+`🏁`: number, number of times the checkpoint was reached before (including times where it was resumed from and executed)
 
 * `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any event sent from its children. Can be nested.
 
@@ -474,7 +475,7 @@ Hi {player name}!
 Salut {nom du joueur} !
 ```
 
-Variables that are defined automatically by Anselme (`👁️` and `🏁` in checkpoints and functions) can be automatically aliased using `vm:setaliases("👁️alias", "🏁alias")`. See [API](#api-reference).
+Variables that are defined automatically by Anselme (`👁️`, `🔖` and `🏁` in checkpoints and functions) can be automatically aliased using `vm:setaliases("👁️alias", "🔖alias", 🏁alias")`. See [API](#api-reference).
 
 ### Expressions
 

@@ -132,17 +132,34 @@ local function parse_line(line, state, namespace)
 				state.aliases[alias] = fqm..".👁️"
 			end
 			if r.type == "function" then
-				-- define 🏁 variable
-				if not state.variables[fqm..".🏁"] then
-					state.variables[fqm..".🏁"] = {
+				-- define 🔖 variable
+				if not state.variables[fqm..".🔖"] then
+					state.variables[fqm..".🔖"] = {
 						type = "string",
 						value = ""
 					}
 				end
-				-- define alias for 🏁
-				local checkpoint_alias = state.builtin_aliases["🏁"]
+				-- define alias for 🔖
+				local checkpoint_alias = state.builtin_aliases["🔖"]
 				if checkpoint_alias then
 					local alias = ("%s.%s"):format(fqm, checkpoint_alias)
+					if state.aliases[alias] ~= nil and state.aliases[alias] then
+						return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(alias, fqm..".🔖", state.aliases[alias], line.source)
+					end
+					state.aliases[alias] = fqm..".🔖"
+				end
+			elseif r.type == "checkpoint" then
+				-- define 🏁 variable
+				if not state.variables[fqm..".🏁"] then
+					state.variables[fqm..".🏁"] = {
+						type = "number",
+						value = 0
+					}
+				end
+				-- define alias for 🏁
+				local reached_alias = state.builtin_aliases["🏁"]
+				if reached_alias then
+					local alias = ("%s.%s"):format(fqm, reached_alias)
 					if state.aliases[alias] ~= nil and state.aliases[alias] then
 						return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(alias, fqm..".🏁", state.aliases[alias], line.source)
 					end
