@@ -57,29 +57,25 @@ local run_block
 local function run_line(state, line)
 	-- store line
 	state.interpreter.running_line = line
-	-- condition decorator
-	local skipped = false
-	if line.condition then
-		local v, e = eval(state, line.condition)
-		if not v then return v, ("%s; at %s"):format(e, line.source) end
-		skipped = not truthy(v)
+	-- if line intend to push an event, flush buffer it it's a different event
+	if line.push_event and state.interpreter.event_buffer and state.interpreter.event_type ~= line.push_event then
+		local v, e = run_line(state, { source = line.source, type = "flush_events" })
+		if e then return v, e end
+		if v then return v end
 	end
-	if not skipped then
-		-- tag decorator
-		if line.tag then
-			local v, e = eval(state, line.tag)
-			if not v then return v, ("%s; in tag decorator at %s"):format(e, line.source) end
-			tags:push(state, v)
-		end
-		-- if line intend to push an event, flush buffer it it's a different event
-		if line.push_event and state.interpreter.event_buffer and state.interpreter.event_type ~= line.push_event then
-			local v, e = run_line(state, { source = line.source, type = "flush_events" })
+	-- line types
+	if line.type == "condition" then
+		line.parent_block.last_condition_success = nil
+		local v, e = eval(state, line.expression)
+		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		if truthy(v) then
+			line.parent_block.last_condition_success = true
+			v, e = run_block(state, line.child)
 			if e then return v, e end
 			if v then return v end
 		end
-		-- line types
-		if line.type == "condition" then
-			line.parent_block.last_condition_success = nil
+	elseif line.type == "else-condition" then
+		if not line.parent_block.last_condition_success then
 			local v, e = eval(state, line.expression)
 			if not v then return v, ("%s; at %s"):format(e, line.source) end
 			if truthy(v) then
@@ -88,85 +84,68 @@ local function run_line(state, line)
 				if e then return v, e end
 				if v then return v end
 			end
-		elseif line.type == "else-condition" then
-			if not line.parent_block.last_condition_success then
-				local v, e = eval(state, line.expression)
-				if not v then return v, ("%s; at %s"):format(e, line.source) end
-				if truthy(v) then
-					line.parent_block.last_condition_success = true
-					v, e = run_block(state, line.child)
+		end
+	elseif line.type == "choice" then
+		local t, er = eval_text(state, line.text)
+		if not t then return t, er end
+		table.insert(state.interpreter.choice_available, {
+			tags = tags:current(state),
+			block = line.child
+		})
+		write_event(state, "choice", t)
+	elseif line.type == "tag" then
+		local v, e = eval(state, line.expression)
+		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		tags:push(state, v)
+		v, e = run_block(state, line.child)
+		tags:pop(state)
+		if e then return v, e end
+		if v then return v end
+	elseif line.type == "return" then
+		local v, e = eval(state, line.expression)
+		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		return v
+	elseif line.type == "text" then
+		local t, er = eval_text(state, line.text)
+		if not t then return t, ("%s; at %s"):format(er, line.source) end
+		write_event(state, "text", t)
+	elseif line.type == "flush_events" then
+		while state.interpreter.event_buffer do
+			local type, buffer = state.interpreter.event_type, state.interpreter.event_buffer
+			state.interpreter.event_type = nil
+			state.interpreter.event_buffer = nil
+			-- yield
+			coroutine.yield(type, buffer)
+			-- run choice
+			if type == "choice" then
+				local sel = state.interpreter.choice_selected
+				state.interpreter.choice_selected = nil
+				if not sel or sel < 1 or sel > #state.interpreter.choice_available then
+					return nil, "invalid choice"
+				else
+					local choice = state.interpreter.choice_available[sel]
+					state.interpreter.choice_available = {}
+					tags:push_lua_no_merge(state, choice.tags)
+					local v, e = run_block(state, choice.block)
+					tags:pop(state)
 					if e then return v, e end
-					if v then return v end
+					-- discard return value from choice block as the execution is delayed until an event flush
+					-- and we don't want to stop the execution of another function unexpectedly
 				end
 			end
-		elseif line.type == "choice" then
-			local t, er = eval_text(state, line.text)
-			if not t then return t, er end
-			table.insert(state.interpreter.choice_available, {
-				tags = tags:current(state),
-				block = line.child
-			})
-			write_event(state, "choice", t)
-		elseif line.type == "tag" then
-			local v, e = eval(state, line.expression)
-			if not v then return v, ("%s; at %s"):format(e, line.source) end
-			tags:push(state, v)
-			v, e = run_block(state, line.child)
-			tags:pop(state)
-			if e then return v, e end
-			if v then return v end
-		elseif line.type == "return" then
-			local v, e = eval(state, line.expression)
-			if not v then return v, ("%s; at %s"):format(e, line.source) end
-			return v
-		elseif line.type == "text" then
-			local t, er = eval_text(state, line.text)
-			if not t then return t, ("%s; at %s"):format(er, line.source) end
-			write_event(state, "text", t)
-		elseif line.type == "flush_events" then
-			while state.interpreter.event_buffer do
-				local type, buffer = state.interpreter.event_type, state.interpreter.event_buffer
-				state.interpreter.event_type = nil
-				state.interpreter.event_buffer = nil
-				-- yield
-				coroutine.yield(type, buffer)
-				-- run choice
-				if type == "choice" then
-					local sel = state.interpreter.choice_selected
-					state.interpreter.choice_selected = nil
-					if not sel or sel < 1 or sel > #state.interpreter.choice_available then
-						return nil, "invalid choice"
-					else
-						local choice = state.interpreter.choice_available[sel]
-						state.interpreter.choice_available = {}
-						tags:push_lua_no_merge(state, choice.tags)
-						local v, e = run_block(state, choice.block)
-						tags:pop(state)
-						if e then return v, e end
-						-- discard return value from choice block as the execution is delayed until an event flush
-						-- and we don't want to stop the execution of another function unexpectedly
-					end
-				end
-			end
-		elseif line.type ~= "checkpoint" then
-			return nil, ("unknown line type %q; at %s"):format(line.type, line.source)
 		end
-		-- tag decorator
-		if line.tag then
-			tags:pop(state)
-		end
-		-- checkpoint decorator and line
-		if line.checkpoint then
-			state.variables[line.namespace.."👁️"] = {
-				type = "number",
-				value = state.variables[line.namespace.."👁️"].value + 1
-			}
-			state.variables[line.parent_function.namespace.."🏁"] = {
-				type = "string",
-				value = line.name
-			}
-			merge_state(state)
-		end
+	elseif line.type == "checkpoint" then
+		state.variables[line.namespace.."👁️"] = {
+			type = "number",
+			value = state.variables[line.namespace.."👁️"].value + 1
+		}
+		state.variables[line.parent_function.namespace.."🏁"] = {
+			type = "string",
+			value = line.name
+		}
+		merge_state(state)
+	else
+		return nil, ("unknown line type %q; at %s"):format(line.type, line.source)
 	end
 end
 
@@ -196,9 +175,9 @@ run_block = function(state, block, resume_from_there, i, j)
 		i = i + 1
 	end
 	-- if we are exiting a checkpoint block, mark it as ran and update checkpoint
-	-- (when resuming from a checkpoint, execution is resumed from inside the checkpoint, the line.checkpoint check in run_line is never called)
+	-- (when resuming from a checkpoint, execution is resumed from inside the checkpoint, the line.type=="checkpoint" check in run_line is never called)
 	-- (and we want this to be done after executing the checkpoint block anyway)
-	if block.parent_line and block.parent_line.checkpoint then
+	if block.parent_line and block.parent_line.type == "checkpoint" then
 		local parent_line = block.parent_line
 		state.variables[parent_line.namespace.."👁️"] = {
 			type = "number",
@@ -227,7 +206,7 @@ run_block = function(state, block, resume_from_there, i, j)
 		elseif parent_line.type == "condition" or parent_line.type == "else-condition" then
 			parent_line.parent_block.last_condition_success = true
 		end
-		if parent_line.type == "tag" or parent_line.tag then
+		if parent_line.type == "tag" then
 			tags:pop(state)
 		end
 		local v, e = run_block(state, parent_line.parent_block, resume_from_there, parent_line.parent_position+1)
@@ -250,11 +229,6 @@ local function run(state, block, resume_from_there, i, j)
 			if parent_line.type == "tag" then
 				local v, e = eval(state, parent_line.expression)
 				if not v then return v, ("%s; at %s"):format(e, parent_line.source) end
-				table.insert(tags_to_add, v)
-			end
-			if parent_line.tag then
-				local v, e = eval(state, parent_line.tag)
-				if not v then return v, ("%s; in tag decorator at %s"):format(e, parent_line.source) end
 				table.insert(tags_to_add, v)
 			end
 			parent_line = parent_line.parent_block.parent_line

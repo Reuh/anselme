@@ -6,27 +6,6 @@ local parse_text
 local function parse(state)
 	for _, l in ipairs(state.queued_lines) do
 		local line, namespace = l.line, l.namespace
-		-- decorators
-		if line.condition then
-			if line.condition:match("[^%s]") then
-				local exp, rem = expression(line.condition, state, namespace)
-				if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
-				if rem:match("[^%s]") then return nil, ("expected end of expression before %q in condition decorator; at %s"):format(rem, line.source) end
-				line.condition = exp
-			else
-				line.condition = nil
-			end
-		end
-		if line.tag then
-			if line.tag:match("[^%s]") then
-				local exp, rem = expression(line.tag, state, namespace)
-				if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
-				if rem:match("[^%s]") then return nil, ("expected end of expression before %q in condition decorator; at %s"):format(rem, line.source) end
-				line.tag = exp
-			else
-				line.tag = nil
-			end
-		end
 		-- expressions
 		if line.expression then
 			local exp, rem = expression(line.expression, state, namespace)

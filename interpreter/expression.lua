@@ -99,18 +99,9 @@ local function eval(state, exp)
 			end
 			-- anselme function
 			if type(fn.value) == "table"  then
-				-- checkpoint & checkpoint decorator
-				if fn.value.type == "checkpoint" or fn.value.checkpoint then
-					local r, e
-					if fn.value.type == "checkpoint" then
-						r, e = run(state, fn.value.child, not exp.explicit_call)
-					-- checkpoint decorators: run single line or resume from it.
-					-- checkpoint & seen variables will be updated from the interpreter usual checkpoint-reaching code.
-					elseif exp.explicit_call then
-						r, e = run(state, fn.value.parent_block, false, fn.value.parent_position, fn.value.parent_position)
-					else
-						r, e = run(state, fn.value.parent_block, true, fn.value.parent_position)
-					end
+				-- checkpoint
+				if fn.value.type == "checkpoint" then
+					local r, e = run(state, fn.value.child, not exp.explicit_call)
 					if not r then return r, e end
 					return r
 				-- function

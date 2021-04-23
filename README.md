@@ -3,7 +3,7 @@ Anselme
 
 The overengineered dialog scripting system in pure Lua.
 
-**Has been rewritten recently, doc is still WIP**
+**Has been rewritten recently, doc and language are still WIP**
 
 Purpose
 -------
@@ -90,7 +90,7 @@ Another line.
 
 When executing a piece of Anselme code, it will not directly modify the global state (i.e. the values of variables used by every script), but only locally, in this execution.
 
-Right after reaching a checkpoint (line or decorator), Anselme will merge the local state with the global one, i.e., make every change accessible to other scripts.
+Right after reaching a checkpoint line, Anselme will merge the local state with the global one, i.e., make every change accessible to other scripts.
 
 ```
 $ main
@@ -296,17 +296,67 @@ And this is more text, in a different event.
 
 ### Line decorators
 
-Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour.
+Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour. Decorators are just syntaxic sugar to make some common operations simpler to write.
 
-* `~`: condition decorator. Same as an condition line, behaving as if this line was it sole child. Typically used to conditionally execute line. Does not affect following else-conditions.
-
-* `§`: checkpoint decorator. Same as a checkpoint line, behaving as if this line was it sole child.
-
-* `#`: tag decorator. Same as a tag line, behaving as if this line was it sole child.
+* `~`: condition decorator. Same as an condition line, behaving as if this line was it sole child. Typically used to conditionally execute line.
 
 ```
 $ fn
     run this line only once ~ 👁️
+```
+
+is equivalent to:
+
+```
+$ fn
+    ~ 👁️
+        run this line only once
+```
+
+* `#`: tag decorator. Same as a tag line, behaving as if this line was it sole child.
+
+```
+tagged # 42
+```
+
+is equivalent to:
+
+```
+# 42
+    tagged
+```
+
+* `$`: function decorator. Same as a function line, behaving as if this line was it sole child, but also run the function.
+
+```
+text $ f
+```
+
+is equivalent to:
+
+```
+~ f
+$ f
+    text
+```
+
+This is typically used for immediatletly running functions when defining them, for example for a looping choice :
+
+```
+~$ loop
+    > Loop
+        @loop
+    > Exit
+```
+
+is equivalent to (since empty condition is assumed true):
+
+```
+$ loop
+    > Loop
+        @loop
+    > Exit
+~ loop
 ```
 
 ### Text interpolation
@@ -368,7 +418,7 @@ Valid identifiers must be at least 1 caracters long and can contain anything exc
 
 When defining an identifier (using a function, checkpoint or variable delcaration line), it will be defined into the current namespace (defined by the parent function/checkpoint). When evaluating an expression, Anselme will look for variables into the current line's namespace, then go up a level if it isn't found, and so on.
 
-In practise, this means you have to use the "genealogy" of the variable to refer to it from a line not in it indentation block:
+In practise, this means you have to use the "genealogy" of the variable to refer to it from a line not in the same namespace:
 
 ```
 $ fn1

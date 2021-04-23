@@ -15,79 +15,6 @@ local function parse_line(line, state, namespace)
 		r.remove_from_block_ast = true
 		return r
 	end
-	-- decorators
-	while l:match("^..+[~#]") or l:match("^..+§") do
-		-- condition
-		if l:match("^..+%~.-$") then
-			local expr
-			l, expr = l:match("^(.-)%s*%~(.-)$")
-			r.condition = expr
-		-- checkpoint
-		elseif l:match("^..+§.-$") then
-			-- get identifier
-			local name
-			l, name = l:match("^(.-)%s*§(.-)$")
-			local identifier, rem = name:match("^("..identifier_pattern..")(.-)$")
-			if not identifier then return nil, ("no valid identifier in checkpoint decorator %q; at %s"):format(identifier, line.source) end
-			-- format identifier
-			local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
-			-- get alias
-			if rem:match("^%:") then
-				local content = rem:sub(2)
-				local alias, rem2 = content:match("^("..identifier_pattern..")(.-)$")
-				if not alias then return nil, ("expected an identifier in alias in checkpoint decorator, but got %q; at %s"):format(content, line.source) end
-				if rem2:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in checkpoint decorator, but got %q; at %s"):format(rem2, line.source) end
-				-- format alias
-				local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
-				-- define alias
-				if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
-					return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
-				end
-				state.aliases[aliasfqm] = fqm
-			elseif rem:match("[^%s]") then
-				return nil, ("expected end-of-line after identifier in checkpoint decorator, but got %q; at %s"):format(rem, line.source)
-			end
-			-- define checkpoint
-			namespace = fqm.."."
-			r.checkpoint = true
-			r.parent_function = true
-			r.namespace = fqm.."."
-			r.name = fqm
-			if not state.functions[fqm] then
-				state.functions[fqm] = {
-					{
-						arity = 0,
-						value = r
-					}
-				}
-				if not state.variables[fqm..".👁️"] then
-					state.variables[fqm..".👁️"] = {
-						type = "number",
-						value = 0
-					}
-				end
-				-- define alias for 👁️
-				local seen_alias = state.builtin_aliases["👁️"]
-				if seen_alias then
-					local alias = ("%s.%s"):format(fqm, seen_alias)
-					if state.aliases[alias] ~= nil and state.aliases[alias] then
-						return nil, ("trying to define alias %q for variable %q, but already exist and refer to different variable %q; at %s"):format(alias, fqm..".👁️", state.aliases[alias], line.source)
-					end
-					state.aliases[alias] = fqm..".👁️"
-				end
-			else
-				table.insert(state.functions[fqm], {
-					arity = 0,
-					value = r
-				})
-			end
-		-- tag
-		elseif l:match("^..+%#.-$") then
-			local expr
-			l, expr = l:match("^(.-)%s*%#(.-)$")
-			r.tag = expr
-		end
-	end
 	-- else-condition & condition
 	if l:match("^~~?") then
 		r.type = l:match("^~~") and "else-condition" or "condition"
@@ -169,7 +96,6 @@ local function parse_line(line, state, namespace)
 		end
 		-- store parent function and run checkpoint when line is read
 		if r.type == "checkpoint" then
-			r.checkpoint = true
 			r.parent_function = true
 		end
 		-- don't keep function node in block AST
@@ -336,52 +262,78 @@ end
 -- * nil, err: in case of error
 local function parse_block(indented, state, namespace, parent_function)
 	local block = { type = "block" }
-	local lastLine -- last line AST
-	for i, l in ipairs(indented) do
+	for _, l in ipairs(indented) do
 		-- parsable line
-		if l.content then
-			local ast, err = parse_line(l, state, namespace)
-			if err then return nil, err end
-			lastLine = ast
-			-- store parent function
-			if ast.parent_function then ast.parent_function = parent_function end
-			-- add to block AST
-			if not ast.remove_from_block_ast then
-				ast.parent_block = block
-				-- add ast node
-				ast.parent_position = #block+1
-				if ast.replace_with then
-					if indented[i+1].content then
-						table.insert(indented, i+1, { content = ast.replace_with, source = l.source })
-					else
-						table.insert(indented, i+2, { content = ast.replace_with, source = l.source }) -- if line has children
-					end
-				else
-					table.insert(block, ast)
-				end
-			end
-			-- add child
-			if ast.child then ast.child = { type = "block", parent_line = ast } end
-			-- queue in expression evalution
-			table.insert(state.queued_lines, { namespace = ast.namespace or namespace, line = ast })
-		-- indented (ignore block comments)
-		elseif lastLine.type ~= "comment" then
-			if not lastLine.child then
-				return nil, ("line %s (%s) can't have children"):format(lastLine.source, lastLine.type)
+		local ast, err = parse_line(l, state, namespace)
+		if err then return nil, err end
+		-- store parent function
+		if ast.parent_function then ast.parent_function = parent_function end
+		-- add to block AST
+		if not ast.remove_from_block_ast then
+			ast.parent_block = block
+			-- add ast node
+			ast.parent_position = #block+1
+			table.insert(block, ast)
+		end
+		-- add child
+		if ast.child then ast.child = { type = "block", parent_line = ast } end
+		-- queue in expression evalution
+		table.insert(state.queued_lines, { namespace = ast.namespace or namespace, line = ast })
+
+		-- indented block (ignore block comments)
+		if l.children and ast.type ~= "comment" then
+			if not ast.child then
+				return nil, ("line %s (%s) can't have children"):format(ast.source, ast.type)
 			else
-				local r, e = parse_block(l, state, lastLine.namespace or namespace, lastLine.type == "function" and lastLine or parent_function)
+				local r, e = parse_block(l.children, state, ast.namespace or namespace, ast.type == "function" and ast or parent_function)
 				if not r then return r, e end
-				r.parent_line = lastLine
-				lastLine.child = r
+				r.parent_line = ast
+				ast.child = r
 			end
 		end
 	end
 	return block
 end
 
---- returns the nested list of lines {content="", line=1}, grouped by indentation
+-- returns new_indented
+local function transform_indented(indented)
+	local i = 1
+	while i <= #indented do
+		local l = indented[i]
+
+		-- condition decorator
+		if l.content:match("^.-%s*[^~]%~[^#~$]-$") then
+			local decorator
+			l.content, decorator = l.content:match("^(..-)%s*(%~[^#~$]-)$")
+			indented[i] = { content = decorator, source = l.source, children = { l } }
+		-- tag decorator
+		elseif l.content:match("^..-%s*%#[^#~$]-$") then
+			local decorator
+			l.content, decorator = l.content:match("^(..-)%s*(%#[^#~$]-)$")
+			indented[i] = { content = decorator, source = l.source, children = { l } }
+		-- function decorator
+		elseif l.content:match("^..-%s*%$[^#~$]-$") then
+			local name
+			l.content, name = l.content:match("^(..-)%s*%$([^#~$]-)$")
+			indented[i] = { content = "~"..name, source = l.source }
+			table.insert(indented, i+1, { content = "$"..name, source = l.source, children = { l } })
+			i = i + 1 -- $ line should not contain any decorator anymore
+		else
+			i = i + 1 -- only increment when no decorator, as there may be several decorators per line
+		end
+
+		-- indented block
+		if l.children then
+			transform_indented(l.children)
+		end
+	end
+	return indented
+end
+
+--- returns the nested list of lines {content="", line=1, children={lines...} or nil}, parsing indentation
 -- multiple empty lines are merged
--- * list, last line
+-- * list, last line, insert_empty_line: in case of success
+-- * nil, err: in case of error
 local function parse_indent(lines, source, i, indentLevel, insert_empty_line)
 	i = i or 1
 	indentLevel = indentLevel or 0
@@ -396,9 +348,14 @@ local function parse_indent(lines, source, i, indentLevel, insert_empty_line)
 				end
 				table.insert(indented, { content = line, source = ("%s:%s"):format(source, i) })
 			elseif #indent > indentLevel then
-				local t
-				t, i, insert_empty_line = parse_indent(lines, source, i, #indent, insert_empty_line)
-				table.insert(indented, t)
+				if #indented == 0 then
+					return nil, ("unexpected indentation; at %s:%s"):format(source, i)
+				else
+					local t
+					t, i, insert_empty_line = parse_indent(lines, source, i, #indent, insert_empty_line)
+					if not t then return nil, i end
+					indented[#indented].children = t
+				end
 			else
 				return indented, i-1, insert_empty_line
 			end
@@ -426,17 +383,19 @@ end
 local function parse(state, s, name, source)
 	-- parse lines
 	local lines = parse_lines(s)
-	local indented = parse_indent(lines, source or name)
+	local indented, e = parse_indent(lines, source or name)
+	if not indented then return nil, e end
 	-- wrap in named function if neccessary
 	if name ~= "" then
 		if not name:match("^"..identifier_pattern.."$") then
 			return nil, ("invalid function name %q"):format(name)
 		end
 		indented = {
-			{ content = "$ "..name, source = ("%s:%s"):format(source or name, 0) },
-			indented
+			{ content = "$ "..name, source = ("%s:%s"):format(source or name, 0), children = indented },
 		}
 	end
+	-- transform ast
+	indented = transform_indented(indented)
 	-- parse
 	local root, err = parse_block(indented, state, "")
 	if not root then return nil, err end

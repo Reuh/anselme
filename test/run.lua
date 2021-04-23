@@ -195,6 +195,7 @@ else
 				if args["write-new"] and e:match("No such file") then
 					write_result(filebase, result)
 					print("Written result file for "..filebase)
+					success = success + 1
 				elseif not args.silent then
 					print("> "..namespace)
 					print(e)
