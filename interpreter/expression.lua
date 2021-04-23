@@ -99,13 +99,13 @@ local function eval(state, exp)
 			end
 			-- anselme function
 			if type(fn.value) == "table"  then
-				-- paragraph & paragraph decorator
-				if fn.value.type == "paragraph" or fn.value.paragraph then
+				-- checkpoint & checkpoint decorator
+				if fn.value.type == "checkpoint" or fn.value.checkpoint then
 					local r, e
-					if fn.value.type == "paragraph" then
+					if fn.value.type == "checkpoint" then
 						r, e = run(state, fn.value.child, not exp.explicit_call)
-					-- paragraph decorators: run single line or resume from it.
-					-- checkpoint & seen variables will be updated from the interpreter usual paragraph-reaching code.
+					-- checkpoint decorators: run single line or resume from it.
+					-- checkpoint & seen variables will be updated from the interpreter usual checkpoint-reaching code.
 					elseif exp.explicit_call then
 						r, e = run(state, fn.value.parent_block, false, fn.value.parent_position, fn.value.parent_position)
 					else
@@ -123,7 +123,7 @@ local function eval(state, exp)
 					local r, e
 					if exp.explicit_call or state.variables[fn.value.namespace.."🏁"].value == "" then
 						r, e = run(state, fn.value.child)
-					-- resume at last paragraph
+					-- resume at last checkpoint
 					else
 						local expr, err = expression(state.variables[fn.value.namespace.."🏁"].value, state, "")
 						if not expr then return expr, err end

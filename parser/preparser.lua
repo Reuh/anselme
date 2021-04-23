@@ -22,21 +22,21 @@ local function parse_line(line, state, namespace)
 			local expr
 			l, expr = l:match("^(.-)%s*%~(.-)$")
 			r.condition = expr
-		-- paragraph
+		-- checkpoint
 		elseif l:match("^..+§.-$") then
 			-- get identifier
 			local name
 			l, name = l:match("^(.-)%s*§(.-)$")
 			local identifier, rem = name:match("^("..identifier_pattern..")(.-)$")
-			if not identifier then return nil, ("no valid identifier in paragraph decorator %q; at %s"):format(identifier, line.source) end
+			if not identifier then return nil, ("no valid identifier in checkpoint decorator %q; at %s"):format(identifier, line.source) end
 			-- format identifier
 			local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
 			-- get alias
 			if rem:match("^%:") then
 				local content = rem:sub(2)
 				local alias, rem2 = content:match("^("..identifier_pattern..")(.-)$")
-				if not alias then return nil, ("expected an identifier in alias in paragraph decorator, but got %q; at %s"):format(content, line.source) end
-				if rem2:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in paragraph decorator, but got %q; at %s"):format(rem2, line.source) end
+				if not alias then return nil, ("expected an identifier in alias in checkpoint decorator, but got %q; at %s"):format(content, line.source) end
+				if rem2:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in checkpoint decorator, but got %q; at %s"):format(rem2, line.source) end
 				-- format alias
 				local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
 				-- define alias
@@ -45,11 +45,11 @@ local function parse_line(line, state, namespace)
 				end
 				state.aliases[aliasfqm] = fqm
 			elseif rem:match("[^%s]") then
-				return nil, ("expected end-of-line after identifier in paragraph decorator, but got %q; at %s"):format(rem, line.source)
+				return nil, ("expected end-of-line after identifier in checkpoint decorator, but got %q; at %s"):format(rem, line.source)
 			end
-			-- define paragraph
+			-- define checkpoint
 			namespace = fqm.."."
-			r.paragraph = true
+			r.checkpoint = true
 			r.parent_function = true
 			r.namespace = fqm.."."
 			r.name = fqm
@@ -104,14 +104,14 @@ local function parse_line(line, state, namespace)
 		r.push_event = "choice"
 		r.child = true
 		r.text = l:match("^>%s*(.-)$")
-	-- function & paragraph
+	-- function & checkpoint
 	elseif l:match("^%$") or l:match("^§") then -- § is a 2-bytes caracter, DO NOT USE LUA PATTERN OPERATORS as they operate on single bytes
-		r.type = l:match("^%$") and "function" or "paragraph"
+		r.type = l:match("^%$") and "function" or "checkpoint"
 		r.child = true
 		-- get identifier
 		local lc = l:match("^%$(.*)$") or l:match("^§(.*)$")
 		local identifier, rem = lc:match("^("..identifier_pattern..")(.-)$")
-		if not identifier then return nil, ("no valid identifier in paragraph/function definition line %q; at %s"):format(lc, line.source) end
+		if not identifier then return nil, ("no valid identifier in checkpoint/function definition line %q; at %s"):format(lc, line.source) end
 		-- format identifier
 		local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
 		-- get alias
@@ -119,12 +119,12 @@ local function parse_line(line, state, namespace)
 			local content = rem:sub(2)
 			local alias
 			alias, rem = content:match("^("..identifier_pattern..")(.-)$")
-			if not alias then return nil, ("expected an identifier in alias in paragraph/function definition line, but got %q; at %s"):format(content, line.source) end
+			if not alias then return nil, ("expected an identifier in alias in checkpoint/function definition line, but got %q; at %s"):format(content, line.source) end
 			-- format alias
 			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
 			-- define alias
 			if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
-				return nil, ("trying to define alias %q for function/paragraph %q, but already exist and refer to %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
+				return nil, ("trying to define alias %q for checkpoint/function %q, but already exist and refer to %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
 			end
 			state.aliases[aliasfqm] = fqm
 		end
@@ -159,7 +159,7 @@ local function parse_line(line, state, namespace)
 				table.insert(r.params, param_fqm)
 			end
 		elseif rem:match("[^%s]") then
-			return nil, ("expected end-of-line at end of paragraph/function definition line, but got %q; at %s"):format(rem, line.source)
+			return nil, ("expected end-of-line at end of checkpoint/function definition line, but got %q; at %s"):format(rem, line.source)
 		end
 		local arity, vararg = #r.params, nil
 		if arity > 0 and r.params[arity]:match("%.%.%.$") then -- varargs
@@ -167,9 +167,9 @@ local function parse_line(line, state, namespace)
 			vararg = arity
 			arity = { arity-1, math.huge }
 		end
-		-- store parent function and run paragraph when line is read
-		if r.type == "paragraph" then
-			r.paragraph = true
+		-- store parent function and run checkpoint when line is read
+		if r.type == "checkpoint" then
+			r.checkpoint = true
 			r.parent_function = true
 		end
 		-- don't keep function node in block AST

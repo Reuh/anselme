@@ -31,7 +31,7 @@ And things that are halfway there but *should* be there eventually (i.e., TODO):
 * language independant; scripts should (hopefully) be easily localizable into any language (it's possible, but doesn't provide any batteries for this right now)
     Defaults variables use emoji and then it's expected to alias them; works but not the most satisfying solution.
 * a good documentation
-    Need to work on consistent naming (paragraphs/checkpoints/commit, call syntaxes)
+    Need to work on consistent naming of Anselme concepts
     A step by step tutorial
 
 Things that Anselme is not:
@@ -86,11 +86,11 @@ Another line.
                 random line whith indentation which makes no sense at all.
 ```
 
-#### Commiting / checkpoints
+#### Checkpoints
 
 When executing a piece of Anselme code, it will not directly modify the global state (i.e. the values of variables used by every script), but only locally, in this execution.
 
-Right after reaching a checkpoint (a paragraph line), Anselme will commit its local state into the global one, i.e., make every change accessible to other scripts.
+Right after reaching a checkpoint (line or decorator), Anselme will merge the local state with the global one, i.e., make every change accessible to other scripts.
 
 ```
 $ main
@@ -103,7 +103,7 @@ $ main
     (But if we run the script "parallel" in parallel at this point, it will still think var=5)
 
     § foo
-        But the variable will be commited to the global state on a checkpoint
+        But the variable will be merged with the global state on a checkpoint
 
     after: {var}=2, still, as expected
 
@@ -117,9 +117,9 @@ $ parallel
 
 The purpose of this system is both to allow several scripts to run at the same time with an easy way to avoid interferences, and to make sure the global state is always in a consistent (and not in the middle of a calculation): since scripts can be interrupted at any time, when it is interrupted, anything that was changed between the last checkpoint and the interruption will be discarded. When running the script again, it will resume correctly at the last reached checkpoint. See [function calls](#function-calls) for more details on how to call/resume a function.
 
-Checkpoints are set per function. Paragraphs are expected to be defined inside functions only.
+Checkpoints are set per function, and are expected to be defined inside functions only.
 
-Commiting also happens after a paragraph has been manually called or resumed from.
+State merging also happens after a checkpoint has been manually called or resumed from.
 
 ### Lines types
 
@@ -137,9 +137,9 @@ There's different types of lines, depending on their first character(s) (after i
     here
 ```
 
-* `~`: expression line. Can be followed by an [expression](#expressions); otherwise the expression `1` is assumed. If the expression evaluates to [true](#truethness), run its children.
+* `~`: condition line. Can be followed by an [expression](#expressions); otherwise the expression `1` is assumed. If the expression evaluates to [true](#truethness), run its children. Without children, this line is typically use to simply run an expression.
 
-* `~~`: else expression. Same as an expression line, but is only run if the last expression or else-expression line (in the same indentation block) was false (regardless of line distance).
+* `~~`: else-condition. Same as a condition line, but is only run if the last condition or else-condition line (in the same indentation block) was false (regardless of line distance).
 
 ```
 ~ 1
@@ -164,7 +164,7 @@ There's different types of lines, depending on their first character(s) (after i
 > Last choice
 ```
 
-* `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body.
+* `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body. Also define a new namespace for its children.
 
 The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
@@ -215,15 +215,15 @@ Functions can return a value using a [return line](#lines-that-can-t-have-childr
 Functions always have the following variables defined in its namespace by default:
 
 `👁️`: number, number of times the function was executed before
-`🏁`: string, name of last reached checkpoint/paragraph
+`🏁`: string, name of last reached checkpoint
 
-* `§`: paragraph. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a paragraph. A paragraph act as a checkpoint.
+* `§`: checkpoint. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
 
-The function body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#paragraph-calls) to see the different ways of calling a paragraph.
+The function body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#checkpoint-calls) to see the different ways of calling a checkpoint manually.
 
-It is a checkpoint and will commit variables when the line is reached. See [committing](#committing-checkpoints).
+The local interpreter state will be merged with the global state when the line is reached. See [checkpoints](#checkpoints).
 
-When executing the parent function after this checkpoint has been reached (using the paranthesis-less function call syntax), the function will resume from this checkpoint, and the paragraph's children will be run. This is meant to be used as a way to restart the conversation from this point after it was interrupted, providing necessary context.
+When executing the parent function after this checkpoint has been reached (using the paranthesis-less function call syntax), the function will resume from this checkpoint, and the checkpoint's children will be run. This is meant to be used as a way to restart the conversation from this point after it was interrupted, providing necessary context.
 
 ```
 $ inane dialog
@@ -233,9 +233,9 @@ $ inane dialog
     (further dialog here)
 ```
 
-Paragraphs always have the following variable defined in its namespace by default:
+Checkpoints always have the following variable defined in its namespace by default:
 
-`👁️`: number, number of times the paragraph was reached or executed before
+`👁️`: number, number of times the checkpoint was reached or executed before
 
 * `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any event sent from its children. Can be nested.
 
@@ -298,9 +298,9 @@ And this is more text, in a different event.
 
 Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour.
 
-* `~`: expression decorator. Same as an expression line, behaving as if this line was it sole child. Typically used to conditionally execute line. Does not affect following else-conditions.
+* `~`: condition decorator. Same as an condition line, behaving as if this line was it sole child. Typically used to conditionally execute line. Does not affect following else-conditions.
 
-* `§`: paragraph decorator. Same as a paragraph line, behaving as if this line was it sole child.
+* `§`: checkpoint decorator. Same as a checkpoint line, behaving as if this line was it sole child.
 
 * `#`: tag decorator. Same as a tag line, behaving as if this line was it sole child.
 
@@ -366,7 +366,7 @@ Every event have a type (`text`, `choice`, `return` or `error` by default, custo
 
 Valid identifiers must be at least 1 caracters long and can contain anything except the caracters `%/*+-()!&|=$§?><:{}[],\`. They can contain spaces.
 
-When defining an identifier (using a function, paragraph or variable delcaration line), it will be defined into the current namespace (defined by the parent function/paragraph). When evaluating an expression, Anselme will look for variables into the current line's namespace, then go up a level if it isn't found, and so on.
+When defining an identifier (using a function, checkpoint or variable delcaration line), it will be defined into the current namespace (defined by the parent function/checkpoint). When evaluating an expression, Anselme will look for variables into the current line's namespace, then go up a level if it isn't found, and so on.
 
 In practise, this means you have to use the "genealogy" of the variable to refer to it from a line not in it indentation block:
 
@@ -396,7 +396,7 @@ Var1 in the fn1 namespace = 2: {fn1.var1}
 
 #### Aliases
 
-When defining identifiers (in variables, functions or paragraph definitions), they can be followed by a colon and another identifier. This identifier can be used as a new way to access the identifier (i.e., an alias).
+When defining identifiers (in variables, functions or checkpoint definitions), they can be followed by a colon and another identifier. This identifier can be used as a new way to access the identifier (i.e., an alias).
 
 ```
 :42 name: alias
@@ -424,7 +424,7 @@ Hi {player name}!
 Salut {nom du joueur} !
 ```
 
-Variables that are defined automatically by Anselme (`👁️` and `🏁` in paragraphs and functions) can be automatically aliased using `vm:setaliases("👁️alias", "🏁alias")`. See [API](#api-reference).
+Variables that are defined automatically by Anselme (`👁️` and `🏁` in checkpoints and functions) can be automatically aliased using `vm:setaliases("👁️alias", "🏁alias")`. See [API](#api-reference).
 
 ### Expressions
 
@@ -490,7 +490,7 @@ $ f(a)
 ~ f("an argument")
 ```
 
-Please note, however, that if the function contains checkpoints/paragraphs, these two syntaxes behave differently. Without parantheses, the function will resume from the last reached checkpoint; with parantheses, the function always restart from its beginning:
+Please note, however, that if the function contains checkpoints, these two syntaxes behave differently. Without parantheses, the function will resume from the last reached checkpoint; with parantheses, the function always restart from its beginning:
 
 ```
 $ f
@@ -533,9 +533,9 @@ $ f
 this is text: {f}
 ```
 
-#### Paragraph calls
+#### Checkpoint calls
 
-Most of the time, you should'nt need to call paragraphs yourself - they will be automatically be set as the active checkpoint when the interperter reach their line, and they will be automatically called when resuming its parent function.
+Most of the time, you should'nt need to call checkpoints yourself - they will be automatically be set as the active checkpoint when the interperter reach their line, and they will be automatically called when resuming its parent function.
 
 But in the cases when you want to manually set the current checkpoint, you can call it with a similar syntax to paranthesis-less function calls:
 
@@ -546,17 +546,17 @@ $ f
         b
     c
 
-Force run from checkpoint, will write "b" and "c" and set the current checkpoint to "checkpoint":
+Force run the function starting from checkpoint, will write "b" and "c" and set the current checkpoint to "checkpoint":
 ~ f.checkpoint
 
-Will correctly resumes from the checkpoint, and write "b" and "c":
+Will correctly resumes from the last set checkpoint, and write "b" and "c":
 ~ f
 
 Function can always be restarted from the begining using parantheses:
 ~ f()
 ```
 
-You can also only execute the paragraphs' children code only by using a parantheses-syntax:
+You can also only execute the checkpoints' children code only by using a parantheses-syntax:
 
 ```
 $ f
@@ -574,13 +574,13 @@ And will resume from the checkpoint like before:
 
 Method style calling is also possible, like with functions.
 
-Paragraphs commit variables after being called (either manually or automatically from resuming a function). The commit always happen after the paragraph's child block has been ran.
+Checkpoints merge variables after being called (either manually or automatically from resuming a function). See [checkpoints](#checkpoints). The merge always happen after the checkpoint's child block has been ran.
 
-Please also be aware that when resuming from a paragraph, Anselme will try to restore the interpreter state as if the function was correctly executed from the start up to this paragraph. This includes:
+Please also be aware that when resuming from a checkpoint, Anselme will try to restore the interpreter state as if the function was correctly executed from the start up to this checkpoint. This includes:
 
-* if the paragraph is in a expression block, it will assume the expression was true (but will not re-evaluate it)
-* if the paragraph is in a choice block, it will assume this choice was selected (but will not re-evaluate any of the choices from the same choice group)
-* will try to re-add every tag from parent lines; this require Anselme to re-evaluate every tag line and decorator that's a parent of the paragraph in the function. Be careful if your tag expressions have side-effects.
+* if the checkpoint is in a condition block, it will assume the condition was true (but will not re-evaluate it)
+* if the checkpoint is in a choice block, it will assume this choice was selected (but will not re-evaluate any of the choices from the same choice group)
+* will try to re-add every tag from parent lines; this require Anselme to re-evaluate every tag line and decorator that's a parent of the checkpoint in the function. Be careful if your tag expressions have side-effects.
 
 #### Operators
 
@@ -650,7 +650,7 @@ This only works on strings:
 
 ##### Sequential execution
 
-`cycle(...)`: given function/paragraph identifiers as string as arguments, will execute them in the order given each time the function is ran; e.g., `cycle("a", "b")` will execute a on the first execution, then b, then a again, etc.
+`cycle(...)`: given function/checkpoint identifiers as string as arguments, will execute them in the order given each time the function is ran; e.g., `cycle("a", "b")` will execute a on the first execution, then b, then a again, etc.
 
 `next(...)`: same as cycle, but will not cycle; once the end of sequence is reached, will keep executing the last element.
 

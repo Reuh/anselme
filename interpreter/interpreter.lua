@@ -1,5 +1,5 @@
 local eval
-local truthy, flush_state, to_lua, eval_text, escape
+local truthy, merge_state, to_lua, eval_text, escape
 
 local tags = {
 	--- push new tags on top of the stack, from Anselme values
@@ -148,15 +148,15 @@ local function run_line(state, line)
 					end
 				end
 			end
-		elseif line.type ~= "paragraph" then
+		elseif line.type ~= "checkpoint" then
 			return nil, ("unknown line type %q; at %s"):format(line.type, line.source)
 		end
 		-- tag decorator
 		if line.tag then
 			tags:pop(state)
 		end
-		-- paragraph decorator and line
-		if line.paragraph then
+		-- checkpoint decorator and line
+		if line.checkpoint then
 			state.variables[line.namespace.."👁️"] = {
 				type = "number",
 				value = state.variables[line.namespace.."👁️"].value + 1
@@ -165,7 +165,7 @@ local function run_line(state, line)
 				type = "string",
 				value = line.name
 			}
-			flush_state(state)
+			merge_state(state)
 		end
 	end
 end
@@ -195,10 +195,10 @@ run_block = function(state, block, resume_from_there, i, j)
 		end
 		i = i + 1
 	end
-	-- if we are exiting a paragraph block, mark it as ran and update checkpoint
-	-- (when resuming from a checkpoint, execution is resumed from inside the paragraph, the line.paragraph check in run_line is never called)
+	-- if we are exiting a checkpoint block, mark it as ran and update checkpoint
+	-- (when resuming from a checkpoint, execution is resumed from inside the checkpoint, the line.checkpoint check in run_line is never called)
 	-- (and we want this to be done after executing the checkpoint block anyway)
-	if block.parent_line and block.parent_line.paragraph then
+	if block.parent_line and block.parent_line.checkpoint then
 		local parent_line = block.parent_line
 		state.variables[parent_line.namespace.."👁️"] = {
 			type = "number",
@@ -213,7 +213,7 @@ run_block = function(state, block, resume_from_there, i, j)
 				value = parent_line.name
 			}
 		end
-		flush_state(state)
+		merge_state(state)
 	end
 	-- go up hierarchy if asked to resume
 	-- will stop at function boundary
@@ -294,7 +294,7 @@ local interpreter = {
 package.loaded[...] = interpreter
 eval = require((...):gsub("interpreter$", "expression"))
 local common = require((...):gsub("interpreter$", "common"))
-truthy, flush_state, to_lua, eval_text = common.truthy, common.flush_state, common.to_lua, common.eval_text
+truthy, merge_state, to_lua, eval_text = common.truthy, common.merge_state, common.to_lua, common.eval_text
 escape = require((...):gsub("interpreter%.interpreter$", "parser.common")).escape
 
 return interpreter

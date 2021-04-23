@@ -14,7 +14,7 @@ local expression = require((...):gsub("anselme$", "parser.expression"))
 local eval = require((...):gsub("anselme$", "interpreter.expression"))
 local run_line = require((...):gsub("anselme$", "interpreter.interpreter")).run_line
 local to_lua = require((...):gsub("anselme$", "interpreter.common")).to_lua
-local flush_state = require((...):gsub("anselme$", "interpreter.common")).flush_state
+local merge_state = require((...):gsub("anselme$", "interpreter.common")).merge_state
 local stdfuncs = require((...):gsub("anselme$", "stdlib.functions"))
 
 -- wrappers for love.filesystem / luafilesystem
@@ -55,7 +55,7 @@ local interpreter_methods = {
 	vm = nil,
 
 	--- run the VM until the next event
-	-- will commit changed variables on successful script end
+	-- will merge changed variables on successful script end
 	-- returns event, data; if event is "return" or "error", the interpreter must not be stepped further
 	step = function(self)
 		-- check status
@@ -84,7 +84,7 @@ local interpreter_methods = {
 		local success, event, data = coroutine.resume(self.state.interpreter.coroutine)
 		anselme.running = previous
 		if not success then return "error", event end
-		if event == "return" then flush_state(self.state) end
+		if event == "return" then merge_state(self.state) end
 		return event, data
 	end,
 
@@ -254,7 +254,7 @@ local vm_mt = {
 		return self
 	end,
 
-	--- set aliases for built-in variables 👁️ and 🏁 that will be defined on every new paragraph and function
+	--- set aliases for built-in variables 👁️ and 🏁 that will be defined on every new checkpoint and function
 	-- nil for no alias
 	-- return self
 	setaliases = function(self, seen, checkpoint)
@@ -296,7 +296,7 @@ local vm_mt = {
 	end,
 
 	--- save/load script state
-	-- only saves variables full names and values, so make sure to not change important variables, paragraphs and functions names between a save and a load
+	-- only saves variables full names and values, so make sure to not change important variables, checkpoints and functions names between a save and a load
 	load = function(self, data)
 		local saveMajor, currentMajor = data.anselme_version:match("^[^%.]*"), anselme.version:match("^[^%.]*")
 		assert(saveMajor == currentMajor, ("trying to load data from an incompatible version of Anselme; save was done using %s but current version is %s"):format(data.anselme_version, anselme.version))
@@ -353,7 +353,7 @@ local vm_mt = {
 					-- choice event
 					choice_selected = nil,
 					choice_available = {},
-					-- skip next choices until next event change (to skip currently running choice block when resuming from a paragraph)
+					-- skip next choices until next event change (to skip currently running choice block when resuming from a checkpoint)
 					skip_choices_until_flush = nil,
 					-- interrupt
 					interrupt = nil,
@@ -397,7 +397,7 @@ return setmetatable(anselme, {
 				-- 	{
 				-- 		arity = {3,42}, type = { [1] = "variable" }, check = function, rewrite = function, vararg = 2, mode = "custom",
 				-- 		value = function(state, exp)
-				-- 		end -- or paragraph, function, line
+				-- 		end -- or checkpoint, function, line
 				-- 	}
 				-- },
 			},

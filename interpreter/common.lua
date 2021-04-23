@@ -4,7 +4,7 @@ local eval
 local common
 common = {
 	-- flush interpreter state to global state
-	flush_state = function(state)
+	merge_state = function(state)
 		local global_vars = state.interpreter.global_state.variables
 		for var, value in pairs(state.variables) do
 			global_vars[var] = value
