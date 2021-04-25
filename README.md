@@ -733,6 +733,12 @@ This only works on strings:
 
 #### Built-in functions
 
+##### Pair methods
+
+`name(pair)`: returns the name (first element) of a pair
+
+`value(pair)`: returns the value (second element) of a pair
+
 ##### List methods
 
 `len(list)`: returns length of the list

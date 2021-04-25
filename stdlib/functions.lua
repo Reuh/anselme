@@ -267,6 +267,23 @@ functions = {
 			end
 		}
 	},
+	-- pair methods
+	name = {
+		{
+			arity = 1, types = { "pair" }, mode = "raw",
+			value = function(a)
+				return a.value[1]
+			end
+		}
+	},
+	value = {
+		{
+			arity = 1, types = { "pair" }, mode = "raw",
+			value = function(a)
+				return a.value[2]
+			end
+		}
+	},
 	-- list methods
 	len = {
 		{
