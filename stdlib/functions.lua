@@ -29,6 +29,9 @@ local function compare(a, b)
 	end
 end
 
+local numeric_index
+local string_index
+
 local functions
 functions = {
 	-- discard left
@@ -40,6 +43,55 @@ functions = {
 	},
 	-- assignement
 	[":="] = {
+		-- assign to numeric index
+		{
+			arity = 2, mode = "custom",
+			check = function(state, args)
+				local left = args[1]
+				return left.type == "function" and left.variant == numeric_index and left.argument.expression.left.type == "variable"
+			end,
+			value = function(state, exp)
+				local arg = exp.argument.expression
+				local name = arg.left.argument.expression.left.name
+				local index, indexe = eval(state, arg.left.argument.expression.right)
+				if not index then return index, indexe end
+				local right, righte = eval(state, arg.right)
+				if not right then return right, righte end
+				state.variables[name].value[index.value] = right
+				return right
+			end
+		},
+		-- assign to string index
+		{
+			arity = 2, mode = "custom",
+			check = function(state, args)
+				local left = args[1]
+				return left.type == "function" and left.variant == string_index and left.argument.expression.left.type == "variable"
+			end,
+			value = function(state, exp)
+				local arg = exp.argument.expression
+				local name = arg.left.argument.expression.left.name
+				local index, indexe = eval(state, arg.left.argument.expression.right)
+				if not index then return index, indexe end
+				local right, righte = eval(state, arg.right)
+				if not right then return right, righte end
+				-- update index
+				local list = state.variables[name].value
+				for _,v in ipairs(list) do
+					if v.type == "pair" and compare(v.value[1], index) then
+						v.value[2] = right
+						return right
+					end
+				end
+				-- new index
+				table.insert(list, {
+					type = "pair",
+					value = { index, right }
+				})
+				return right
+			end
+		},
+		-- assign to direct variable
 		{
 			arity = 2, mode = "custom",
 			check = function(state, args)
@@ -391,6 +443,9 @@ functions = {
 		return anselme.running:run(f, anselme.running:current_namespace())
 	end
 }
+
+numeric_index = functions["("][1]
+string_index = functions["("][2]
 
 package.loaded[...] = functions
 truthy = require((...):gsub("stdlib%.functions$", "interpreter.common")).truthy

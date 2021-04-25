@@ -685,6 +685,8 @@ Built-in operators:
 
 `a := b`: evaluate b, assign its value to identifier `a`. Returns the new value.
 
+`a(index) := b`: evaluate b, assign its value to element of specific index in list `a`. Element is searched using the same method as list index operator `a(b)`; if indexing using a string and an associated pair doesn't exist, add a new one at the end of the list. Returns the new value.
+
 `a += b`: evaluate b, assign its the current value of a `+` the value of b to a. Returns the new value.
 
 `-=`, `*=`, `/=`, `//=`, `%=`, `^=`: same with other arithmetic operators.

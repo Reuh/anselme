@@ -5,8 +5,6 @@ Probably won't be able to remove them completely (since lists can have mixed typ
 Ideally, we'd avoid runtime type checking.
 
 TODO: test reacheability of script paths
-TODO: functions with default value for arguments / named parameters. Use = as name-value delimiter.
-TODO: allow passing varargs as is to another function call
 
 Symbols still available:
 	`
