@@ -1,7 +1,10 @@
 -- anselme module
 local anselme = {
 	-- version
-	version = "0.13.1",
+	-- major.minor.fix
+	-- saves files are incompatible between major versions
+	-- scripts files may break between minor versions
+	version = "0.14.0",
 	--- currently running interpreter
 	running = nil
 }
@@ -399,7 +402,7 @@ return setmetatable(anselme, {
 			functions = {
 				-- [":="] = {
 				-- 	{
-				-- 		arity = {3,42}, type = { [1] = "variable" }, check = function, rewrite = function, vararg = 2, mode = "custom",
+				-- 		arity = {3,42}, type = { [1] = "variable" }, check = function, rewrite = function, mode = "custom",
 				-- 		value = function(state, exp)
 				-- 		end -- or checkpoint, function, line
 				-- 	}

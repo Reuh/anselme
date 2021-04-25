@@ -53,7 +53,7 @@ functions = {
 				return right.return_type or true
 			end,
 			value = function(state, exp)
-				local arg = exp.argument
+				local arg = exp.argument.expression
 				local name = arg.left.name
 				local right, righte = eval(state, arg.right)
 				if not right then return right, righte end
@@ -84,7 +84,7 @@ functions = {
 		{ rewrite = rewrite_assignement }
 	},
 	-- comparaison
-	["="] = {
+	["=="] = {
 		{
 			arity = 2, return_type = "number", mode = "raw",
 			value = function(a, b)
@@ -193,7 +193,7 @@ functions = {
 		{
 			arity = 2, return_type = "number", mode = "custom",
 			value = function(state, exp)
-				local arg = exp.argument
+				local arg = exp.argument.expression
 				local left, lefte = eval(state, arg.left)
 				if not left then return left, lefte end
 				if truthy(left) then
@@ -217,7 +217,7 @@ functions = {
 		{
 			arity = 2, return_type = "number", mode = "custom",
 			value = function(state, exp)
-				local arg = exp.argument
+				local arg = exp.argument.expression
 				local left, lefte = eval(state, arg.left)
 				if not left then return left, lefte end
 				if truthy(left) then
@@ -253,6 +253,17 @@ functions = {
 			arity = 2, types = { "list", "number" }, mode = "raw",
 			value = function(a, b)
 				return a.value[b.value] or { type = "nil", value = nil }
+			end
+		},
+		{
+			arity = 2, types = { "list", "string" }, mode = "raw",
+			value = function(a, b)
+				for _,v in ipairs(a.value) do
+					if v.type == "pair" and compare(v.value[1], b) then
+						return v.value[2]
+					end
+				end
+				return { type = "nil", value = nil }
 			end
 		}
 	},

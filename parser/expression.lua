@@ -6,7 +6,7 @@ local binops_prio = {
 	[2] = { ":=", "+=", "-=", "//=", "/=", "*=", "%=", "^=" },
 	[3] = { "," },
 	[4] = { "|", "&" },
-	[5] = { "!=", "=", ">=", "<=", "<", ">" },
+	[5] = { "!=", "==", ">=", "<=", "<", ">" },
 	[6] = { "+", "-" },
 	[7] = { "*", "//", "/", "%" },
 	[8] = {}, -- unary operators
@@ -89,7 +89,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of list parenthesis expression"):format(r_paren) end
 			end
 			return expression(r, state, namespace, currentPriority, {
-				type = "list_parentheses",
+				type = "list_brackets",
 				return_type = "list",
 				expression = exp
 			})
@@ -97,6 +97,26 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 		elseif s:match("^"..identifier_pattern) then
 			local name, r = s:match("^("..identifier_pattern..")(.-)$")
 			name = format_identifier(name)
+			-- string:value pair shorthand using =
+			if r:match("^=[^=]") then
+				local val
+				val, r = expression(r:match("^=(.*)$"), state, namespace, 9)
+				if not val then return val, r end
+				local args = {
+					type = "list",
+					return_type = "list",
+					left = {
+						type = "string",
+						return_type = "string",
+						value = { name }
+					},
+					right = val
+				}
+				-- find compatible variant
+				local variant, err = find_function_variant(":", state, args, true)
+				if not variant then return variant, err end
+				return expression(r, state, namespace, currentPriority, variant)
+			end
 			-- variables
 			local var, vfqm = find(state.aliases, state.variables, namespace, name)
 			if var then
@@ -132,6 +152,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 						local err
 						args, err = expression(content, state, namespace)
 						if not args then return args, err end
+						if err:match("[^%s]") then return nil, ("unexpected %q at end of argument list"):format(err) end
 					end
 				end
 				-- find compatible variant
@@ -181,6 +202,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 										local err
 										args, err = expression(content, state, namespace)
 										if not args then return args, err end
+										if err:match("[^%s]") then return nil, ("unexpected %q at end of argument list"):format(err) end
 									end
 								end
 								-- add first argument

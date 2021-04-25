@@ -5,6 +5,6 @@ $ f
 		y
 	@2
 
-~ f = 2
+~ f == 2
 	~ choose(1)
 	Yes.

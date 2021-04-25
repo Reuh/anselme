@@ -98,16 +98,16 @@ $ main
 
     ~ var := 2
 
-    before: {var}=2, because the value has been changed in the current execution context
+    before: {var}==2, because the value has been changed in the current execution context
 
-    (But if we run the script "parallel" in parallel at this point, it will still think var=5)
+    (But if we run the script "parallel" in parallel at this point, it will still think var==5)
 
     § foo
         But the variable will be merged with the global state on a checkpoint
 
-    after: {var}=2, still, as expected
+    after: {var}==2, still, as expected
 
-    (And if we run the script "parallel" in parallel at this point, it will now think var=2)
+    (And if we run the script "parallel" in parallel at this point, it will now think var==2)
 
 $ parallel
     parallel: {main.var}
@@ -150,7 +150,7 @@ There's different types of lines, depending on their first character(s) (after i
 
 ~ 0
     This is never run.
-~~ 1 = 0
+~~ 1 == 0
     This neither.
 ~~
     This is.
@@ -168,13 +168,14 @@ There's different types of lines, depending on their first character(s) (after i
 
 The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
-A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias. It is enclosed with paranthesis and contain a comma-separated list of identifiers:
+A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias (after a `:`) and a default value (after a `=`). It is enclosed with paranthesis and contain a comma-separated list of identifiers:
 
 ```
-$ f(a, b, c)
+$ f(a, b: alias for b, c="default for c", d: alias for d = "default for d")
     first argument: {a}
     second argument: {b}
     third argument: {c}
+    fourth argument: {d}
 ```
 
 Functions can also have a variable number of arguments. By adding `...` after the last argument identifier, it will be considered a variable length argument ("vararg"), and will contain a list of every extraneous argument.
@@ -274,7 +275,7 @@ $ f
     @2
 
 (f will return 2 since the choice is run after the @2 line)
-~ f = 2
+~ f == 2
 
     Yes.
 
@@ -442,7 +443,7 @@ Var1 in the current namespace = 1: {var1}
 Var1 in the fn1 namespace = 2: {fn1.var1}
 
 (Weird, but valid, and also the reason I'm not talking of scoping:)
-~ fn1.var1 = 3
+~ fn1.var1 == 3
 ```
 
 #### Aliases
@@ -495,7 +496,7 @@ Default types are:
 
 * `list`: a list of values. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
 
-* `pair`: a couple of values. Types can be mixed. Can be defined using colon `"key":5`.
+* `pair`: a couple of values. Types can be mixed. Can be defined using colon `"key":5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax.
 
 How conversions are handled from Anselme to Lua:
 
@@ -507,7 +508,7 @@ How conversions are handled from Anselme to Lua:
 
 * `list` -> `table`. Pair elements in the list will be assigned as a key-value pair in the Lua list and its index skipped in the sequential part, e.g. `[1,2,"key":"value",3]` -> `{1,2,3,key="value"}`.
 
-* `pair` -> `table`, with a signle key-value pair.
+* `pair` -> `table`, with a single key-value pair.
 
 How conservions are handled from Lua to Anselme:
 
@@ -584,6 +585,49 @@ $ f
 this is text: {f}
 ```
 
+Functions can also have default arguments. Defaults values can be any expression and are re-evaluated each time the function is called:
+
+```
+$ f(a, b=1)
+    @a+b
+
+{f(1)} = 2
+
+$ g(a, b=a)
+    @a+b
+
+{g(1)} = 2
+{g(2)} = 4
+```
+
+Arguments can also be passed by naming them instead of their position. These syntaxes can be mixed:
+
+```
+$ f(a, b, c)
+    @a + b + c
+
+{f(1,2,3)} = {f(c=3,b=2,a=1)} = {f(1,2,c=3)}
+```
+
+Anselme actually treat argument list are regular lists; named arguments are actually pairs.
+
+This means that pairs can't be passed directly as arguments to a function (as they will be considered named arguments). If you want to use pairs, always wrap them in a list.
+
+Functions can have a variable number of arguments. Additional arguments are added in a list:
+
+```
+$ f(a, b...)
+    {a}
+
+    {b}
+
+{f(1, 2, 3, 4, 5)}
+
+(Will print:)
+    1
+    [2,3,4,5]
+```
+
 #### Checkpoint calls
 
 Most of the time, you should'nt need to call checkpoints yourself - they will be automatically be set as the active checkpoint when the interperter reach their line, and they will be automatically called when resuming its parent function.
@@ -647,7 +691,7 @@ Built-in operators:
 
 ##### Comparaison
 
-`a = b`: returns `1` if a and b have the same value (will recursively compare list and pairs), `0` otherwise
+`a == b`: returns `1` if a and b have the same value (will recursively compare list and pairs), `0` otherwise
 
 `a != b`: returns `1` if a and b do not have the same value, `0` otherwise
 
@@ -685,7 +729,7 @@ This only works on strings:
 
 `a : b`: evaluate a and b, returns a new pair with a as key and b as value.
 
-`a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing.
+`a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name.
 
 #### Built-in functions
 

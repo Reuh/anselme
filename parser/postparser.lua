@@ -6,6 +6,21 @@ local parse_text
 local function parse(state)
 	for _, l in ipairs(state.queued_lines) do
 		local line, namespace = l.line, l.namespace
+		-- default arguments
+		if line.type == "function" then
+			for i, param in ipairs(line.params) do
+				if param.default then
+					local exp, rem = expression(param.default, state, namespace)
+					if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
+					if rem:match("[^%s]") then return nil, ("expected end of expression before %q; at %s"):format(rem, line.source) end
+					param.default = exp
+					-- complete type information
+					if exp.return_type then
+						line.variant.types[i] = exp.return_type
+					end
+				end
+			end
+		end
 		-- expressions
 		if line.expression then
 			local exp, rem = expression(line.expression, state, namespace)

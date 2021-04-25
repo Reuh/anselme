@@ -1,0 +1,9 @@
+$ f : test
+	@"ok"
+
+{f} = {test}
+
+$ g : bis(a)
+	@a
+
+{g("ye")} = {bis("ye")}

@@ -33,12 +33,13 @@ local function eval(state, exp)
 	elseif exp.type == "parentheses" then
 		return eval(state, exp.expression)
 	-- list parentheses
-	elseif exp.type == "list_parentheses" then
+	elseif exp.type == "list_brackets" then
 		if exp.expression then
 			local v, e = eval(state, exp.expression)
 			if not v then return v, e end
-			if v.type == "list" then
+			if exp.expression.type == "list" then
 				return v
+			-- contained a single element, wrap in list manually
 			else
 				return {
 					type = "list",
@@ -78,24 +79,12 @@ local function eval(state, exp)
 		if fn.mode == "custom" then
 			return fn.value(state, exp)
 		else
-			-- eval args: same as list, but only put vararg arguments in a separate list
-			local l = {}
+			-- eval args: list_brackets
+			local args = {}
 			if exp.argument then
-				local vararg = fn.vararg or math.huge
-				local i, ast = 1, exp.argument
-				while ast.type == "list" and i < vararg do
-					local left, lefte = eval(state, ast.left)
-					if not left then return left, lefte end
-					table.insert(l, left)
-					ast = ast.right
-					i = i + 1
-				end
-				local right, righte = eval(state, ast)
-				if not right then return right, righte end
-				table.insert(l, right)
-			end
-			if fn.vararg and #l < fn.vararg then -- empty list vararg
-				table.insert(l, { type = "list", value = {} })
+				local arg, arge = eval(state, exp.argument)
+				if not arg then return arg, arge end
+				args = arg.value
 			end
 			-- anselme function
 			if type(fn.value) == "table"  then
@@ -106,9 +95,40 @@ local function eval(state, exp)
 					return r
 				-- function
 				elseif fn.value.type == "function" then
-					-- set args
+					-- map named arguments
+					for _, arg in ipairs(args) do
+						if arg.type == "pair" and arg.value[1].type == "string" then
+							args[arg.value[1].value] = arg.value[2]
+						end
+					end
+					-- get and set args
 					for j, param in ipairs(fn.value.params) do
-						state.variables[param] = l[j]
+						local val
+						-- named
+						if param.alias and args[param.alias] then
+							val = args[param.alias]
+						elseif args[param.name] then
+							val = args[param.name]
+						-- vararg
+						elseif param.vararg then
+							val = { type = "list", value = {} }
+							for k=j, #args do
+								table.insert(val.value, args[k])
+							end
+						-- positional
+						elseif args[j] and args[j].type ~= "pair" then
+							val = args[j]
+						-- default
+						elseif param.default then
+							local v, e = eval(state, param.default)
+							if not v then return v, e end
+							val = v
+						end
+						if val then
+							state.variables[param.full_name] = val
+						else
+							return nil, ("missing mandatory argument %q in function %q call"):format(param.name, fn.value.name)
+						end
 					end
 					-- eval function
 					local r, e
@@ -130,12 +150,13 @@ local function eval(state, exp)
 					return nil, ("unknown function type %q"):format(fn.value.type)
 				end
 			-- lua functions
+			-- TODO: handle named and default arguments
 			else
 				if fn.mode == "raw" then
-					return fn.value(unpack(l))
+					return fn.value(unpack(args))
 				else
 					local l_lua = {}
-					for _, v in ipairs(l) do
+					for _, v in ipairs(args) do
 						table.insert(l_lua, to_lua(v))
 					end
 					local r, e

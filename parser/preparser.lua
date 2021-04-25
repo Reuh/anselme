@@ -2,6 +2,28 @@ local expression
 local format_identifier, identifier_pattern
 local eval
 
+-- try to define an alias using rem, the text that follows the identifier
+-- returns true, new_rem, alias_name in case of success
+-- returns true, rem in case of no alias and no error
+-- returns nil, err in case of alias and error
+local function maybe_alias(rem, fqm, namespace, line, state)
+	local alias
+	if rem:match("^%:") then
+		local param_content = rem:sub(2)
+		alias, rem = param_content:match("^("..identifier_pattern..")(.-)$")
+		if not alias then return nil, ("expected an identifier in alias, but got %q; at %s"):format(param_content, line.source) end
+		alias = format_identifier(alias)
+		-- format alias
+		local aliasfqm = ("%s%s"):format(namespace, alias)
+		-- define alias
+		if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
+			return nil, ("trying to define alias %q for %q, but already exist and refer to %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
+		end
+		state.aliases[aliasfqm] = fqm
+	end
+	return true, rem, alias
+end
+
 -- * ast: if success
 -- * nil, error: in case of error
 local function parse_line(line, state, namespace)
@@ -9,12 +31,6 @@ local function parse_line(line, state, namespace)
 	local r = {
 		source = line.source
 	}
-	-- comment
-	if l:match("^%(") then
-		r.type = "comment"
-		r.remove_from_block_ast = true
-		return r
-	end
 	-- else-condition & condition
 	if l:match("^~~?") then
 		r.type = l:match("^~~") and "else-condition" or "condition"
@@ -42,19 +58,9 @@ local function parse_line(line, state, namespace)
 		-- format identifier
 		local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
 		-- get alias
-		if rem:match("^%:") then
-			local content = rem:sub(2)
-			local alias
-			alias, rem = content:match("^("..identifier_pattern..")(.-)$")
-			if not alias then return nil, ("expected an identifier in alias in checkpoint/function definition line, but got %q; at %s"):format(content, line.source) end
-			-- format alias
-			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
-			-- define alias
-			if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
-				return nil, ("trying to define alias %q for checkpoint/function %q, but already exist and refer to %q; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
-			end
-			state.aliases[aliasfqm] = fqm
-		end
+		local ok_alias
+		ok_alias, rem = maybe_alias(rem, fqm, namespace, line, state)
+		if not ok_alias then return ok_alias, rem end
 		-- get params
 		r.params = {}
 		if r.type == "function" and rem:match("^%b()$") then
@@ -63,36 +69,39 @@ local function parse_line(line, state, namespace)
 				-- get identifier
 				local param_identifier, param_rem = param:match("^("..identifier_pattern..")(.-)$")
 				if not identifier then return nil, ("no valid identifier in function parameter %q; at %s"):format(param, line.source) end
+				param_identifier = format_identifier(param_identifier)
 				-- format identifier
-				local param_fqm = ("%s.%s"):format(fqm, format_identifier(param_identifier))
+				local param_fqm = ("%s.%s"):format(fqm, param_identifier)
 				-- get alias
-				if param_rem:match("^%:") then
-					local param_content = param_rem:sub(2)
-					local alias
-					alias, param_rem = param_content:match("^("..identifier_pattern..")(.-)$")
-					if not alias then return nil, ("expected an identifier in alias in parameter, but got %q; at %s"):format(param_content, line.source) end
-					-- format alias
-					local aliasfqm = ("%s.%s"):format(fqm, format_identifier(alias))
-					-- define alias
-					if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= param_fqm then
-						return nil, ("trying to define alias %q for parameter %q, but already exist and refer to %q; at %s"):format(aliasfqm, param_fqm, state.aliases[aliasfqm], line.source)
-					end
-					state.aliases[aliasfqm] = param_fqm
-				end
-				if param_rem:match("[^%s]") then
+				local ok_param_alias, param_alias
+				ok_param_alias, param_rem, param_alias = maybe_alias(param_rem, param_fqm, fqm..".", line, state)
+				if not ok_param_alias then return ok_param_alias, param_rem end
+				-- get default value
+				local default
+				if param_rem:match("^=") then
+					default = param_rem:match("^=(.*)$")
+				elseif param_rem:match("[^%s]") then
 					return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param_fqm, param_rem, line.source)
 				end
 				-- add parameter
-				table.insert(r.params, param_fqm)
+				table.insert(r.params, { name = param_identifier, alias = param_alias, full_name = param_fqm, default = default })
 			end
 		elseif rem:match("[^%s]") then
 			return nil, ("expected end-of-line at end of checkpoint/function definition line, but got %q; at %s"):format(rem, line.source)
 		end
-		local arity, vararg = #r.params, nil
-		if arity > 0 and r.params[arity]:match("%.%.%.$") then -- varargs
-			r.params[arity] = r.params[arity]:match("^(.*)%.%.%.$")
-			vararg = arity
-			arity = { arity-1, math.huge }
+		-- calculate arity
+		local minarity, maxarity = #r.params, #r.params
+		for _, param in ipairs(r.params) do -- params with default values
+			if param.default then
+				minarity = minarity - 1
+			end
+		end
+		if maxarity > 0 and r.params[maxarity].full_name:match("%.%.%.$") then -- varargs
+			r.params[maxarity].name = r.params[maxarity].name:match("^(.*)%.%.%.$")
+			r.params[maxarity].full_name = r.params[maxarity].full_name:match("^(.*)%.%.%.$")
+			r.params[maxarity].vararg = true
+			minarity = minarity - 1
+			maxarity = math.huge
 		end
 		-- store parent function and run checkpoint when line is read
 		if r.type == "checkpoint" then
@@ -107,9 +116,8 @@ local function parse_line(line, state, namespace)
 		r.name = fqm
 		if state.variables[fqm] then return nil, ("trying to define %s %s, but a variable with the same name exists; at %s"):format(r.type, fqm, line.source) end
 		r.variant = {
-			arity = arity,
+			arity = { minarity, maxarity },
 			types = {},
-			vararg = vararg,
 			value = r
 		}
 		-- new function (no overloading yet)
@@ -191,13 +199,13 @@ local function parse_line(line, state, namespace)
 		end
 		-- define args and set type check information
 		for i, param in ipairs(r.params) do
-			if not state.variables[param] then
-				state.variables[param] = {
+			if not state.variables[param.full_name] then
+				state.variables[param.full_name] = {
 					type = "undefined argument",
 					value = { r.variant, i }
 				}
-			elseif state.variables[param].type ~= "undefined argument" then
-				r.variant.types[i] = state.variables[param].type
+			elseif state.variables[param.full_name].type ~= "undefined argument" then
+				r.variant.types[i] = state.variables[param.full_name].type
 			end
 		end
 	-- definition
@@ -208,25 +216,17 @@ local function parse_line(line, state, namespace)
 		local exp, rem = expression(l:match("^:(.*)$"), state, namespace) -- expression parsing is done directly to get type information
 		if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
 		-- get identifier
-		local identifier, rem2 = rem:match("^("..identifier_pattern..")(.-)$")
+		local identifier
+		identifier, rem = rem:match("^("..identifier_pattern..")(.-)$")
 		if not identifier then return nil, ("no valid identifier after expression in definition line %q; at %s"):format(rem, line.source) end
 		-- format identifier
 		local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
 		-- get alias
-		if rem2:match("^%:") then
-			local content = rem2:sub(2)
-			local alias, rem3 = content:match("^("..identifier_pattern..")(.-)$")
-			if not alias then return nil, ("expected an identifier in alias in definition line, but got %q; at %s"):format(content, line.source) end
-			if rem3:match("[^%s]") then return nil, ("expected end-of-line after identifier in alias in definition line, but got %q; at %s"):format(rem3, line.source) end
-			-- format alias
-			local aliasfqm = ("%s%s"):format(namespace, format_identifier(alias))
-			-- define alias
-			if state.aliases[aliasfqm] ~= nil and state.aliases[aliasfqm] ~= fqm then
-				return nil, ("trying to define alias %s for variable %s, but already exist and refer to different variable %s; at %s"):format(aliasfqm, fqm, state.aliases[aliasfqm], line.source)
-			end
-			state.aliases[aliasfqm] = fqm
-		elseif rem2:match("[^%s]") then
-			return nil, ("expected end-of-line after identifier in definition line, but got %q; at %s"):format(rem2, line.source)
+		local ok_alias
+		ok_alias, rem = maybe_alias(rem, fqm, namespace, line, state)
+		if not ok_alias then return ok_alias, rem end
+		if rem:match("[^%s]") then
+			return nil, ("expected end-of-line after identifier in definition line, but got %q; at %s"):format(rem, line.source)
 		end
 		-- define identifier
 		if state.functions[fqm] then return nil, ("trying to define variable %s, but a function with the same name exists; at %s"):format(fqm, line.source) end
@@ -297,8 +297,8 @@ local function parse_block(indented, state, namespace, parent_function)
 		-- queue in expression evalution
 		table.insert(state.queued_lines, { namespace = ast.namespace or namespace, line = ast })
 
-		-- indented block (ignore block comments)
-		if l.children and ast.type ~= "comment" then
+		-- indented block
+		if l.children then
 			if not ast.child then
 				return nil, ("line %s (%s) can't have children"):format(ast.source, ast.type)
 			else
@@ -317,31 +317,35 @@ local function transform_indented(indented)
 	local i = 1
 	while i <= #indented do
 		local l = indented[i]
-
-		-- condition decorator
-		if l.content:match("^.-%s*[^~]%~[^#~$]-$") then
-			local decorator
-			l.content, decorator = l.content:match("^(..-)%s*(%~[^#~$]-)$")
-			indented[i] = { content = decorator, source = l.source, children = { l } }
-		-- tag decorator
-		elseif l.content:match("^..-%s*%#[^#~$]-$") then
-			local decorator
-			l.content, decorator = l.content:match("^(..-)%s*(%#[^#~$]-)$")
-			indented[i] = { content = decorator, source = l.source, children = { l } }
-		-- function decorator
-		elseif l.content:match("^..-%s*%$[^#~$]-$") then
-			local name
-			l.content, name = l.content:match("^(..-)%s*%$([^#~$]-)$")
-			indented[i] = { content = "~"..name, source = l.source }
-			table.insert(indented, i+1, { content = "$"..name, source = l.source, children = { l } })
-			i = i + 1 -- $ line should not contain any decorator anymore
+		-- comment
+		if l.content:match("^%(") then
+			table.remove(indented, i)
 		else
-			i = i + 1 -- only increment when no decorator, as there may be several decorators per line
-		end
+			-- condition decorator
+			if l.content:match("^.-%s*[^~]%~[^#~$]-$") then
+				local decorator
+				l.content, decorator = l.content:match("^(..-)%s*(%~[^#~$]-)$")
+				indented[i] = { content = decorator, source = l.source, children = { l } }
+			-- tag decorator
+			elseif l.content:match("^..-%s*%#[^#~$]-$") then
+				local decorator
+				l.content, decorator = l.content:match("^(..-)%s*(%#[^#~$]-)$")
+				indented[i] = { content = decorator, source = l.source, children = { l } }
+			-- function decorator
+			elseif l.content:match("^..-%s*%$[^#~$]-$") then
+				local name
+				l.content, name = l.content:match("^(..-)%s*%$([^#~$]-)$")
+				indented[i] = { content = "~"..name, source = l.source }
+				table.insert(indented, i+1, { content = "$"..name, source = l.source, children = { l } })
+				i = i + 1 -- $ line should not contain any decorator anymore
+			else
+				i = i + 1 -- only increment when no decorator, as there may be several decorators per line
+			end
 
-		-- indented block
-		if l.children then
-			transform_indented(l.children)
+			-- indented block
+			if l.children then
+				transform_indented(l.children)
+			end
 		end
 	end
 	return indented

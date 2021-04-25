@@ -107,6 +107,9 @@ common = {
 		for _, variant in ipairs(func) do
 			local ok = true
 			local return_type = variant.return_type
+			-- arity check
+			-- note: because named args can't be predicted in advance (pairs need to be evaluated), this arity check isn't enough to guarantee a compatible function
+			-- (e.g., if there's 3 required args but only provide 3 optional arg in a call, will pass)
 			if variant.arity then
 				local min, max
 				if type(variant.arity) == "table" then
@@ -123,6 +126,7 @@ common = {
 					ok = false
 				end
 			end
+			-- custom check
 			if ok and variant.check then
 				local s, e = variant.check(state, args)
 				if not s then
@@ -131,6 +135,7 @@ common = {
 				end
 				return_type = s == true and return_type or s
 			end
+			-- type check
 			if ok and variant.types then
 				for j, t in pairs(variant.types) do
 					if args[j] and args[j].return_type and args[j].return_type ~= t then
@@ -139,6 +144,7 @@ common = {
 					end
 				end
 			end
+			-- done
 			if ok then
 				if variant.rewrite then
 					local r, e = variant.rewrite(fqm, state, arg, explicit_call)
@@ -156,7 +162,11 @@ common = {
 						name = fqm,
 						explicit_call = explicit_call,
 						variant = variant,
-						argument = arg
+						argument = { -- wrap everything in a list literal to simply later things (otherwise may be nil, single value, list constructor)
+							type = "list_brackets",
+							return_type = "list",
+							expression = arg
+						}
 					}
 				end
 			end
