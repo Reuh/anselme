@@ -4,7 +4,7 @@ $ leave
 $ oh
 	no
 	$ bar
-		:5 var
+		:var = 5
 
 		~ var := 2
 

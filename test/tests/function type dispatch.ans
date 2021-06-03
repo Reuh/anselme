@@ -1,0 +1,9 @@
+$ fn(x::number)
+	x
+
+$ fn(a::string)
+	a
+
+~ fn("s")
+
+~ fn(5)

@@ -1,0 +1,11 @@
+$ -(f)
+	@"generic minus"
+
+$ -(f::string)
+	@"minus "+f
+
+{-5}
+
+{-"lol"}
+
+{-[]}

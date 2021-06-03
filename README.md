@@ -3,7 +3,7 @@ Anselme
 
 The overengineered dialog scripting system in pure Lua.
 
-**Has been rewritten recently, doc and language are still WIP**
+**Documentation and language are still WIP and will change.**
 
 Purpose
 -------
@@ -94,7 +94,7 @@ Right after reaching a checkpoint line, Anselme will merge the local state with 
 
 ```
 $ main
-    :5 var
+    :var = 5
 
     ~ var := 2
 
@@ -164,11 +164,11 @@ There's different types of lines, depending on their first character(s) (after i
 > Last choice
 ```
 
-* `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body. Also define a new namespace for its children.
+* `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body. Also define a new namespace for its children (using the function name if it has no arguments, or a unique name otherwise).
 
 The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
-A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias (after a `:`) and a default value (after a `=`). It is enclosed with paranthesis and contain a comma-separated list of identifiers:
+A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias (after a `:`) and a default value (after a `=`), and then a type annotation (after a `::`). It is enclosed with paranthesis and contain a comma-separated list of identifiers:
 
 ```
 $ f(a, b: alias for b, c="default for c", d: alias for d = "default for d")
@@ -176,6 +176,9 @@ $ f(a, b: alias for b, c="default for c", d: alias for d = "default for d")
     second argument: {b}
     third argument: {c}
     fourth argument: {d}
+
+$ f(a::string, b: alias for b::string, c::alias="default for c"::string)
+    same
 ```
 
 Functions can also have a variable number of arguments. By adding `...` after the last argument identifier, it will be considered a variable length argument ("vararg"), and will contain a list of every extraneous argument.
@@ -183,7 +186,6 @@ Functions can also have a variable number of arguments. By adding `...` after th
 ```
 $ f(a, b...)
     {b}
-
 
 (will print [1])
 ~ f("discarded", 1)
@@ -195,7 +197,7 @@ $ f(a, b...)
 ~ f("discarded")
 ```
 
-Functions with the same name can be defined, as long as they have a different number of argument. Functions will be selected based on the number of arguments given:
+Functions with the same name can be defined, as long as they have a different arguments. Functions will be selected based on the number of arguments given, their name and their type annotation:
 
 ```
 $ f(a, b)
@@ -204,11 +206,40 @@ $ f(a, b)
 $ f(x)
     b
 
+$ f(x::string)
+    c
+
 (will print a)
 ~ f(1,2)
 
 (will print b)
 ~ f(1)
+
+(will print c)
+~ f("hello")
+```
+
+Every operator, except assignement operators, `|`, `&` and `,` can also be use as a function name in order to overload the operator:
+
+```
+$ /(a::string, b::string)
+    @"{a}/{b}"
+```
+
+After the parameter list, you may also write `:=` followed by an identifier, and eventually an alias. This defines an assignement function, which will be called when assigning a value to the function:
+
+```
+:x = "value"
+$ f()
+    @x
+$ f() := v
+    @x := v
+
+value = {f}
+
+~ f() := "other"
+
+other = {f}
 ```
 
 Functions can return a value using a [return line](#lines-that-can-t-have-children).
@@ -251,10 +282,11 @@ Checkpoints always have the following variable defined in its namespace by defau
 
 #### Lines that can't have children:
 
-* `:`: variable declaration. Followed by an [expression](#expressions) and an [identifier](#identifiers), then eventually an [alias](#aliases). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). Once defined, the type of a variable can not change.
+* `:`: variable declaration. Followed by an [identifier](#identifiers) (with eventually an [alias](#aliases)), a `=` and an [expression](#expressions). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). The expression is not evaluated instantly, but the first time the variable is used.
 
 ```
-:42 foo
+:foo = 42
+:bar : alias = 12
 ```
 
 * `@`: return line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. Exit the current function and returns the expression's value.
@@ -366,10 +398,12 @@ $ loop
 Text and choice lines allow for arbitrary text. Expression can be evaluated and inserted into the text as the line is executed by enclosing the [expression](#expressions) into brackets.
 
 ```
-:5 a
+:a = 5
 
 Value of a: {a}
 ```
+
+The expression is automatically wrapped in a call to `format(expr)`. You can overload `format` to change its behaviour for custom types.
 
 ### Event buffer
 
@@ -416,9 +450,9 @@ Every event have a type (`text`, `choice`, `return` or `error` by default, custo
 
 ### Identifiers
 
-Valid identifiers must be at least 1 caracters long and can contain anything except the caracters `%/*+-()!&|=$§?><:{}[],\`. They can contain spaces.
+Valid identifiers must be at least 1 caracters long and can contain anything except the caracters ``~`^+-=<>/[]*{}|\_!?,;:()"@&$#%`` (that is, every special caracter on a US keyboard except '). They can contain spaces. They can not start with a number.
 
-When defining an identifier (using a function, checkpoint or variable delcaration line), it will be defined into the current namespace (defined by the parent function/checkpoint). When evaluating an expression, Anselme will look for variables into the current line's namespace, then go up a level if it isn't found, and so on.
+When defining an identifier (using a function, checkpoint or variable delcaration line), it will be defined into the current namespace (defined by the parent function/checkpoint). When evaluating an expression, Anselme will look for variables into the current line's namespace, then go up a level if it isn't found, and so on. Note that the namespace of functions with arguments are not accessible from outside the function.
 
 In practise, this means you have to use the "genealogy" of the variable to refer to it from a line not in the same namespace:
 
@@ -427,17 +461,17 @@ $ fn1
     (everything here is in the fn1 namespace)
     $ fn2
         (fn1.fn2 namespace)
-        :var2 42
+        :var2 = 42
         Var2 = 42: {var2}
 
     Var2 = not found: {var2}
     Var2 = 42: {fn2.var2}
 
-    :var1 1
+    :var1 = 1
 
 Var2 = 42: {fn1.fn2.var2}
 
-:var1 2
+:var1 = 2
 
 Var1 in the current namespace = 1: {var1}
 Var1 in the fn1 namespace = 2: {fn1.var1}
@@ -451,7 +485,7 @@ Var1 in the fn1 namespace = 2: {fn1.var1}
 When defining identifiers (in variables, functions or checkpoint definitions), they can be followed by a colon and another identifier. This identifier can be used as a new way to access the identifier (i.e., an alias).
 
 ```
-:42 name: alias
+:name: alias = 42
 
 {name} is the same as {alias}
 ```
@@ -466,12 +500,12 @@ Anselme's solution is to keep the original name in the translated script file, b
 
 ```
 (in the original, english script)
-:"John Pizzapone" player name
+:player name = "John Pizzapone"
 
 Hi {player name}!
 
 (in a translated, french script)
-:"John Pizzapone" player name : nom du joueur
+:player name : nom du joueur = "John Pizzapone"
 
 Salut {nom du joueur} !
 ```
@@ -490,13 +524,15 @@ Default types are:
 
 * `nil`: nil. Can be defined using empty parantheses `()`.
 
-* `number`: a number. Can be defined similarly to Lua number literals.
+* `number`: a number (double). Can be defined using the forms `42`, `.42`, `42.42`.
 
-* `string`: a string. Can be defined between double quotes `"string"`. Support [text interpolation](#text-interpolation).
+* `string`: a string. Can be defined between double quotes `"string"`. Support [text interpolation](#text-interpolation). Support the escape codes `\\` for `\`, `\"` for `"`, `\n` for a newline and `\t` for a tabulation.
 
 * `list`: a list of values. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
 
 * `pair`: a couple of values. Types can be mixed. Can be defined using colon `"key":5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax.
+
+* `type`: a couple of values. Types can be mixed. Can be defined using colon `expr::type`. The second value is used in type checks, this is intended to be use to give a custom type to a value.
 
 How conversions are handled from Anselme to Lua:
 
@@ -628,6 +664,36 @@ $ f(a, b...)
     [2,3,4,5]
 ```
 
+Anselme use dynamic dispatch, meaning the correct function is selected at runtime. The correct function is selected based on number of arguments, argument names, and argument type annotations. The function with the most specific arguments will be selected. If several functions match, an error is thrown.
+
+```
+$ fn(x::number, y)
+    a
+
+$ fn(x::number)
+    b
+
+$ fn(a::string)
+    c
+
+$ fn(x::number, y::number)
+    c
+
+a = {fn(5, "s")}
+
+b = {fn("s")}
+
+c = {fn(5)}
+
+d = {fn(5, 2)}
+
+$ g(x)
+
+$ g(x, a="t")
+
+error, can't select unique function: {g(5)}
+```
+
 #### Checkpoint calls
 
 Most of the time, you should'nt need to call checkpoints yourself - they will be automatically be set as the active checkpoint when the interperter reach their line, and they will be automatically called when resuming its parent function.
@@ -676,6 +742,24 @@ Please also be aware that when resuming from a checkpoint, Anselme will try to r
 * if the checkpoint is in a condition block, it will assume the condition was true (but will not re-evaluate it)
 * if the checkpoint is in a choice block, it will assume this choice was selected (but will not re-evaluate any of the choices from the same choice group)
 * will try to re-add every tag from parent lines; this require Anselme to re-evaluate every tag line and decorator that's a parent of the checkpoint in the function. Be careful if your tag expressions have side-effects.
+
+##### Operator priority
+
+From lowest to highest priority:
+
+```
+;
+:=  +=  -=  //= /=  *=  %=  ^=
+,
+|   &
+!=  ==  >=  <=  <   >
++   -
+*   //  /   %
+::  :
+unary -, unary !
+^
+.
+```
 
 #### Operators
 
@@ -731,7 +815,9 @@ This only works on strings:
 
 `a : b`: evaluate a and b, returns a new pair with a as key and b as value.
 
-`a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name.
+`a :: b`: evaluate a and b, returns a new typed value with a as value and b as type.
+
+`a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name. Operator is named `()`.
 
 #### Built-in functions
 
@@ -761,7 +847,19 @@ This only works on strings:
 
 ##### Various
 
+`format(v)`: function called when formatting a value in a text interpolation
+
 `rand([m[, n]])`: when called whitout arguments, returns a random float in [0,1). Otherwise, returns a random number in [m,n]; m=1 if not given.
+
+`error(str)`: throw an error with the specified message
+
+`raw(v)`: return v, stripped of its custom types
+
+`type(v)`: return v's type
+
+#### Built-in variables
+
+TODO see stdlib/bootscript.lua
 
 API reference
 -------------

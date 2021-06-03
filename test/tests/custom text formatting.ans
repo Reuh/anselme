@@ -1,0 +1,11 @@
+:person = "personne"
+
+$ Person(name, age)
+	@[name=name, age=age]::person
+
+:abject = Person("Darmanin", 38)
+
+{abject}
+
+$ format(p::person)
+	@"Name: {p("name")}\nAge: {p("age")}"

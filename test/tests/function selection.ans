@@ -1,0 +1,12 @@
+$ a(x::number)
+	@x + 2
+
+$ x
+	$ a(x::string)
+		@x + "heh"
+
+	{a("plop")}
+
+	{a(2)}
+
+~ x

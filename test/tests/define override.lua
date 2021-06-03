@@ -1,14 +1,6 @@
 local _={}
-_[5]={}
-_[4]={data="a: 5",tags=_[5]}
-_[3]={_[4]}
-_[2]={"return"}
-_[1]={"text",_[3]}
-return {_[1],_[2]}
+_[1]={"error","trying to define variable \"define override.a\" but it is already defined; at test/tests/define override.ans:3"}
+return {_[1]}
 --[[
-{ "text", { {
-      data = "a: 5",
-      tags = {}
-    } } }
-{ "return" }
+{ "error", 'trying to define variable "define override.a" but it is already defined; at test/tests/define override.ans:3' }
 ]]--

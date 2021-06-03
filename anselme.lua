@@ -4,11 +4,13 @@ local anselme = {
 	-- major.minor.fix
 	-- saves files are incompatible between major versions
 	-- scripts files may break between minor versions
-	version = "0.14.0",
+	version = "0.15.0",
 	--- currently running interpreter
 	running = nil
 }
 package.loaded[...] = anselme
+
+i = require("inspect") -- luacheck: ignore
 
 -- load libs
 local preparse = require((...):gsub("anselme$", "parser.preparser"))
@@ -17,8 +19,10 @@ local expression = require((...):gsub("anselme$", "parser.expression"))
 local eval = require((...):gsub("anselme$", "interpreter.expression"))
 local run_line = require((...):gsub("anselme$", "interpreter.interpreter")).run_line
 local to_lua = require((...):gsub("anselme$", "interpreter.common")).to_lua
+local identifier_pattern = require((...):gsub("anselme$", "parser.common")).identifier_pattern
 local merge_state = require((...):gsub("anselme$", "interpreter.common")).merge_state
 local stdfuncs = require((...):gsub("anselme$", "stdlib.functions"))
+local bootscript = require((...):gsub("anselme$", "stdlib.bootscript"))
 
 -- wrappers for love.filesystem / luafilesystem
 local function list_directory(path)
@@ -151,7 +155,7 @@ local interpreter_methods = {
 		local co = coroutine.create(function()
 			local r, e = eval(self.state, expr)
 			if not r then return "error", e end
-			return "return", to_lua(r)
+			return "return", r
 		end)
 		local previous = anselme.running
 		anselme.running = self
@@ -162,7 +166,7 @@ local interpreter_methods = {
 		elseif event ~= "return" then
 			return nil, ("evaluated expression generated an %q event"):format(event)
 		else
-			return data
+			return to_lua(data)
 		end
 	end,
 }
@@ -170,6 +174,9 @@ interpreter_methods.__index = interpreter_methods
 
 --- vm methods
 local vm_mt = {
+	-- anselme state
+	state = nil,
+
 	--- wrapper for loading a whole set of scripts
 	-- should be preferred to other loading functions if possible
 	-- will load in path, in order:
@@ -270,39 +277,30 @@ local vm_mt = {
 	end,
 
 	--- define functions from Lua
-	-- name: full name of the function
+	-- signature: full signature of the function
 	-- fn: function (Lua function or table, see examples in stdlib/functions.lua)
 	-- return self
-	loadfunction = function(self, name, fn)
-		if type(name) == "table" then
-			for k, v in pairs(name) do
-				if type(v) == "table" then
-					for _, variant in ipairs(v) do
-						self:loadfunction(k, variant)
-					end
-				else
-					self:loadfunction(k, v)
-				end
+	loadfunction = function(self, signature, fn)
+		if type(signature) == "table" then
+			for k, v in pairs(signature) do
+				local s, e = self:loadfunction(k, v)
+				if not s then return nil, e end
 			end
 		else
-			if not self.state.functions[name] then
-				self.state.functions[name] = {}
-			end
-			if type(fn) == "function" then
-				local info = debug.getinfo(fn)
-				table.insert(self.state.functions[name], {
-					arity = info.isvararg and {info.nparams, math.huge} or info.nparams,
-					value = fn
-				})
-			else
-				table.insert(self.state.functions[name], fn)
-			end
+			if type(fn) == "function" then fn = { value = fn } end
+			self.state.link_next_function_definition_to_lua_function = fn
+			local s, e = self:loadstring("$"..signature, "", "lua")
+			if not s then return nil, e end
+			assert(self.state.link_next_function_definition_to_lua_function == nil, "unexpected error while defining lua function")
+			return self
 		end
 		return self
 	end,
 
 	--- save/load script state
 	-- only saves variables full names and values, so make sure to not change important variables, checkpoints and functions names between a save and a load
+	-- only save variables with usable identifiers, so will skip functions with arguments, operators, etc.
+	-- loading should be after loading scripts (otherwise you will "variable already defined" errors)
 	load = function(self, data)
 		local saveMajor, currentMajor = data.anselme_version:match("^[^%.]*"), anselme.version:match("^[^%.]*")
 		assert(saveMajor == currentMajor, ("trying to load data from an incompatible version of Anselme; save was done using %s but current version is %s"):format(data.anselme_version, anselme.version))
@@ -314,7 +312,7 @@ local vm_mt = {
 	save = function(self)
 		local vars = {}
 		for k, v in pairs(self.state.variables) do
-			if v.type ~= "undefined argument" then
+			if v.type ~= "undefined argument" and v.type ~= "pending definition" and k:match("^"..identifier_pattern.."$") then
 				vars[k] = v
 			end
 		end
@@ -343,7 +341,7 @@ local vm_mt = {
 		local interpreter
 		interpreter = {
 			state = {
-				builtin_aliases = self.builtin_aliases,
+				builtin_aliases = self.state.builtin_aliases,
 				aliases = self.state.aliases,
 				functions = self.state.functions,
 				variables = setmetatable({}, { __index = self.state.variables }),
@@ -365,7 +363,7 @@ local vm_mt = {
 					interrupt = nil,
 					-- tag stack
 					tags = tags or {},
-				}
+				},
 			},
 			vm = self
 		}
@@ -397,29 +395,29 @@ return setmetatable(anselme, {
 				-- ["🏁"] = "reached"
 			},
 			aliases = {
-				-- ["bonjour.salutation"] = "hello.greeting",
+				-- ["bonjour.salutation"] = "hello.greeting", ...
 			},
 			functions = {
-				-- [":="] = {
+				-- ["script.fn"] = {
 				-- 	{
-				-- 		arity = {3,42}, type = { [1] = "variable" }, check = function, rewrite = function, mode = "custom",
-				-- 		value = function(state, exp)
-				-- 		end -- or checkpoint, function, line
-				-- 	}
-				-- },
+				-- 		function or checkpoint table
+				-- 	}, ...
+				-- }, ...
 			},
 			variables = {
 				-- foo = {
 				-- 	type = "number",
 				-- 	value = 42
-				-- },
+				-- }, ...
 			},
 			queued_lines = {
-				-- { line = line, namespace = "foo" },
-			}
+				-- { line = line, namespace = "foo" }, ...
+			},
+			link_next_function_definition_to_lua_function = nil -- temporarly set to tell the preparser to link a anselme function definition with a lua function
 		}
 		local vm = setmetatable({ state = state }, vm_mt)
-		vm:loadfunction(stdfuncs)
+		assert(vm:loadstring(bootscript, "", "boot script"))
+		assert(vm:loadfunction(stdfuncs))
 		return vm
 	end
 })

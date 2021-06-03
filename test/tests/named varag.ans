@@ -1,6 +1,6 @@
 $ f(l...)
 	~ l.len
-		:0 a
+		:a = 0
 		~ a := l(1)
 		~ l.remove(1)
 		@a + f(l=l)

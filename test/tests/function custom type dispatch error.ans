@@ -1,0 +1,17 @@
+:name="name"::string
+:french name="french"::name
+:esperanto name="esperanto"::name
+
+$ a(name::string)
+	{name} is english or generic
+
+$ a(name:nom::french name)
+	{nom} is french
+
+~ a("bob"::name)
+
+~ a("pierre"::french name)
+
+~ a("idk"::esperanto name)
+
+~ a(5)

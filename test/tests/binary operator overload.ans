@@ -1,0 +1,11 @@
+$ -(a, b)
+	@"generic minus"
+
+$ -(a::string, b::string)
+	@a + " minus " + b
+
+{2-5}
+
+{"heh"-"lol"}
+
+{[]-[]}

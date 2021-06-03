@@ -88,6 +88,8 @@ if args.script then
 				elseif t == "choice" then
 					print(format_text(d, "\n> "))
 					istate:choose(io.read())
+				elseif t == "error" then
+					print(t, d)
 				else
 					print(t, inspect(d))
 				end
@@ -110,51 +112,38 @@ else
 		vm:setaliases("seen", "checkpoint", "reached")
 		vm:loadfunction {
 			-- custom event test
-			["wait"] = {
-				{
-					arity = 1, types = { "number" },
-					value = function(duration)
-						coroutine.yield("wait", duration)
-					end
-				}
+			["wait(time::number)"] = {
+				value = function(duration)
+					coroutine.yield("wait", duration)
+				end
 			},
 			-- run another function in parallel
-			["run"] = {
-				{
-					arity =  1, types = { "string" },
-					value = function(str)
-						local istate, e = anselme.running.vm:run(str, anselme.running:current_namespace())
-						if not istate then coroutine.yield("error", e) end
-						local event, data = istate:step()
-						coroutine.yield(event, data)
-					end
-				}
+			["run(name::string)"] = {
+				value = function(str)
+					local istate, e = anselme.running.vm:run(str, anselme.running:current_namespace())
+					if not istate then coroutine.yield("error", e) end
+					local event, data = istate:step()
+					coroutine.yield(event, data)
+				end
 			},
 			-- manual choice
-			choose = {
-				{
-					arity = 1, types = { "number" },
-					value = function(c)
-						anselme.running:choose(c)
-					end
-				}
+			["choose(choice::number)"] = {
+				value = function(c)
+					anselme.running:choose(c)
+				end
 			},
 			-- manual interrupt
-			interrupt = {
-				{
-					arity = 1, types = { "string" },
-					value = function(str)
-						anselme.running:interrupt(str)
-						coroutine.yield("wait", 0)
-					end
-				},
-				{
-					arity = 0,
-					value = function()
-						anselme.running:interrupt()
-						coroutine.yield("wait", 0)
-					end
-				}
+			["interrupt(name::string)"] = {
+				value = function(str)
+					anselme.running:interrupt(str)
+					coroutine.yield("wait", 0)
+				end
+			},
+			["interrupt()"] = {
+				value = function()
+					anselme.running:interrupt()
+					coroutine.yield("wait", 0)
+				end
 			}
 		}
 		local state, err = vm:loadfile(file, namespace)

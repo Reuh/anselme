@@ -1,421 +1,222 @@
-local truthy, eval, find_function_variant, anselme
-
-local function rewrite_assignement(fqm, state, arg, explicit_call)
-	local op, e = find_function_variant(fqm:match("^(.*)%=$"), state, arg, true)
-	if not op then return op, e end
-	local ass, err = find_function_variant(":=", state, { type = "list", left = arg.left, right = op }, explicit_call)
-	if not ass then return ass, err end
-	return ass
-end
-
-local function compare(a, b)
-	if a.type ~= b.type then
-		return false
-	end
-	if a.type == "pair" then
-		return compare(a.value[1], b.value[1]) and compare(a.value[2], b.value[2])
-	elseif a.type == "list" then
-		if #a.value ~= #b.value then
-			return false
-		end
-		for i, v in ipairs(a.value) do
-			if not compare(v, b.value[i]) then
-				return false
-			end
-		end
-		return true
-	else
-		return a.value == b.value
-	end
-end
-
-local numeric_index
-local string_index
+local truthy, anselme, compare, is_of_type
 
 local functions
 functions = {
 	-- discard left
-	[";"] = {
-		{
-			arity = 2, mode = "raw",
-			value = function(a, b) return b end
-		}
-	},
-	-- assignement
-	[":="] = {
-		-- assign to numeric index
-		{
-			arity = 2, mode = "custom",
-			check = function(state, args)
-				local left = args[1]
-				return left.type == "function" and left.variant == numeric_index and left.argument.expression.left.type == "variable"
-			end,
-			value = function(state, exp)
-				local arg = exp.argument.expression
-				local name = arg.left.argument.expression.left.name
-				local index, indexe = eval(state, arg.left.argument.expression.right)
-				if not index then return index, indexe end
-				local right, righte = eval(state, arg.right)
-				if not right then return right, righte end
-				state.variables[name].value[index.value] = right
-				return right
-			end
-		},
-		-- assign to string index
-		{
-			arity = 2, mode = "custom",
-			check = function(state, args)
-				local left = args[1]
-				return left.type == "function" and left.variant == string_index and left.argument.expression.left.type == "variable"
-			end,
-			value = function(state, exp)
-				local arg = exp.argument.expression
-				local name = arg.left.argument.expression.left.name
-				local index, indexe = eval(state, arg.left.argument.expression.right)
-				if not index then return index, indexe end
-				local right, righte = eval(state, arg.right)
-				if not right then return right, righte end
-				-- update index
-				local list = state.variables[name].value
-				for _,v in ipairs(list) do
-					if v.type == "pair" and compare(v.value[1], index) then
-						v.value[2] = right
-						return right
-					end
-				end
-				-- new index
-				table.insert(list, {
-					type = "pair",
-					value = { index, right }
-				})
-				return right
-			end
-		},
-		-- assign to direct variable
-		{
-			arity = 2, mode = "custom",
-			check = function(state, args)
-				local left, right = args[1], args[2]
-				if left.type ~= "variable" then
-					return nil, ("assignement expected a variable as a left argument but received a %s"):format(left.type)
-				end
-				if left.return_type and right.return_type and left.return_type ~= right.return_type then
-					return nil, ("trying to assign a %s value to a %s variable"):format(right.return_type, left.return_type)
-				end
-				return right.return_type or true
-			end,
-			value = function(state, exp)
-				local arg = exp.argument.expression
-				local name = arg.left.name
-				local right, righte = eval(state, arg.right)
-				if not right then return right, righte end
-				state.variables[name] = right
-				return right
-			end
-		}
-	},
-	["+="] = {
-		{ rewrite = rewrite_assignement }
-	},
-	["-="] = {
-		{ rewrite = rewrite_assignement }
-	},
-	["*="] = {
-		{ rewrite = rewrite_assignement }
-	},
-	["/="] = {
-		{ rewrite = rewrite_assignement }
-	},
-	["//="] = {
-		{ rewrite = rewrite_assignement }
-	},
-	["%="] = {
-		{ rewrite = rewrite_assignement }
-	},
-	["^="] = {
-		{ rewrite = rewrite_assignement }
+	[";(a, b)"] = {
+		mode = "raw",
+		value = function(a, b) return b end
 	},
 	-- comparaison
-	["=="] = {
-		{
-			arity = 2, return_type = "number", mode = "raw",
-			value = function(a, b)
-				return {
-					type = "number",
-					value = compare(a, b) and 1 or 0
-				}
-			end
-		}
+	["==(a, b)"] = {
+		mode = "raw",
+		value = function(a, b)
+			return {
+				type = "number",
+				value = compare(a, b) and 1 or 0
+			}
+		end
 	},
-	["!="] = {
-		{
-			arity = 2, return_type = "number", mode = "raw",
-			value = function(a, b)
-				return {
-					type = "number",
-					value = compare(a, b) and 0 or 1
-				}
-			end
-		}
+	["!=(a, b)"] = {
+		mode = "raw",
+		value = function(a, b)
+			return {
+				type = "number",
+				value = compare(a, b) and 0 or 1
+			}
+		end
 	},
-	[">"] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a > b end
-		}
-	},
-	["<"] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a < b end
-		}
-	},
-	[">="] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a >= b end
-		}
-	},
-	["<="] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a <= b end
-		}
-	},
+	[">(a::number, b::number)"] = function(a, b) return a > b end,
+	["<(a::number, b::number)"] = function(a, b) return a < b end,
+	[">=(a::number, b::number)"] = function(a, b) return a >= b end,
+	["<=(a::number, b::number)"] = function(a, b) return a <= b end,
 	-- arithmetic
-	["+"] = {
-		{
-			arity = 2,
-			value = function(a, b)
-				if type(a) == "string" then
-					return a .. b
-				else
-					return a + b
-				end
-			end
-		}
-	},
-	["-"] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a - b end
-		},
-		{
-			arity = 1, types = { "number" }, return_type = "number",
-			value = function(a) return -a end
-		}
-	},
-	["*"] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a * b end
-		}
-	},
-	["/"] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a / b end
-		}
-	},
-	["//"] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return math.floor(a / b) end
-		}
-	},
-	["^"] = {
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b) return a ^ b end
-		}
-	},
+	["+(a::number, b::number)"] = function(a, b) return a + b end,
+	["+(a::string, b::string)"] = function(a, b) return a .. b end,
+	["-(a::number, b::number)"] = function(a, b) return a - b end,
+	["-(a::number)"] = function(a) return -a end,
+	["*(a::number, b::number)"] = function(a, b) return a * b end,
+	["/(a::number, b::number)"] = function(a, b) return a / b end,
+	["//(a::number, b::number)"] = function(a, b) return math.floor(a / b) end,
+	["^(a::number, b::number)"] = function(a, b) return a ^ b end,
 	-- boolean
-	["!"] = {
-		{
-			arity = 1, return_type = "number", mode = "raw",
-			value = function(a)
-				return {
-					type = "number",
-					value = truthy(a) and 0 or 1
-				}
-			end
-		}
-	},
-	["&"] = {
-		{
-			arity = 2, return_type = "number", mode = "custom",
-			value = function(state, exp)
-				local arg = exp.argument.expression
-				local left, lefte = eval(state, arg.left)
-				if not left then return left, lefte end
-				if truthy(left) then
-					local right, righte = eval(state, arg.right)
-					if not right then return right, righte end
-					if truthy(right) then
-						return {
-							type = "number",
-							value = 1
-						}
-					end
-				end
-				return {
-					type = "number",
-					value = 0
-				}
-			end
-		}
-	},
-	["|"] = {
-		{
-			arity = 2, return_type = "number", mode = "custom",
-			value = function(state, exp)
-				local arg = exp.argument.expression
-				local left, lefte = eval(state, arg.left)
-				if not left then return left, lefte end
-				if truthy(left) then
-					return {
-						type = "number",
-						value = 1
-					}
-				end
-				local right, righte = eval(state, arg.right)
-				if not right then return right, righte end
-				return {
-					type = "number",
-					value = truthy(right) and 1 or 0
-				}
-			end
-		}
+	["!(a)"] = {
+		mode = "raw",
+		value = function(a)
+			return {
+				type = "number",
+				value = truthy(a) and 0 or 1
+			}
+		end
 	},
 	-- pair
-	[":"] = {
-		{
-			arity = 2, return_type = "pair", mode = "raw",
-			value = function(a, b)
-				return {
-					type = "pair",
-					value = { a, b }
-				}
-			end
-		}
+	[":(a, b)"] = {
+		mode = "raw",
+		value = function(a, b)
+			return {
+				type = "pair",
+				value = { a, b }
+			}
+		end
+	},
+	-- type
+	["::(a, b)"] = {
+		mode = "raw",
+		value = function(a, b)
+			return {
+				type = "type",
+				value = { a, b }
+			}
+		end
 	},
 	-- index
-	["("] = {
-		{
-			arity = 2, types = { "list", "number" }, mode = "raw",
-			value = function(a, b)
-				return a.value[b.value] or { type = "nil", value = nil }
-			end
-		},
-		{
-			arity = 2, types = { "list", "string" }, mode = "raw",
-			value = function(a, b)
-				for _,v in ipairs(a.value) do
-					if v.type == "pair" and compare(v.value[1], b) then
-						return v.value[2]
-					end
+	["()(l::list, i::number)"] = {
+		mode = "untyped raw",
+		value = function(l, i)
+			return l.value[i.value] or { type = "nil", value = nil }
+		end
+	},
+	["()(l::list, i::string)"] = {
+		mode = "untyped raw",
+		value = function(l, i)
+			for _, v in ipairs(l.value) do
+				if v.type == "pair" and compare(v.value[1], i) then
+					return v.value[2]
 				end
-				return { type = "nil", value = nil }
 			end
-		}
+			return { type = "nil", value = nil }
+		end
+	},
+	-- index assignment
+	["()(l::list, i::number) := v"] = {
+		mode = "raw",
+		value = function(l, i, v)
+			local lv = l.type == "type" and l.value[1] or l
+			local iv = i.type == "type" and i.value[1] or i
+			lv.value[iv.value] = v
+			return v
+		end
+	},
+	["()(l::list, k::string) := v"] = {
+		mode = "raw",
+		value = function(l, k, v)
+			local lv = l.type == "type" and l.value[1] or l
+			local kv = k.type == "type" and k.value[1] or k
+			-- update index
+			for _, x in ipairs(lv.value) do
+				if x.type == "pair" and compare(x.value[1], kv) then
+					x.value[2] = v
+					return v
+				end
+			end
+			-- new index
+			table.insert(lv.value, {
+				type = "pair",
+				value = { kv, v }
+			})
+			return v
+		end
 	},
 	-- pair methods
-	name = {
-		{
-			arity = 1, types = { "pair" }, mode = "raw",
-			value = function(a)
-				return a.value[1]
-			end
-		}
+	["name(p::pair)"] = {
+		mode = "untyped raw",
+		value = function(a)
+			return a.value[1]
+		end
 	},
-	value = {
-		{
-			arity = 1, types = { "pair" }, mode = "raw",
-			value = function(a)
-				return a.value[2]
-			end
-		}
+	["value(p::pair)"] = {
+		mode = "untyped raw",
+		value = function(a)
+			return a.value[2]
+		end
 	},
 	-- list methods
-	len = {
-		{
-			arity = 1, types = { "list" }, return_type = "number", mode = "raw", -- raw to count pairs in the list
-			value = function(a)
-				return {
-					type = "number",
-					value = #a.value
-				}
-			end
-		}
+	["len(l::list)"] = {
+		mode = "untyped raw", -- raw to count pairs in the list
+		value = function(a)
+			return {
+				type = "number",
+				value = #a.value
+			}
+		end
 	},
-	insert = {
-		{
-			arity = 2, types = { "list" }, return_type = "list", mode = "raw",
-			value = function(a, v)
-				table.insert(a.value, v)
-				return a
-			end
-		},
-		{
-			arity = 3, types = { "list", "number" }, return_type = "list", mode = "raw",
-			value = function(a, k, v)
-				table.insert(a.value, k.value, v)
-				return a
-			end
-		}
+	["insert(l::list, v)"] = {
+		mode = "raw",
+		value = function(l, v)
+			local lv = l.type == "type" and l.value[1] or l
+			table.insert(lv.value, v)
+		end
 	},
-	remove = {
-		{
-			arity = 1, types = { "list" }, return_type = "list", mode = "raw",
-			value = function(a)
-				table.remove(a.value)
-				return a
-			end
-		},
-		{
-			arity = 2, types = { "list", "number" }, return_type = "list", mode = "raw",
-			value = function(a, k)
-				table.remove(a.value, k.value)
-				return a
-			end
-		}
+	["insert(l::list, i::number, v)"] = {
+		mode = "raw",
+		value = function(l, i, v)
+			local lv = l.type == "type" and l.value[1] or l
+			local iv = i.type == "type" and i.value[1] or i
+			table.insert(lv.value, iv.value, v)
+		end
 	},
-	find = {
-		{
-			arity = 2, types = { "list" }, return_type = "number", mode = "raw",
-			value = function(a, v)
-				for i, x in ipairs(v.value) do
-					if compare(v, x) then
-						return i
-					end
+	["remove(l::list)"] = {
+		mode = "untyped raw",
+		value = function(l)
+			return table.remove(l.value)
+		end
+	},
+	["remove(l::list, i::number)"] = {
+		mode = "untyped raw",
+		value = function(l, i)
+			return table.remove(l.value, i.value)
+		end
+	},
+	["find(l::list, v)"] = {
+		mode = "raw",
+		value = function(l, v)
+			local lv = l.type == "type" and l.value[1] or l
+			for i, x in ipairs(lv.value) do
+				if compare(x, v) then
+					return i
 				end
-				return 0
 			end
-		},
+			return { type = "number", value = 0 }
+		end
 	},
 	-- other methods
-	rand = {
-		{
-			arity = 0, return_type = "number",
-			value = function()
-				return math.random()
+	["error(m::string)"] = function(m) error(m, 0) end,
+	["rand"] = function() return math.random() end,
+	["rand(a::number)"] = function(a) return math.random(a) end,
+	["rand(a::number, b::number)"] = function(a, b) return math.random(a, b) end,
+	["raw(v)"] = {
+		mode = "raw",
+		value = function(v)
+			if v.type == "type" then
+				return v.value[1]
+			else
+				return v
 			end
-		},
-		{
-			arity = 1, types = { "number" }, return_type = "number",
-			value = function(a)
-				return math.random(a)
-			end
-		},
-		{
-			arity = 2, types = { "number", "number" }, return_type = "number",
-			value = function(a, b)
-				return math.random(a, b)
-			end
-		}
+		end
 	},
-	cycle = function(...)
-		local l = {...}
+	["type(v)"] = {
+		mode = "raw",
+		value = function(v)
+			if v.type == "type" then
+				return v.value[2]
+			else
+				return {
+					type = "string",
+					value = v.type
+				}
+			end
+		end
+	},
+	["is of type(v, t)"] = {
+		mode = "raw",
+		value = function(v, t)
+			return {
+				type = "number",
+				value = is_of_type(v, t) or 0
+			}
+		end
+	},
+	["cycle(l...)"] = function(l)
 		local f, fseen = l[1], assert(anselme.running:eval(l[1]..".👁️", anselme.running:current_namespace()))
 		for j=2, #l do
 			local seen = assert(anselme.running:eval(l[j]..".👁️", anselme.running:current_namespace()))
@@ -426,12 +227,10 @@ functions = {
 		end
 		return anselme.running:run(f, anselme.running:current_namespace())
 	end,
-	random = function(...)
-		local l = {...}
+	["random(l...)"] = function(l)
 		return anselme.running:run(l[math.random(1, #l)], anselme.running:current_namespace())
 	end,
-	next = function(...)
-		local l = {...}
+	["next(l...)"] = function(l)
 		local f = l[#l]
 		for j=1, #l-1 do
 			local seen = assert(anselme.running:eval(l[j]..".👁️", anselme.running:current_namespace()))
@@ -444,13 +243,7 @@ functions = {
 	end
 }
 
-numeric_index = functions["("][1]
-string_index = functions["("][2]
-
 package.loaded[...] = functions
-truthy = require((...):gsub("stdlib%.functions$", "interpreter.common")).truthy
-eval = require((...):gsub("stdlib%.functions$", "interpreter.expression"))
-find_function_variant = require((...):gsub("stdlib%.functions$", "parser.common")).find_function_variant
+local common = require((...):gsub("stdlib%.functions$", "interpreter.common"))
+truthy, compare, is_of_type = common.truthy, common.compare, common.is_of_type
 anselme = require((...):gsub("stdlib%.functions$", "anselme"))
-
-return functions

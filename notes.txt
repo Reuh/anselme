@@ -1,0 +1,61 @@
+# Symbol selection
+
+Anselme favor symbols over keywords, as it make translation easier.
+
+We prefer to use symbols available on a standard US keyboard as it often is the lowest common denominator.
+
+As we want to be able to write identifiers with little restriction, we try to only use symbols which are unlikely to appear naturally in a name.
+
+Considering Anselme is aimed to people with a light programming introduction, are safe to use for syntax purposes:
+
+* Diacritics (should be safe when used on their own): ~`^
+* Usual mathematical symbols (should be safe to use): +-=<>/
+* Unusual punctuation / main use is already programming (should be safe to use): []*{}|\_
+* Usual punctuation used to separate parts of a sentence (should be safe to use): !?.,;:()
+* Signs (could be used in a name, but also common programming symbols): @&$#%
+* Usual punctuation (could be used in a name): '"
+
+In the end, we decided to reserve all of those except '.
+
+Using other unicode symbols may be also alright, but there also should be a way to only use these symbols.
+
+TODO: add alias to §
+
+Reserved symbols that are still not used in expressions: ~`\_?@$#
+
+Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;()"&%
+
+# Code Q&A
+
+* What does "fqm" means?
+	It means "fully qualified matriname", which is the same as a fully qualified name, but considers the hierarchy to be mostly mother-daugher based.
+	It has nothing to do with the fact I'm inept at writing acronyms and realized I wrote it wrong after using it for a whole year.
+* What's a "variant"?
+	One of the different forms of a same function with a given fqm. No idea why I chose "variant".
+* Why emojis?
+	They're kinda language independent I guess. I have no idea.
+* Why?
+	I still have no idea.
+
+# Other
+
+TODO: test reacheability of script paths
+
+TODO: redisign the checkpoint system to work better when used with parallel scripts (as they will rewrite each other's variables)
+
+TODO: redisign a static type checking system
+If we want to go full gradual typing, it would help to:
+* add type anotation+type check to variables (:a::number=5) and functions return ($ f()::number)
+* enforce some restrictions on type (assume they're constant?)
+* make some tuple/list distinction (homogenous/heterogenous types) as right now index operations are a type roulette. Or type annotate lists using some parametric type.
+Advantages:
+* can be used for better static variant selection; if everything is type annotated, selection could be restricted to a single function
+Disadvantages:
+* idk if it's worth the trouble
+
+TODO: allow to define aliases after the initial definition
+~ alias(number, "nombre")
+
+TODO: ensure that most stuff in the state stays consistent after an error was thrown
+
+TODO: way to migrate save files

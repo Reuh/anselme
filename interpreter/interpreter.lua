@@ -1,5 +1,5 @@
 local eval
-local truthy, merge_state, to_lua, eval_text, escape
+local truthy, merge_state, to_lua, eval_text, escape, get_variable
 
 local tags = {
 	--- push new tags on top of the stack, from Anselme values
@@ -135,9 +135,11 @@ local function run_line(state, line)
 			end
 		end
 	elseif line.type == "checkpoint" then
+		local reached, reachede = get_variable(state, line.namespace.."🏁")
+		if not reached then return nil, reachede end
 		state.variables[line.namespace.."🏁"] = {
 			type = "number",
-			value = state.variables[line.namespace.."🏁"].value + 1
+			value = reached.value + 1
 		}
 		state.variables[line.parent_function.namespace.."🔖"] = {
 			type = "string",
@@ -179,17 +181,23 @@ run_block = function(state, block, resume_from_there, i, j)
 	-- (and we want this to be done after executing the checkpoint block anyway)
 	if block.parent_line and block.parent_line.type == "checkpoint" then
 		local parent_line = block.parent_line
+		local reached, reachede = get_variable(state, parent_line.namespace.."🏁")
+		if not reached then return nil, reachede end
+		local seen, seene = get_variable(state, parent_line.namespace.."👁️")
+		if not seen then return nil, seene end
+		local checkpoint, checkpointe = get_variable(state, parent_line.parent_function.namespace.."🔖")
+		if not checkpoint then return nil, checkpointe end
 		state.variables[parent_line.namespace.."👁️"] = {
 			type = "number",
-			value = state.variables[parent_line.namespace.."👁️"].value + 1
+			value = seen.value + 1
 		}
 		state.variables[parent_line.namespace.."🏁"] = {
 			type = "number",
-			value = state.variables[parent_line.namespace.."🏁"].value + 1
+			value = reached.value + 1
 		}
 		-- don't update checkpoint if an already more precise checkpoint is set
 		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
-		local current_checkpoint = state.variables[parent_line.parent_function.namespace.."🔖"].value
+		local current_checkpoint = checkpoint.value
 		if not current_checkpoint:match("^"..escape(parent_line.name)) then
 			state.variables[parent_line.parent_function.namespace.."🔖"] = {
 				type = "string",
@@ -272,7 +280,7 @@ local interpreter = {
 package.loaded[...] = interpreter
 eval = require((...):gsub("interpreter$", "expression"))
 local common = require((...):gsub("interpreter$", "common"))
-truthy, merge_state, to_lua, eval_text = common.truthy, common.merge_state, common.to_lua, common.eval_text
+truthy, merge_state, to_lua, eval_text, get_variable = common.truthy, common.merge_state, common.to_lua, common.eval_text, common.get_variable
 escape = require((...):gsub("interpreter%.interpreter$", "parser.common")).escape
 
 return interpreter

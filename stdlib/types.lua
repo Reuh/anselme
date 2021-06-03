@@ -130,6 +130,20 @@ types.anselme = {
 			if not v and ve then return v, ve end
 			return { [k] = v }
 		end
+	},
+	type = {
+		format = function(val)
+			local k, ke = format(val[1])
+			if not k then return k, ke end
+			local v, ve = format(val[2])
+			if not v then return v, ve end
+			return ("%s::%s"):format(k, v)
+		end,
+		to_lua = function(val)
+			local k, ke = to_lua(val[1])
+			if not k and ke then return k, ke end
+			return k
+		end
 	}
 }
 
