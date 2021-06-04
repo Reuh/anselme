@@ -1,4 +1,4 @@
-local truthy, anselme, compare, is_of_type
+local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier
 
 local functions
 functions = {
@@ -124,6 +124,24 @@ functions = {
 			return v
 		end
 	},
+	-- alias
+	["alias(identifier::string, alias::string)"] = {
+		value = function(identifier, alias)
+			-- check identifiers
+			local fqm = identifier:match("^"..identifier_pattern.."$")
+			if not fqm then error(("%q is not a valid identifier"):format(identifier)) end
+			fqm = format_identifier(fqm)
+			local aliasfqm = alias:match("^"..identifier_pattern.."$")
+			if not aliasfqm then error(("%q is not a valid identifier for an alias"):format(alias)) end
+			aliasfqm = format_identifier(aliasfqm)
+			-- define alias
+			local aliases = anselme.running.state.aliases
+			if aliases[aliasfqm] ~= nil and aliases[aliasfqm] ~= fqm then
+				error(("trying to define alias %q for %q, but already exist and refer to %q"):format(aliasfqm, fqm, aliases[alias]))
+			end
+			aliases[aliasfqm] = fqm
+		end
+	},
 	-- pair methods
 	["name(p::pair)"] = {
 		mode = "untyped raw",
@@ -188,7 +206,7 @@ functions = {
 	},
 	-- other methods
 	["error(m::string)"] = function(m) error(m, 0) end,
-	["rand"] = function() return math.random() end,
+	["rand()"] = function() return math.random() end,
 	["rand(a::number)"] = function(a) return math.random(a) end,
 	["rand(a::number, b::number)"] = function(a, b) return math.random(a, b) end,
 	["raw(v)"] = {
@@ -251,6 +269,8 @@ functions = {
 }
 
 package.loaded[...] = functions
-local common = require((...):gsub("stdlib%.functions$", "interpreter.common"))
-truthy, compare, is_of_type = common.truthy, common.compare, common.is_of_type
+local icommon = require((...):gsub("stdlib%.functions$", "interpreter.common"))
+truthy, compare, is_of_type = icommon.truthy, icommon.compare, icommon.is_of_type
+local pcommon = require((...):gsub("stdlib%.functions$", "parser.common"))
+identifier_pattern, format_identifier = pcommon.identifier_pattern, pcommon.format_identifier
 anselme = require((...):gsub("stdlib%.functions$", "anselme"))

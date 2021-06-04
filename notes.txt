@@ -30,6 +30,8 @@ Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&
 * What does "fqm" means?
 	It means "fully qualified matriname", which is the same as a fully qualified name, but considers the hierarchy to be mostly mother-daugher based.
 	It has nothing to do with the fact I'm inept at writing acronyms and realized I wrote it wrong after using it for a whole year.
+* Why are built-in anselme scripts stored in Lua files?
+	I believe it was to avoid reimplementing the require() file search algorithm myself.
 * What's a "variant"?
 	One of the different forms of a same function with a given fqm. No idea why I chose "variant".
 * Why emojis?
@@ -53,9 +55,6 @@ Advantages:
 Disadvantages:
 * idk if it's worth the trouble
 * could do something like `$ ()(l::list(?), i::number)::?`, but then can't return nil on not found...
-
-TODO: allow to define aliases after the initial definition
-~ alias(number, "nombre")
 
 TODO: ensure that most stuff in the state stays consistent after an error was thrown
 

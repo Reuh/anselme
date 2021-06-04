@@ -75,6 +75,9 @@ table.sort(files)
 -- test script
 if args.script then
 	local vm = anselme()
+	if args.lang then
+		assert(vm:loadlanguage(args.lang))
+	end
 	local state, err = vm:loadfile(args.script, "script")
 	if state then
 		local istate, e = vm:run("script")

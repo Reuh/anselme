@@ -10,19 +10,18 @@ local anselme = {
 }
 package.loaded[...] = anselme
 
-i = require("inspect") -- luacheck: ignore
-
 -- load libs
-local preparse = require((...):gsub("anselme$", "parser.preparser"))
-local postparse = require((...):gsub("anselme$", "parser.postparser"))
-local expression = require((...):gsub("anselme$", "parser.expression"))
-local eval = require((...):gsub("anselme$", "interpreter.expression"))
-local run_line = require((...):gsub("anselme$", "interpreter.interpreter")).run_line
-local to_lua = require((...):gsub("anselme$", "interpreter.common")).to_lua
-local identifier_pattern = require((...):gsub("anselme$", "parser.common")).identifier_pattern
-local merge_state = require((...):gsub("anselme$", "interpreter.common")).merge_state
-local stdfuncs = require((...):gsub("anselme$", "stdlib.functions"))
-local bootscript = require((...):gsub("anselme$", "stdlib.bootscript"))
+local anselme_root = (...):gsub("anselme$", "")
+local preparse = require(anselme_root.."parser.preparser")
+local postparse = require(anselme_root.."parser.postparser")
+local expression = require(anselme_root.."parser.expression")
+local eval = require(anselme_root.."interpreter.expression")
+local run_line = require(anselme_root.."interpreter.interpreter").run_line
+local to_lua = require(anselme_root.."interpreter.common").to_lua
+local identifier_pattern = require(anselme_root.."parser.common").identifier_pattern
+local merge_state = require(anselme_root.."interpreter.common").merge_state
+local stdfuncs = require(anselme_root.."stdlib.functions")
+local bootscript = require(anselme_root.."stdlib.bootscript")
 
 -- wrappers for love.filesystem / luafilesystem
 local function list_directory(path)
@@ -179,11 +178,13 @@ local vm_mt = {
 
 	--- wrapper for loading a whole set of scripts
 	-- should be preferred to other loading functions if possible
+	-- requires LÖVE or LuaFileSystem
 	-- will load in path, in order:
 	-- * config.ans, which contains various optional configuration options:
 	--   * alias 👁️: string, default alias for 👁️
 	--   * alias 🏁: string, default alias for 🏁
 	--   * alias 🔖: string, default alias for 🔖
+	--   * language: string, built-in language file to load
 	--   * main file: string, name (without .ans extension) of a file that will be loaded into the root namespace
 	-- * main file, if defined in config.ans
 	-- * every other file in the path and subdirectories, using their path as namespace (i.e., contents of path/world1/john.ans will be defined in a function world1.john)
@@ -199,8 +200,14 @@ local vm_mt = {
 		local checkpoint_alias = self:eval("config.alias 🔖")
 		local reached_alias = self:eval("config.alias 🏁")
 		local main_file = self:eval("config.main file")
+		local language = self:eval("config.language")
 		-- set aliases
 		self:setaliases(seen_alias, checkpoint_alias, reached_alias)
+		-- load language
+		if language then
+			local s, e = self:loadlanguage(language)
+			if not s then return s, e end
+		end
 		-- load main file
 		if main_file then
 			local s, e = self:loadfile(path.."/"..main_file..".ans")
@@ -224,7 +231,7 @@ local vm_mt = {
 
 	--- load code
 	-- similar to Lua's code loading functions.
-	-- name(default=""): namespace to load the code in. Will define a new function if needed.
+	-- name(default=""): namespace to load the code in. Will define a new function is specified; otherwise, code will be parsed but not executable from an expression.
 	-- return self in case of success
 	-- returns nil, err in case of error
 	loadstring = function(self, str, name, source)
@@ -248,7 +255,7 @@ local vm_mt = {
 		if not s then return s, err end
 		return self
 	end,
-	loaddirectory = function(self, path, name)
+	loaddirectory = function(self, path, name) -- requires LÖVE or LuaFileSystem
 		if not name then name = "" end
 		name = name == "" and "" or name.."."
 		for _, item in ipairs(list_directory(path)) do
@@ -273,6 +280,18 @@ local vm_mt = {
 		self.state.builtin_aliases["👁️"] = seen
 		self.state.builtin_aliases["🔖"] = checkpoint
 		self.state.builtin_aliases["🏁"] = reached
+		return self
+	end,
+
+	--- load & execute a built-in language file
+	-- return self in case of success
+	-- returns nil, err in case of error
+	loadlanguage = function(self, lang)
+		local code = require(anselme_root.."stdlib.languages."..lang)
+		local s, e = self:loadstring(code, "anselme."..lang, lang)
+		if not s then return s, e end
+		s, e = self:eval("anselme."..lang)
+		if e then return s, e end
 		return self
 	end,
 
@@ -374,7 +393,7 @@ local vm_mt = {
 	-- expr: expression to evaluate
 	-- namespace(default=""): namespace to evaluate the expression in
 	-- tags(default={}): defaults tag when evaluating the expression
-	-- return value in case of success
+	-- return value in case of success (nil if nothing returned)
 	-- returns nil, err in case of error
 	eval = function(self, expr, namespace, tags)
 		local interpreter, err = self:run("0", namespace, tags)

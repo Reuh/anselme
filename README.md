@@ -819,6 +819,8 @@ This only works on strings:
 
 `a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name. Operator is named `()`.
 
+`{}(v)`: function called when formatting a value in a text interpolation for printing
+
 #### Built-in functions
 
 ##### Pair methods
@@ -847,7 +849,7 @@ This only works on strings:
 
 ##### Various
 
-`{}(v)`: function called when formatting a value in a text interpolation for printing
+`alias(identifier::string, alias::string)`: define an alias `alias` for variable `identifier`. Expect fully qualified names.
 
 `rand([m[, n]])`: when called whitout arguments, returns a random float in [0,1). Otherwise, returns a random number in [m,n]; m=1 if not given.
 
