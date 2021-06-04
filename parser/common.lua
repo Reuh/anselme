@@ -34,8 +34,10 @@ common = {
 		"!=", "==", ">=", "<=", "<", ">",
 		"+", "-",
 		"*", "//", "/", "%",
+		"::", ":",
 		"!",
-		"^", "::", ":", "()"
+		"^",
+		"()", "{}"
 	},
 	-- escapement code and their value in strings
 	-- I don't think there's a point in supporting form feed, carriage return, and other printer and terminal related codes
@@ -136,7 +138,7 @@ common = {
 				if not exp then return nil, rem end
 				if not rem:match("^%s*}") then return nil, ("expected closing } at end of expression before %q"):format(rem) end
 				-- wrap in format() call
-				local variant, err = common.find_function_variant(state, namespace, "format", exp, true)
+				local variant, err = common.find_function_variant(state, namespace, "{}", exp, true)
 				if not variant then return variant, err end
 				-- add to text
 				table.insert(l, variant)

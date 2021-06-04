@@ -59,7 +59,7 @@ common = {
 		end
 	end,
 	-- format a anselme value to something printable
-	-- does not call custom format() functions, only built-in ones, so it should not be able to fail
+	-- does not call custom {}() functions, only built-in ones, so it should not be able to fail
 	-- str: if success
 	-- * nil, err: if error
 	format = function(val)

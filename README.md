@@ -403,7 +403,7 @@ Text and choice lines allow for arbitrary text. Expression can be evaluated and 
 Value of a: {a}
 ```
 
-The expression is automatically wrapped in a call to `format(expr)`. You can overload `format` to change its behaviour for custom types.
+The expression is automatically wrapped in a call to `{}(expr)`. You can overload `{}` to change its behaviour for custom types.
 
 ### Event buffer
 
@@ -847,7 +847,7 @@ This only works on strings:
 
 ##### Various
 
-`format(v)`: function called when formatting a value in a text interpolation
+`{}(v)`: function called when formatting a value in a text interpolation for printing
 
 `rand([m[, n]])`: when called whitout arguments, returns a random float in [0,1). Otherwise, returns a random number in [m,n]; m=1 if not given.
 

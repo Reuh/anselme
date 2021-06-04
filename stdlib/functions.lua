@@ -117,6 +117,13 @@ functions = {
 			return v
 		end
 	},
+	-- format
+	["{}(v)"] = {
+		mode = "raw",
+		value = function(v)
+			return v
+		end
+	},
 	-- pair methods
 	["name(p::pair)"] = {
 		mode = "untyped raw",

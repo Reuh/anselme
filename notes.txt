@@ -23,7 +23,7 @@ TODO: add alias to §
 
 Reserved symbols that are still not used in expressions: ~`\_?@$#
 
-Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;()"&%
+Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&%
 
 # Code Q&A
 
@@ -52,6 +52,7 @@ Advantages:
 * can be used for better static variant selection; if everything is type annotated, selection could be restricted to a single function
 Disadvantages:
 * idk if it's worth the trouble
+* could do something like `$ ()(l::list(?), i::number)::?`, but then can't return nil on not found...
 
 TODO: allow to define aliases after the initial definition
 ~ alias(number, "nombre")

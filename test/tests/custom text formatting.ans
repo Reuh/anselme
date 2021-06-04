@@ -7,5 +7,5 @@ $ Person(name, age)
 
 {abject}
 
-$ format(p::person)
+$ {}(p::person)
 	@"Name: {p("name")}\nAge: {p("age")}"
