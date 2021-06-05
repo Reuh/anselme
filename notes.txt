@@ -57,5 +57,3 @@ Disadvantages:
 * could do something like `$ ()(l::list(?), i::number)::?`, but then can't return nil on not found...
 
 TODO: ensure that most stuff in the state stays consistent after an error was thrown
-
-TODO: way to migrate save files

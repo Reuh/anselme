@@ -203,8 +203,9 @@ local vm_mt = {
 	-- will load in path, in order:
 	-- * config.ans, which will be executed in the "config" namespace and may contains various optional configuration options:
 	--   * language: string, built-in language file to load
-	--   * version: any, version information of the game. Can be used to perform eventual migration of save with an old version in the main file.
-	--                   Always included in saved variables.
+	--   * anselme version: number, version of the anselme language this game was made for
+	--   * game version: any, version information of the game. Can be used to perform eventual migration of save with an old version in the main file.
+	--                        Always included in saved variables.
 	--   * main file: string, name (without .ans extension) of a file that will be loaded into the root namespace and ran when starting the game
 	-- * main file, if defined in config.ans
 	-- * every other file in the path and subdirectories, using their path as namespace (i.e., contents of path/world1/john.ans will be defined in a function world1.john)
@@ -222,12 +223,17 @@ local vm_mt = {
 		-- get config
 		self.game = {
 			language = self:eval("config.language"),
-			version = self:eval("config.version"),
+			anselme_version = self:eval("config.anselme version"),
+			game_version = self:eval("config.game version"),
 			main_file = self:eval("config.main file"),
 			main_block = nil
 		}
+		-- check language version
+		if self.game.anselme_version and self.game.anselme_version ~= anselme.versions.language then
+			return nil, ("trying to load game made for Anselme language %s, but currently using version %s"):format(self.game.anselme_version, anselme.versions.language)
+		end
 		-- force merging version into state
-		local interpreter, err = self:run("config.version")
+		local interpreter, err = self:run("config.game version")
 		if not interpreter then return interpreter, err end
 		interpreter:step()
 		-- load language
