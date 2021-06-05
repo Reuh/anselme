@@ -1,3 +1,4 @@
+-- Script run when creating a VM
 return [[
 (Built-in type definition)
 :nil="nil"

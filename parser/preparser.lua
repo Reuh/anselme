@@ -404,7 +404,7 @@ end
 
 --- preparse shit: create AST structure, define variables and functions, but don't parse expression or perform any type checking
 -- (wait for other files to be parsed before doing this with postparse)
--- * state: in case of success
+-- * block: in case of success
 -- * nil, err: in case of error
 local function parse(state, s, name, source)
 	-- parse lines
@@ -425,7 +425,7 @@ local function parse(state, s, name, source)
 	-- parse
 	local root, err = parse_block(indented, state, "")
 	if not root then return nil, err end
-	return state
+	return root
 end
 
 package.loaded[...] = parse

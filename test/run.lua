@@ -73,14 +73,24 @@ end
 table.sort(files)
 
 -- test script
-if args.script then
+if args.script or args.game then
 	local vm = anselme()
 	if args.lang then
 		assert(vm:loadlanguage(args.lang))
 	end
-	local state, err = vm:loadfile(args.script, "script")
+	local state, err
+	if args.script then
+		state, err = vm:loadfile(args.script, "script")
+	else
+		state, err = vm:loadgame(args.game)
+	end
 	if state then
-		local istate, e = vm:run("script")
+		local istate, e
+		if args.script then
+			istate, e = vm:run("script")
+		elseif args.game then
+			istate, e = vm:rungame()
+		end
 		if not istate then
 			print("error", e)
 		else
@@ -98,11 +108,11 @@ if args.script then
 				end
 			until t == "return" or t == "error"
 		end
-		if args.save then
-			print(inspect(vm:save()))
-		end
 	else
 		print("error", err)
+	end
+	if args.save then
+		print(inspect(vm:save()))
 	end
 -- run tests
 else
