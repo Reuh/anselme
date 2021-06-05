@@ -181,9 +181,6 @@ local vm_mt = {
 	-- requires LÖVE or LuaFileSystem
 	-- will load in path, in order:
 	-- * config.ans, which contains various optional configuration options:
-	--   * alias 👁️: string, default alias for 👁️
-	--   * alias 🏁: string, default alias for 🏁
-	--   * alias 🔖: string, default alias for 🔖
 	--   * language: string, built-in language file to load
 	--   * main file: string, name (without .ans extension) of a file that will be loaded into the root namespace
 	-- * main file, if defined in config.ans
@@ -196,13 +193,8 @@ local vm_mt = {
 			local s, e = self:loadfile(path.."/config.ans", "config")
 			if not s then return s, e end
 		end
-		local seen_alias = self:eval("config.alias 👁️")
-		local checkpoint_alias = self:eval("config.alias 🔖")
-		local reached_alias = self:eval("config.alias 🏁")
 		local main_file = self:eval("config.main file")
 		local language = self:eval("config.language")
-		-- set aliases
-		self:setaliases(seen_alias, checkpoint_alias, reached_alias)
 		-- load language
 		if language then
 			local s, e = self:loadlanguage(language)
@@ -284,14 +276,25 @@ local vm_mt = {
 	end,
 
 	--- load & execute a built-in language file
+	-- the language file may optionally contain the special variables:
+	--   * alias 👁️: string, default alias for 👁️
+	--   * alias 🏁: string, default alias for 🏁
+	--   * alias 🔖: string, default alias for 🔖
 	-- return self in case of success
 	-- returns nil, err in case of error
 	loadlanguage = function(self, lang)
+		local namespace = "anselme."..lang
+		-- execute language file
 		local code = require(anselme_root.."stdlib.languages."..lang)
-		local s, e = self:loadstring(code, "anselme."..lang, lang)
+		local s, e = self:loadstring(code, namespace, lang)
 		if not s then return s, e end
-		s, e = self:eval("anselme."..lang)
+		s, e = self:eval(namespace)
 		if e then return s, e end
+		-- set aliases for built-in variables
+		local seen_alias = self:eval(namespace..".alias 👁️")
+		local checkpoint_alias = self:eval(namespace..".alias 🔖")
+		local reached_alias = self:eval(namespace..".alias 🏁")
+		self:setaliases(seen_alias, checkpoint_alias, reached_alias)
 		return self
 	end,
 

@@ -22,4 +22,9 @@ return [[
 ~ "cycle".alias("cycler")
 ~ "random".alias("aléatoire")
 ~ "next".alias("séquence")
+
+(Built-in variables)
+:alias 👁️ = "vu"
+:alias 🔖 = "checkpoint"
+:alias 🏁 = "atteint"
 ]]
