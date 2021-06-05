@@ -5,7 +5,8 @@ local parse_text
 -- * nil, error: in case of error
 local function parse(state)
 	-- expression parsing
-	for _, l in ipairs(state.queued_lines) do
+	for i=#state.queued_lines, 1, -1 do
+		local l = state.queued_lines[i]
 		local line, namespace = l.line, l.namespace
 		-- default arguments and type annotation
 		if line.type == "function" then
@@ -60,8 +61,8 @@ local function parse(state)
 			if err then return nil, ("%s; at %s"):format(err, line.source) end
 			line.text = txt
 		end
+		state.queued_lines[i] = nil
 	end
-	state.queued_lines = {}
 	return true
 end
 

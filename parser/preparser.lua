@@ -57,9 +57,9 @@ local function parse_line(line, state, namespace)
 		if r.type == "function" then
 			r.remove_from_block_ast = true
 			-- lua function
-			if state.link_next_function_definition_to_lua_function then
-				r.lua_function = state.link_next_function_definition_to_lua_function
-				state.link_next_function_definition_to_lua_function = nil
+			if state.global_state.link_next_function_definition_to_lua_function then
+				r.lua_function = state.global_state.link_next_function_definition_to_lua_function
+				state.global_state.link_next_function_definition_to_lua_function = nil
 			end
 		end
 		-- get identifier
@@ -164,10 +164,18 @@ local function parse_line(line, state, namespace)
 		r.arity = { minarity, maxarity }
 		r.signature = signature(r)
 		r.pretty_signature = pretty_signature(r)
+		-- check for signature conflict with functions with the same fqm
+		if state.functions[fqm] then
+			for _, variant in ipairs(state.functions[fqm]) do
+				if r.signature == variant.signature then
+					return nil, ("trying to define %s %s, but another function with same signature %s exists; at %s"):format(r.type, r.pretty_signature, variant.pretty_signature, line.source)
+				end
+			end
+		end
 		-- define variables
 		if not line.children then line.children = {} end
 		-- define 👁️ variable
-		local seen_alias = state.builtin_aliases["👁️"]
+		local seen_alias = state.global_state.builtin_aliases["👁️"]
 		if seen_alias then
 			table.insert(line.children, 1, { content = (":👁️:%s=0"):format(seen_alias), source = line.source })
 		else
@@ -175,7 +183,7 @@ local function parse_line(line, state, namespace)
 		end
 		if r.type == "function" then
 			-- define 🔖 variable
-			local checkpoint_alias = state.builtin_aliases["🔖"]
+			local checkpoint_alias = state.global_state.builtin_aliases["🔖"]
 			if checkpoint_alias then
 				table.insert(line.children, 1, { content = (":🔖:%s=\"\""):format(checkpoint_alias), source = line.source })
 			else
@@ -183,7 +191,7 @@ local function parse_line(line, state, namespace)
 			end
 		elseif r.type == "checkpoint" then
 			-- define 🏁 variable
-			local reached_alias = state.builtin_aliases["🏁"]
+			local reached_alias = state.global_state.builtin_aliases["🏁"]
 			if reached_alias then
 				table.insert(line.children, 1, { content = (":🏁:%s=0"):format(reached_alias), source = line.source })
 			else
@@ -216,13 +224,6 @@ local function parse_line(line, state, namespace)
 			state.functions[fqm] = { r }
 		-- overloading
 		else
-			-- check for signature conflict with functions with the same fqm
-			for _, variant in ipairs(state.functions[fqm]) do
-				if r.signature == variant.signature then
-					return nil, ("trying to define %s %s, but another function with same signature %s exists; at %s"):format(r.type, r.pretty_signature, variant.pretty_signature, line.source)
-				end
-			end
-			-- add
 			table.insert(state.functions[fqm], r)
 		end
 	-- definition
@@ -422,9 +423,49 @@ local function parse(state, s, name, source)
 	end
 	-- transform ast
 	indented = transform_indented(indented)
+	-- build state proxy
+	local state_proxy = {
+		aliases = setmetatable({}, { __index = state.aliases }),
+		variables = setmetatable({}, { __index = state.aliases }),
+		functions = setmetatable({}, {
+			__index = function(self, key)
+				if state.functions[key] then
+					local t = {} -- need to copy to allow ipairs over variants
+					for k, v in ipairs(state.functions[key]) do
+						t[k] = v
+					end
+					self[key] = t
+					return t
+				end
+				return nil
+			end
+		}),
+		queued_lines = {},
+		global_state = state
+	}
 	-- parse
-	local root, err = parse_block(indented, state, "")
+	local root, err = parse_block(indented, state_proxy, "")
 	if not root then return nil, err end
+	-- merge back state proxy into global state
+	for k,v in pairs(state_proxy.aliases) do
+		state.aliases[k] = v
+	end
+	for k,v in pairs(state_proxy.variables) do
+		state.variables[k] = v
+	end
+	for k,v in pairs(state_proxy.functions) do
+		if not state.functions[k] then
+			state.functions[k] = v
+		else
+			for i,w in ipairs(v) do
+				state.functions[k][i] = w
+			end
+		end
+	end
+	for _,l in ipairs(state_proxy.queued_lines) do
+		table.insert(state.queued_lines, l)
+	end
+	-- return block
 	return root
 end
 

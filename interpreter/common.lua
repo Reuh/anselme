@@ -8,6 +8,7 @@ common = {
 		local global_vars = state.interpreter.global_state.variables
 		for var, value in pairs(state.variables) do
 			global_vars[var] = value
+			state.variables[var] = nil
 		end
 	end,
 	-- returns a variable's value, evaluating a pending expression if neccessary
