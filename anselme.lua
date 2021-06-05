@@ -66,12 +66,17 @@ local interpreter_methods = {
 	state = nil,
 	-- VM this interpreter belongs to
 	vm = nil,
+	-- event that stopped the interpreter
+	end_event = nil,
 
 	--- run the VM until the next event
 	-- will merge changed variables on successful script end
-	-- returns event, data; if event is "return" or "error", the interpreter must not be stepped further
+	-- returns event, data; if event is "return" or "error", the interpreter can not be stepped further
 	step = function(self)
 		-- check status
+		if self.end_event then
+			return "error", ("interpreter can't be restarted after receiving a %s event"):format(self.end_event)
+		end
 		if coroutine.status(self.state.interpreter.coroutine) ~= "suspended" then
 			return "error", ("can't step interpreter because it has already finished or is already running (coroutine status: %s)"):format(coroutine.status(self.state.interpreter.coroutine))
 		end
@@ -96,8 +101,9 @@ local interpreter_methods = {
 		anselme.running = self
 		local success, event, data = coroutine.resume(self.state.interpreter.coroutine)
 		anselme.running = previous
-		if not success then return "error", event end
+		if not success then event, data = "error", event end
 		if event == "return" then merge_state(self.state) end
+		if event == "return" or event == "error" then self.end_event = event end
 		return event, data
 	end,
 
@@ -135,6 +141,10 @@ local interpreter_methods = {
 	--- run an expression or block: may trigger events and must be called from within the interpreter coroutine
 	-- return lua value (nil if nothing returned)
 	run = function(self, expr, namespace)
+		-- check status
+		if coroutine.status(self.state.interpreter.coroutine) ~= "running" then
+			error("run must be called from whithin the interpreter coroutine")
+		end
 		-- parse
 		local err
 		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state.interpreter.global_state, namespace or "") end
@@ -159,6 +169,9 @@ local interpreter_methods = {
 	-- return value in case of success (nil if nothing returned)
 	-- return nil, err in case of error
 	eval = function(self, expr, namespace)
+		if self.end_event then
+			return "error", ("interpreter can't be restarted after receiving a %s event"):format(self.end_event)
+		end
 		-- parse
 		local err
 		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state.interpreter.global_state, namespace or "") end

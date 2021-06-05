@@ -43,7 +43,7 @@ Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&
 
 TODO: test reacheability of script paths
 
-TODO: redisign the checkpoint system to work better when used with parallel scripts (as they will rewrite each other's variables)
+TODO: redisign the checkpoint system to work better when used with parallel scripts (if both change the same variable, will be overwritten)
 
 TODO: redisign a static type checking system
 If we want to go full gradual typing, it would help to:
@@ -55,5 +55,3 @@ Advantages:
 Disadvantages:
 * idk if it's worth the trouble
 * could do something like `$ ()(l::list(?), i::number)::?`, but then can't return nil on not found...
-
-TODO: ensure that most stuff in the state stays consistent after an error was thrown

@@ -125,6 +125,7 @@ functions = {
 		end
 	},
 	-- alias
+	-- TODO: directly change global state, should new aliases be kept in case of interpreter error before a merge?
 	["alias(identifier::string, alias::string)"] = {
 		value = function(identifier, alias)
 			-- check identifiers
