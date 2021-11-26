@@ -350,7 +350,7 @@ local function eval(state, exp)
 						ret, e = run(state, fn.child)
 					-- resume at last checkpoint
 					else
-						local expr, err = expression(checkpoint.value, state, "")
+						local expr, err = expression(checkpoint.value, state, fn.namespace)
 						if not expr then return expr, err end
 						ret, e = eval(state, expr)
 					end

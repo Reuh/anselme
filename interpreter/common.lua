@@ -3,7 +3,7 @@ local eval
 
 local common
 common = {
-	-- flush interpreter state to global state
+	--- merge interpreter state with global state
 	merge_state = function(state)
 		local global_vars = state.interpreter.global_state.variables
 		for var, value in pairs(state.variables) do
@@ -11,7 +11,7 @@ common = {
 			state.variables[var] = nil
 		end
 	end,
-	-- returns a variable's value, evaluating a pending expression if neccessary
+	--- returns a variable's value, evaluating a pending expression if neccessary
 	-- if you're sure the variable has already been evaluated, use state.variables[fqm] directly
 	-- return var
 	-- return nil, err
@@ -28,7 +28,7 @@ common = {
 			return var
 		end
 	end,
-	-- check truthyness of an anselme value
+	--- check truthyness of an anselme value
 	truthy = function(val)
 		if val.type == "number" then
 			return val.value ~= 0
@@ -38,7 +38,7 @@ common = {
 			return true
 		end
 	end,
-	-- compare two anselme value for equality
+	--- compare two anselme value for equality
 	compare = function(a, b)
 		if a.type ~= b.type then
 			return false
@@ -59,10 +59,10 @@ common = {
 			return a.value == b.value
 		end
 	end,
-	-- format a anselme value to something printable
+	--- format a anselme value to something printable
 	-- does not call custom {}() functions, only built-in ones, so it should not be able to fail
 	-- str: if success
-	-- * nil, err: if error
+	-- nil, err: if error
 	format = function(val)
 		if atypes[val.type] and atypes[val.type].format then
 			return atypes[val.type].format(val.value)
@@ -70,8 +70,9 @@ common = {
 			return nil, ("no formatter for type %q"):format(val.type)
 		end
 	end,
+	--- convert anselme value to lua
 	-- lua value: if success (may be nil!)
-	-- * nil, err: if error
+	-- nil, err: if error
 	to_lua = function(val)
 		if atypes[val.type] and atypes[val.type].to_lua then
 			return atypes[val.type].to_lua(val.value)
@@ -79,8 +80,9 @@ common = {
 			return nil, ("no Lua exporter for type %q"):format(val.type)
 		end
 	end,
+	--- convert lua value to anselme
 	-- anselme value: if success
-	-- * nil, err: if error
+	-- nil, err: if error
 	from_lua = function(val)
 		if ltypes[type(val)] and ltypes[type(val)].to_anselme then
 			return ltypes[type(val)].to_anselme(val)
@@ -88,23 +90,36 @@ common = {
 			return nil, ("no Lua importer for type %q"):format(type(val))
 		end
 	end,
+	--- evaluate a text AST into a single Lua string
 	-- string: if success
-	-- * nil, err: if error
+	-- nil, err: if error
 	eval_text = function(state, text)
-		local s = ""
+		local l = {}
+		common.eval_text_callback(state, text, function(str) table.insert(l, str) end)
+		return table.concat(l)
+	end,
+	--- same as eval_text, but instead of building a Lua string, call callback for every evaluated part of the text
+	-- callback returns nil, err in case of error
+	-- true: if success
+	-- nil, err: if error
+	eval_text_callback = function(state, text, callback)
 		for _, item in ipairs(text) do
 			if type(item) == "string" then
-				s = s .. item
+				callback(item)
 			else
 				local v, e = eval(state, item)
 				if not v then return v, e end
 				v, e = common.format(v)
 				if not v then return v, e end
-				s = s .. v
+				if v ~= "" then
+					local r, err = callback(v)
+					if err then return r, err end
+				end
 			end
 		end
-		return s
+		return true
 	end,
+	--- check if an anselme value is of a certain type
 	-- specificity(number): if var is of type type
 	-- false: if not
 	is_of_type = function(var, type)

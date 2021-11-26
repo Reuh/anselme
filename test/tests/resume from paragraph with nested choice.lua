@@ -1,71 +1,83 @@
 local _={}
-_[118]={}
+_[130]={}
+_[129]={}
+_[128]={}
+_[127]={}
+_[126]={}
+_[125]={}
+_[124]={}
+_[123]={}
+_[122]={}
+_[121]={}
+_[120]={text="c",tags=_[130]}
+_[119]={text="b",tags=_[129]}
+_[118]={text="a",tags=_[128]}
 _[117]={}
-_[116]={}
-_[115]={}
-_[114]={}
-_[113]={}
+_[116]={text="ab",tags=_[127]}
+_[115]={text="aa",tags=_[117]}
+_[114]={text="ab"}
+_[113]={text="aa"}
 _[112]={}
-_[111]={}
-_[110]={}
-_[109]={}
+_[111]={text="c",tags=_[126]}
+_[110]={text="b",tags=_[125]}
+_[109]={text="a",tags=_[112]}
 _[108]={}
-_[107]={}
+_[107]={text="c",tags=_[108]}
 _[106]={}
 _[105]={}
-_[104]={}
-_[103]={}
+_[104]={text="ab",tags=_[105]}
+_[103]={text="aa",tags=_[124]}
 _[102]={}
-_[101]={}
+_[101]={text="c",tags=_[102]}
 _[100]={}
 _[99]={}
-_[98]={}
-_[97]={}
+_[98]={text="b",tags=_[99]}
+_[97]={text="a",tags=_[123]}
 _[96]={}
-_[95]={}
+_[95]={text="c",tags=_[96]}
 _[94]={}
-_[93]={}
-_[92]={}
+_[93]={text="ab",tags=_[94]}
+_[92]={text="aa",tags=_[122]}
 _[91]={}
-_[90]={}
+_[90]={text="c",tags=_[91]}
 _[89]={}
-_[88]={}
-_[87]={}
-_[86]={data="c",tags=_[118]}
-_[85]={data="b",tags=_[117]}
-_[84]={data="a",tags=_[116]}
-_[83]={data="-> aa",tags=_[115]}
-_[82]={data="ab",tags=_[114]}
-_[81]={data="aa",tags=_[113]}
-_[80]={data="-> aa",tags=_[112]}
-_[79]={data="ab",tags=_[112]}
-_[78]={data="aa",tags=_[112]}
-_[77]={data="-> a",tags=_[112]}
-_[76]={data="c",tags=_[111]}
-_[75]={data="b",tags=_[110]}
-_[74]={data="a",tags=_[109]}
-_[73]={data="-> c",tags=_[108]}
-_[72]={data="c",tags=_[107]}
-_[71]={data="autoflush",tags=_[106]}
-_[70]={data="-> ab",tags=_[105]}
-_[69]={data="ab",tags=_[104]}
-_[68]={data="aa",tags=_[103]}
-_[67]={data="-> c",tags=_[102]}
-_[66]={data="c",tags=_[101]}
-_[65]={data="autoflush",tags=_[100]}
-_[64]={data="-> b",tags=_[99]}
-_[63]={data="b",tags=_[98]}
-_[62]={data="a",tags=_[97]}
-_[61]={data="-> c",tags=_[96]}
-_[60]={data="c",tags=_[95]}
-_[59]={data="-> ab",tags=_[94]}
-_[58]={data="ab",tags=_[93]}
-_[57]={data="aa",tags=_[92]}
-_[56]={data="-> c",tags=_[91]}
-_[55]={data="c",tags=_[90]}
-_[54]={data="-> b",tags=_[89]}
-_[53]={data="b",tags=_[88]}
-_[52]={data="a",tags=_[87]}
+_[88]={text="b",tags=_[89]}
+_[87]={text="a",tags=_[121]}
+_[86]={_[120]}
+_[85]={_[119]}
+_[84]={_[118]}
+_[83]={text="-> aa",tags=_[117]}
+_[82]={_[116]}
+_[81]={_[115]}
+_[80]={text="-> aa",tags=_[112]}
+_[79]={_[114]}
+_[78]={_[113]}
+_[77]={text="-> a",tags=_[112]}
+_[76]={_[111]}
+_[75]={_[110]}
+_[74]={_[109]}
+_[73]={text="-> c",tags=_[108]}
+_[72]={_[107]}
+_[71]={text="autoflush",tags=_[106]}
+_[70]={text="-> ab",tags=_[105]}
+_[69]={_[104]}
+_[68]={_[103]}
+_[67]={text="-> c",tags=_[102]}
+_[66]={_[101]}
+_[65]={text="autoflush",tags=_[100]}
+_[64]={text="-> b",tags=_[99]}
+_[63]={_[98]}
+_[62]={_[97]}
+_[61]={text="-> c",tags=_[96]}
+_[60]={_[95]}
+_[59]={text="-> ab",tags=_[94]}
+_[58]={_[93]}
+_[57]={_[92]}
+_[56]={text="-> c",tags=_[91]}
+_[55]={_[90]}
+_[54]={text="-> b",tags=_[89]}
+_[53]={_[88]}
+_[52]={_[87]}
 _[51]={_[84],_[85],_[86]}
 _[50]={_[83]}
 _[49]={_[81],_[82]}
@@ -91,7 +103,7 @@ _[30]={_[56]}
 _[29]={_[55]}
 _[28]={_[54]}
 _[27]={_[52],_[53]}
-_[26]={"error","invalid choice"}
+_[26]={"error","invalid choice; in event flush at test/tests/resume from paragraph with nested choice.ans:76"}
 _[25]={"choice",_[51]}
 _[24]={"text",_[50]}
 _[23]={"choice",_[49]}
@@ -117,137 +129,140 @@ _[4]={"text",_[30]}
 _[3]={"choice",_[29]}
 _[2]={"text",_[28]}
 _[1]={"choice",_[27]}
-return {_[1],_[2],_[3],_[4],_[5],_[6],_[7],_[8],_[9],_[10],_[11],_[12],_[13],_[14],_[15],_[16],_[17],_[18],_[19],_[20],_[21],_[22],_[23],_[24],_[25],_[26]}
+_[0]={_[1],_[2],_[3],_[4],_[5],_[6],_[7],_[8],_[9],_[10],_[11],_[12],_[13],_[14],_[15],_[16],_[17],_[18],_[19],_[20],_[21],_[22],_[23],_[24],_[25],_[26]}
+_[113].tags=_[112]
+_[114].tags=_[112]
+return _[0]
 --[[
-{ "choice", { {
-      data = "a",
-      tags = {}
-    }, {
-      data = "b",
-      tags = {}
+{ "choice", { { {
+        tags = {},
+        text = "a"
+      } }, { {
+        tags = {},
+        text = "b"
+      } } } }
+{ "text", { {
+      tags = {},
+      text = "-> b"
+    } } }
+{ "choice", { { {
+        tags = {},
+        text = "c"
+      } } } }
+{ "text", { {
+      tags = {},
+      text = "-> c"
+    } } }
+{ "choice", { { {
+        tags = {},
+        text = "aa"
+      } }, { {
+        tags = {},
+        text = "ab"
+      } } } }
+{ "text", { {
+      tags = {},
+      text = "-> ab"
+    } } }
+{ "choice", { { {
+        tags = {},
+        text = "c"
+      } } } }
+{ "text", { {
+      tags = {},
+      text = "-> c"
+    } } }
+{ "choice", { { {
+        tags = {},
+        text = "a"
+      } }, { {
+        tags = {},
+        text = "b"
+      } } } }
+{ "text", { {
+      tags = {},
+      text = "-> b"
     } } }
 { "text", { {
-      data = "-> b",
-      tags = {}
+      tags = {},
+      text = "autoflush"
     } } }
-{ "choice", { {
-      data = "c",
-      tags = {}
+{ "choice", { { {
+        tags = {},
+        text = "c"
+      } } } }
+{ "text", { {
+      tags = {},
+      text = "-> c"
+    } } }
+{ "choice", { { {
+        tags = {},
+        text = "aa"
+      } }, { {
+        tags = {},
+        text = "ab"
+      } } } }
+{ "text", { {
+      tags = {},
+      text = "-> ab"
     } } }
 { "text", { {
-      data = "-> c",
-      tags = {}
+      tags = {},
+      text = "autoflush"
     } } }
-{ "choice", { {
-      data = "aa",
-      tags = {}
-    }, {
-      data = "ab",
-      tags = {}
-    } } }
+{ "choice", { { {
+        tags = {},
+        text = "c"
+      } } } }
 { "text", { {
-      data = "-> ab",
-      tags = {}
+      tags = {},
+      text = "-> c"
     } } }
-{ "choice", { {
-      data = "c",
-      tags = {}
-    } } }
+{ "choice", { { {
+        tags = {},
+        text = "a"
+      } }, { {
+        tags = {},
+        text = "b"
+      } }, { {
+        tags = {},
+        text = "c"
+      } } } }
 { "text", { {
-      data = "-> c",
-      tags = {}
+      tags = {},
+      text = "-> a"
     } } }
-{ "choice", { {
-      data = "a",
-      tags = {}
-    }, {
-      data = "b",
-      tags = {}
-    } } }
+{ "choice", { { {
+        tags = <1>{},
+        text = "aa"
+      } }, { {
+        tags = <table 1>,
+        text = "ab"
+      } } } }
 { "text", { {
-      data = "-> b",
-      tags = {}
+      tags = {},
+      text = "-> aa"
     } } }
+{ "choice", { { {
+        tags = {},
+        text = "aa"
+      } }, { {
+        tags = {},
+        text = "ab"
+      } } } }
 { "text", { {
-      data = "autoflush",
-      tags = {}
+      tags = {},
+      text = "-> aa"
     } } }
-{ "choice", { {
-      data = "c",
-      tags = {}
-    } } }
-{ "text", { {
-      data = "-> c",
-      tags = {}
-    } } }
-{ "choice", { {
-      data = "aa",
-      tags = {}
-    }, {
-      data = "ab",
-      tags = {}
-    } } }
-{ "text", { {
-      data = "-> ab",
-      tags = {}
-    } } }
-{ "text", { {
-      data = "autoflush",
-      tags = {}
-    } } }
-{ "choice", { {
-      data = "c",
-      tags = {}
-    } } }
-{ "text", { {
-      data = "-> c",
-      tags = {}
-    } } }
-{ "choice", { {
-      data = "a",
-      tags = {}
-    }, {
-      data = "b",
-      tags = {}
-    }, {
-      data = "c",
-      tags = {}
-    } } }
-{ "text", { {
-      data = "-> a",
-      tags = {}
-    } } }
-{ "choice", { {
-      data = "aa",
-      tags = <1>{}
-    }, {
-      data = "ab",
-      tags = <table 1>
-    } } }
-{ "text", { {
-      data = "-> aa",
-      tags = {}
-    } } }
-{ "choice", { {
-      data = "aa",
-      tags = {}
-    }, {
-      data = "ab",
-      tags = {}
-    } } }
-{ "text", { {
-      data = "-> aa",
-      tags = {}
-    } } }
-{ "choice", { {
-      data = "a",
-      tags = {}
-    }, {
-      data = "b",
-      tags = {}
-    }, {
-      data = "c",
-      tags = {}
-    } } }
-{ "error", "invalid choice" }
+{ "choice", { { {
+        tags = {},
+        text = "a"
+      } }, { {
+        tags = {},
+        text = "b"
+      } }, { {
+        tags = {},
+        text = "c"
+      } } } }
+{ "error", "invalid choice; in event flush at test/tests/resume from paragraph with nested choice.ans:76" }
 ]]--

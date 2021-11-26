@@ -4,11 +4,11 @@ _[20]={}
 _[19]={}
 _[18]={}
 _[17]={}
-_[16]={data="c",tags=_[21]}
-_[15]={data="c",tags=_[20]}
-_[14]={data="c",tags=_[19]}
-_[13]={data="b",tags=_[18]}
-_[12]={data="a",tags=_[17]}
+_[16]={tags=_[21],text="c"}
+_[15]={tags=_[20],text="c"}
+_[14]={tags=_[19],text="c"}
+_[13]={tags=_[18],text="b"}
+_[12]={tags=_[17],text="a"}
 _[11]={_[16]}
 _[10]={_[15]}
 _[9]={_[14]}
@@ -23,24 +23,24 @@ _[1]={"text",_[7]}
 return {_[1],_[2],_[3],_[4],_[5],_[6]}
 --[[
 { "text", { {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     } } }
 { "text", { {
-      data = "b",
-      tags = {}
+      tags = {},
+      text = "b"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     } } }
 { "return" }
 ]]--

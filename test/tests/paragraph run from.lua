@@ -8,15 +8,15 @@ _[20]={}
 _[19]={}
 _[18]={}
 _[17]={}
-_[16]={data="b",tags=_[25]}
-_[15]={data="x",tags=_[24]}
-_[14]={data="Force no checkpoint:",tags=_[23]}
-_[13]={data="b",tags=_[22]}
-_[12]={data="a",tags=_[21]}
-_[11]={data="From checkpoint:",tags=_[20]}
-_[10]={data="b",tags=_[19]}
-_[9]={data="a",tags=_[18]}
-_[8]={data="Force run from checkpoint:",tags=_[17]}
+_[16]={tags=_[25],text="b"}
+_[15]={tags=_[24],text="x"}
+_[14]={tags=_[23],text="Force no checkpoint:"}
+_[13]={tags=_[22],text="b"}
+_[12]={tags=_[21],text="a"}
+_[11]={tags=_[20],text="From checkpoint:"}
+_[10]={tags=_[19],text="b"}
+_[9]={tags=_[18],text="a"}
+_[8]={tags=_[17],text="Force run from checkpoint:"}
 _[7]={_[14],_[15],_[16]}
 _[6]={_[11],_[12],_[13]}
 _[5]={_[8],_[9],_[10]}
@@ -27,34 +27,34 @@ _[1]={"text",_[5]}
 return {_[1],_[2],_[3],_[4]}
 --[[
 { "text", { {
-      data = "Force run from checkpoint:",
-      tags = {}
+      tags = {},
+      text = "Force run from checkpoint:"
     }, {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     }, {
-      data = "b",
-      tags = {}
+      tags = {},
+      text = "b"
     } } }
 { "text", { {
-      data = "From checkpoint:",
-      tags = {}
+      tags = {},
+      text = "From checkpoint:"
     }, {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     }, {
-      data = "b",
-      tags = {}
+      tags = {},
+      text = "b"
     } } }
 { "text", { {
-      data = "Force no checkpoint:",
-      tags = {}
+      tags = {},
+      text = "Force no checkpoint:"
     }, {
-      data = "x",
-      tags = {}
+      tags = {},
+      text = "x"
     }, {
-      data = "b",
-      tags = {}
+      tags = {},
+      text = "b"
     } } }
 { "return" }
 ]]--

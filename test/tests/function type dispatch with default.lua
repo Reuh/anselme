@@ -10,17 +10,17 @@ _[24]={}
 _[23]={}
 _[22]={}
 _[21]={}
-_[20]={data="gn",tags=_[31]}
-_[19]={data="gs",tags=_[30]}
-_[18]={data="gn",tags=_[29]}
-_[17]={data="gs",tags=_[28]}
-_[16]={data="gn",tags=_[27]}
-_[15]={data="gs",tags=_[26]}
-_[14]={data="gn",tags=_[25]}
-_[13]={data="gs",tags=_[24]}
-_[12]={data="a",tags=_[23]}
-_[11]={data="x",tags=_[22]}
-_[10]={data="a",tags=_[21]}
+_[20]={tags=_[31],text="gn"}
+_[19]={tags=_[30],text="gs"}
+_[18]={tags=_[29],text="gn"}
+_[17]={tags=_[28],text="gs"}
+_[16]={tags=_[27],text="gn"}
+_[15]={tags=_[26],text="gs"}
+_[14]={tags=_[25],text="gn"}
+_[13]={tags=_[24],text="gs"}
+_[12]={tags=_[23],text="a"}
+_[11]={tags=_[22],text="x"}
+_[10]={tags=_[21],text="a"}
 _[9]={_[13],_[14],_[15],_[16],_[17],_[18],_[19],_[20]}
 _[8]={_[12]}
 _[7]={_[11]}
@@ -33,41 +33,41 @@ _[1]={"text",_[6]}
 return {_[1],_[2],_[3],_[4],_[5]}
 --[[
 { "text", { {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     } } }
 { "text", { {
-      data = "x",
-      tags = {}
+      tags = {},
+      text = "x"
     } } }
 { "text", { {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     } } }
 { "text", { {
-      data = "gs",
-      tags = {}
+      tags = {},
+      text = "gs"
     }, {
-      data = "gn",
-      tags = {}
+      tags = {},
+      text = "gn"
     }, {
-      data = "gs",
-      tags = {}
+      tags = {},
+      text = "gs"
     }, {
-      data = "gn",
-      tags = {}
+      tags = {},
+      text = "gn"
     }, {
-      data = "gs",
-      tags = {}
+      tags = {},
+      text = "gs"
     }, {
-      data = "gn",
-      tags = {}
+      tags = {},
+      text = "gn"
     }, {
-      data = "gs",
-      tags = {}
+      tags = {},
+      text = "gs"
     }, {
-      data = "gn",
-      tags = {}
+      tags = {},
+      text = "gn"
     } } }
 { "return" }
 ]]--

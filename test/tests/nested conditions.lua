@@ -2,9 +2,9 @@ local _={}
 _[11]={}
 _[10]={}
 _[9]={}
-_[8]={data="da",tags=_[11]}
-_[7]={data="ye",tags=_[10]}
-_[6]={data="yes",tags=_[9]}
+_[8]={tags=_[11],text="da"}
+_[7]={tags=_[10],text="ye"}
+_[6]={tags=_[9],text="yes"}
 _[5]={_[7],_[8]}
 _[4]={_[6]}
 _[3]={"return"}
@@ -13,15 +13,15 @@ _[1]={"text",_[4]}
 return {_[1],_[2],_[3]}
 --[[
 { "text", { {
-      data = "yes",
-      tags = {}
+      tags = {},
+      text = "yes"
     } } }
 { "text", { {
-      data = "ye",
-      tags = {}
+      tags = {},
+      text = "ye"
     }, {
-      data = "da",
-      tags = {}
+      tags = {},
+      text = "da"
     } } }
 { "return" }
 ]]--

@@ -1,6 +1,8 @@
 local eval
-local truthy, merge_state, to_lua, eval_text, escape, get_variable
+local truthy, merge_state, to_lua, escape, get_variable, eval_text_callback
+local run_line, run_block
 
+--- tag management
 local tags = {
 	--- push new tags on top of the stack, from Anselme values
 	push = function(self, state, val)
@@ -13,10 +15,12 @@ local tags = {
 		for k, v in pairs(to_lua(val)) do new[k] = v end
 		-- add
 		table.insert(state.interpreter.tags, new)
+		return self:len(state)
 	end,
 	--- same but do not merge with last stack item
 	push_lua_no_merge = function(self, state, val)
 		table.insert(state.interpreter.tags, val)
+		return self:len(state)
 	end,
 	-- pop tag table on top of the stack
 	pop = function(self, state)
@@ -31,6 +35,8 @@ local tags = {
 		return #state.interpreter.tags
 	end,
 	--- pop item until we reached desired stack length
+	-- try to prefer this to pop if possible, so in case we mess up the stack somehow it will restore the stack to a good state
+	-- (we may allow tag push/pop from the user side at some point)
 	trim = function(self, state, len)
 		while #state.interpreter.tags > len do
 			self:pop(state)
@@ -38,31 +44,120 @@ local tags = {
 	end
 }
 
-local function write_event(state, type, data)
-	if state.interpreter.event_buffer and state.interpreter.event_type ~= type then
-		error(("previous event of type %q has not been flushed, can't write new %q event"):format(state.interpreter.event_type, type))
-	end
-	if not state.interpreter.event_buffer then
-		state.interpreter.event_type = type
-		state.interpreter.event_buffer = {}
-	end
-	table.insert(state.interpreter.event_buffer, { data = data, tags = tags:current(state) })
-end
+--- event buffer management
+-- i.e. only for text and choice events
+local events = {
+	--- add a new element to the event buffer
+	-- will flush if needed
+	-- returns true in case of success
+	-- returns nil, err in case of error
+	append = function(self, state, type, data)
+		if state.interpreter.event_capture_stack[type] then
+			local r, e = state.interpreter.event_capture_stack[type][#state.interpreter.event_capture_stack[type]](data)
+			if not r then return r, e end
+		else
+			local r, e = self:make_space_for(state, type)
+			if not r then return r, e end
 
-local run_block
+			if not state.interpreter.event_buffer then
+				state.interpreter.event_type = type
+				state.interpreter.event_buffer = {}
+			end
+
+			table.insert(state.interpreter.event_buffer, data)
+		end
+		return true
+	end,
+	--- add a new item in the last element (a list of elements) of the event buffer
+	-- will flush if needed
+	-- will use default or a new list if buffer is empty
+	-- returns true in case of success
+	-- returns nil, err in case of error
+	append_in_last = function(self, state, type, data, default)
+		local r, e = self:make_space_for(state, type)
+		if not r then return r, e end
+
+		if not state.interpreter.event_buffer then
+			r, e = self:append(state, type, default or {})
+			if not r then return r, e end
+		end
+
+		table.insert(state.interpreter.event_buffer[#state.interpreter.event_buffer], data)
+
+		return true
+	end,
+
+	--- start capturing events of a certain type
+	-- when an event of the type is appended, fn will be called with this event data
+	-- and the event will not be added to the event buffer
+	-- fn returns nil, err in case of error
+	push_capture = function(self, state, type, fn)
+		if not state.interpreter.event_capture_stack[type] then
+			state.interpreter.event_capture_stack[type] = {}
+		end
+		table.insert(state.interpreter.event_capture_stack[type], fn)
+	end,
+	--- stop capturing events of a certain type.
+	-- must be called after a push_capture
+	-- this is handled by a stack so nested capturing is allowed.
+	pop_capture = function(self, state, type)
+		table.remove(state.interpreter.event_capture_stack[type])
+		if #state.interpreter.event_capture_stack[type] == 0 then
+			state.interpreter.event_capture_stack[type] = nil
+		end
+	end,
+
+	-- flush event buffer if it's neccessary to push an event of the given type
+	-- returns true in case of success
+	-- returns nil, err in case of error
+	make_space_for = function(self, state, type)
+		if state.interpreter.event_buffer and state.interpreter.event_type ~= type and not state.interpreter.event_capture_stack[type] then
+			return self:flush(state)
+		end
+		return true
+	end,
+	--- flush events and send them to the game if possible
+	-- returns true in case of success
+	-- returns nil, err in case of error
+	flush = function(self, state)
+		while state.interpreter.event_buffer do
+			local type, buffer = state.interpreter.event_type, state.interpreter.event_buffer
+			state.interpreter.event_type = nil
+			state.interpreter.event_buffer = nil
+			state.interpreter.skip_choices_until_flush = nil
+			-- yield
+			coroutine.yield(type, buffer)
+			-- run choice
+			if type == "choice" then
+				local sel = state.interpreter.choice_selected
+				state.interpreter.choice_selected = nil
+				if not sel or sel < 1 or sel > #buffer then
+					return nil, "invalid choice"
+				else
+					local choice = buffer[sel]._d
+					-- execute in expected tag & event capture state
+					local capture_state = state.interpreter.event_capture_stack
+					state.interpreter.event_capture_stack = {}
+					local i = tags:push_lua_no_merge(state, choice.tags)
+					local _, e = run_block(state, choice.block)
+					tags:trim(state, i-1)
+					state.interpreter.event_capture_stack = capture_state
+					if e then return nil, e end
+					-- we discard return value from choice block as the execution is delayed until an event flush
+					-- and we don't want to stop the execution of another function unexpectedly
+				end
+			end
+		end
+		return true
+	end
+}
 
 -- returns var in case of success and there is a return
 -- return nil in case of success and there is no return
 -- return nil, err in case of error
-local function run_line(state, line)
+run_line = function(state, line)
 	-- store line
 	state.interpreter.running_line = line
-	-- if line intend to push an event, flush buffer it it's a different event
-	if line.push_event and state.interpreter.event_buffer and state.interpreter.event_type ~= line.push_event then
-		local v, e = run_line(state, { source = line.source, type = "flush_events" })
-		if e then return v, e end
-		if v then return v end
-	end
 	-- line types
 	if line.type == "condition" then
 		line.parent_block.last_condition_success = nil
@@ -86,19 +181,27 @@ local function run_line(state, line)
 			end
 		end
 	elseif line.type == "choice" then
-		local t, er = eval_text(state, line.text)
-		if not t then return t, er end
-		table.insert(state.interpreter.choice_available, {
-			tags = tags:current(state),
-			block = line.child
-		})
-		write_event(state, "choice", t)
+		local v, e = events:make_space_for(state, "choice")
+		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
+		local currentTags = tags:current(state)
+		v, e = events:append(state, "choice", { _d = { tags = currentTags, block = line.child }}) -- new choice
+		if not v then return v, e end
+		events:push_capture(state, "text", function(event)
+			local v2, e2 = events:append_in_last(state, "choice", event, { _d = { tags = currentTags, block = line.child }})
+			if not v2 then return v2, e2 end
+		end)
+		v, e = eval_text_callback(state, line.text, function(text)
+			local v2, e2 = events:append_in_last(state, "choice", { text = text, tags = currentTags }, { _d = { tags = currentTags, block = line.child }})
+			if not v2 then return v2, e2 end
+		end)
+		events:pop_capture(state, "text")
+		if not v then return v, ("%s; at %s"):format(e, line.source) end
 	elseif line.type == "tag" then
 		local v, e = eval(state, line.expression)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
-		tags:push(state, v)
+		local i = tags:push(state, v)
 		v, e = run_block(state, line.child)
-		tags:pop(state)
+		tags:trim(state, i-1)
 		if e then return v, e end
 		if v then return v end
 	elseif line.type == "return" then
@@ -106,34 +209,18 @@ local function run_line(state, line)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
 		return v
 	elseif line.type == "text" then
-		local t, er = eval_text(state, line.text)
-		if not t then return t, ("%s; at %s"):format(er, line.source) end
-		write_event(state, "text", t)
+		local v, e = events:make_space_for(state, "text") -- do this before any evaluation start
+		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
+		local currentTags = tags:current(state)
+		v, e = eval_text_callback(state, line.text, function(text)
+			-- why you would want to send a non-text event from there, I have no idea, but I'm not going to stop you
+			local v2, e2 = events:append(state, "text", { text = text, tags = currentTags })
+			if not v2 then return v2, e2 end
+		end)
+		if not v then return v, ("%s; at %s"):format(e, line.source) end
 	elseif line.type == "flush_events" then
-		while state.interpreter.event_buffer do
-			local type, buffer = state.interpreter.event_type, state.interpreter.event_buffer
-			state.interpreter.event_type = nil
-			state.interpreter.event_buffer = nil
-			-- yield
-			coroutine.yield(type, buffer)
-			-- run choice
-			if type == "choice" then
-				local sel = state.interpreter.choice_selected
-				state.interpreter.choice_selected = nil
-				if not sel or sel < 1 or sel > #state.interpreter.choice_available then
-					return nil, "invalid choice"
-				else
-					local choice = state.interpreter.choice_available[sel]
-					state.interpreter.choice_available = {}
-					tags:push_lua_no_merge(state, choice.tags)
-					local v, e = run_block(state, choice.block)
-					tags:pop(state)
-					if e then return v, e end
-					-- discard return value from choice block as the execution is delayed until an event flush
-					-- and we don't want to stop the execution of another function unexpectedly
-				end
-			end
-		end
+		local v, e = events:flush(state)
+		if not v then return v, ("%s; in event flush at %s"):format(e, line.source) end
 	elseif line.type == "checkpoint" then
 		local reached, reachede = get_variable(state, line.namespace.."🏁")
 		if not reached then return nil, reachede end
@@ -161,12 +248,8 @@ run_block = function(state, block, resume_from_there, i, j)
 		local line = block[i]
 		local skip = false
 		-- skip current choice block if enabled
-		if state.interpreter.skip_choices_until_flush then
-			if line.type == "choice" then
-				skip = true
-			elseif line.type == "flush_events" or (line.push_event and line.push_event ~= "choice") then
-				state.interpreter.skip_choices_until_flush = nil
-			end
+		if state.interpreter.skip_choices_until_flush and line.type == "choice" then
+			skip = true
 		end
 		-- run line
 		if not skip then
@@ -253,7 +336,7 @@ local function run(state, block, resume_from_there, i, j)
 	-- run
 	local v, e = run_block(state, block, resume_from_there, i, j)
 	-- return to previous tag state
-	-- tag stack pop when resuming is done when exiting the tag block
+	-- when resuming is done, tag stack pop when exiting the tag block
 	-- stray elements may be left on the stack if there is a return before we exit all the tag block, so we trim them
 	if resume_from_there then
 		tags:trim(state, tags_len)
@@ -280,7 +363,7 @@ local interpreter = {
 package.loaded[...] = interpreter
 eval = require((...):gsub("interpreter$", "expression"))
 local common = require((...):gsub("interpreter$", "common"))
-truthy, merge_state, to_lua, eval_text, get_variable = common.truthy, common.merge_state, common.to_lua, common.eval_text, common.get_variable
+truthy, merge_state, to_lua, get_variable, eval_text_callback = common.truthy, common.merge_state, common.to_lua, common.get_variable, common.eval_text_callback
 escape = require((...):gsub("interpreter%.interpreter$", "parser.common")).escape
 
 return interpreter

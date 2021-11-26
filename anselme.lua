@@ -6,11 +6,11 @@ local anselme = {
 	-- api is incremented a each update which may break Lua API compatibility
 	versions = {
 		save = 1,
-		language = 15,
-		api = 1
+		language = 16,
+		api = 2
 	},
 	-- version is incremented at each update
-	version = 16,
+	version = 17,
 	--- currently running interpreter
 	running = nil
 }
@@ -336,6 +336,7 @@ local vm_mt = {
 	end,
 
 	--- set aliases for built-in variables 👁️, 🔖 and 🏁 that will be defined on every new checkpoint and function
+	-- this does not affect variables that were defined before this function was called
 	-- nil for no alias
 	-- return self
 	setaliases = function(self, seen, checkpoint, reached)
@@ -461,9 +462,10 @@ local vm_mt = {
 					event_buffer = nil,
 					-- choice event
 					choice_selected = nil,
-					choice_available = {},
 					-- skip next choices until next event change (to skip currently running choice block when resuming from a checkpoint)
 					skip_choices_until_flush = nil,
+					-- captured events stack {[event type]=stack{fn, ...}, ...}
+					event_capture_stack = {},
 					-- interrupt
 					interrupt = nil,
 					-- tag stack

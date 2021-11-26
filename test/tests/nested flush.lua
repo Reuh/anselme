@@ -1,20 +1,22 @@
 local _={}
-_[31]={}
+_[33]={}
+_[32]={}
+_[31]={tags=_[33],text="h"}
 _[30]={}
-_[29]={}
+_[29]={tags=_[32],text="f"}
 _[28]={}
 _[27]={}
 _[26]={}
 _[25]={}
 _[24]={}
-_[23]={data="h",tags=_[31]}
-_[22]={data="g",tags=_[30]}
-_[21]={data="f",tags=_[29]}
-_[20]={data="e",tags=_[28]}
-_[19]={data="d",tags=_[27]}
-_[18]={data="c",tags=_[26]}
-_[17]={data="b",tags=_[25]}
-_[16]={data="a",tags=_[24]}
+_[23]={_[31]}
+_[22]={tags=_[30],text="g"}
+_[21]={_[29]}
+_[20]={tags=_[28],text="e"}
+_[19]={tags=_[27],text="d"}
+_[18]={tags=_[26],text="c"}
+_[17]={tags=_[25],text="b"}
+_[16]={tags=_[24],text="a"}
 _[15]={_[23]}
 _[14]={_[22]}
 _[13]={_[21]}
@@ -33,35 +35,35 @@ _[1]={"text",_[9]}
 return {_[1],_[2],_[3],_[4],_[5],_[6],_[7],_[8]}
 --[[
 { "text", { {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     } } }
 { "text", { {
-      data = "b",
-      tags = {}
+      tags = {},
+      text = "b"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     }, {
-      data = "d",
-      tags = {}
+      tags = {},
+      text = "d"
     } } }
 { "text", { {
-      data = "e",
-      tags = {}
+      tags = {},
+      text = "e"
     } } }
-{ "choice", { {
-      data = "f",
-      tags = {}
-    } } }
+{ "choice", { { {
+        tags = {},
+        text = "f"
+      } } } }
 { "text", { {
-      data = "g",
-      tags = {}
+      tags = {},
+      text = "g"
     } } }
-{ "choice", { {
-      data = "h",
-      tags = {}
-    } } }
+{ "choice", { { {
+        tags = {},
+        text = "h"
+      } } } }
 { "return" }
 ]]--

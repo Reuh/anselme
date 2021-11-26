@@ -3,22 +3,36 @@ local anselme = require("anselme")
 local ser = require("test.ser")
 local inspect = require("test.inspect")
 
-local function format_text(t, prefix)
-	prefix = prefix or " "
+local function format_text(t)
 	local r = ""
 	for _, l in ipairs(t) do
-		r = r .. prefix
+		-- format tags display
 		local tags = ""
 		for k, v in pairs(l.tags) do
 			tags = tags .. ("[%q]=%q"):format(k, v)
 		end
+		-- build text
 		if tags ~= "" then
-			r = r .. ("[%s]%s"):format(tags, l.data)
+			r = r .. ("[%s]%s"):format(tags, l.text)
 		else
-			r = r .. l.data
+			r = r .. l.text
 		end
 	end
 	return r
+end
+
+--- remove unneeded things from a result table (namely private fields)
+local function strip(t, visited)
+	visited = visited or {}
+	for k, v in pairs(t) do
+		if type(k) == "string" and k:match("^_") then
+			t[k] = nil
+		end
+		if type(v) == "table" and not visited[v] then
+			visited[v] = true
+			strip(v, visited)
+		end
+	end
 end
 
 local function compare(a, b)
@@ -63,14 +77,25 @@ while i <= #arg do
 	end
 end
 
--- list tests
-local files = {}
-for item in lfs.dir("test/tests/") do
-	if item:match("%.ans$") and item:match(args.filter or "") then
-		table.insert(files, "test/tests/"..item)
-	end
+if args.help then
+	print("Anselme test runner. Usage:")
+	print("  no arguments: perform included test suite")
+	print("  --script filename: test a script interactively")
+	print("  --game directory: test a game interactively")
+	print("  --help: display this message")
+	print("")
+	print("For test suite mode:")
+	print("  --filter pattern: only perform tests matching pattern")
+	print("  --write-all: rewrite all expected test results with current output")
+	print("  --write-new: write expected test results with current output for test that do not already have a saved expected output")
+	print("  --write-error: rewrite expected test results with current output for test with invalid output")
+	print("  --silent: silent output")
+	print("")
+	print("For script or game mode:")
+	print("  --lang code: load a language file")
+	print("  --save: print VM state at the end of the script")
+	os.exit()
 end
-table.sort(files)
 
 -- test script
 if args.script or args.game then
@@ -99,7 +124,9 @@ if args.script or args.game then
 				if t == "text" then
 					print(format_text(d))
 				elseif t == "choice" then
-					print(format_text(d, "\n> "))
+					for j, choice in ipairs(d) do
+						print(j.."> "..format_text(choice))
+					end
 					istate:choose(io.read())
 				elseif t == "error" then
 					print(t, d)
@@ -114,8 +141,19 @@ if args.script or args.game then
 	if args.save then
 		print(inspect(vm:save()))
 	end
--- run tests
+
+-- test mode
 else
+	-- list tests
+	local files = {}
+	for item in lfs.dir("test/tests/") do
+		if item:match("%.ans$") and item:match(args.filter or "") then
+			table.insert(files, "test/tests/"..item)
+		end
+	end
+	table.sort(files)
+
+	-- run tests
 	local total, success = #files, 0
 	for _, file in ipairs(files) do
 		local filebase = file:match("^(.*)%.ans$")
@@ -176,6 +214,8 @@ else
 			table.insert(result, { "error", err })
 		end
 
+		strip(result)
+
 		if args["write-all"] then
 			write_result(filebase, result)
 		else
@@ -189,6 +229,11 @@ else
 						print("is not equal to")
 						print(inspect(output))
 						print("")
+					end
+					if args["write-error"] then
+						write_result(filebase, result)
+						print("Rewritten result file for "..filebase)
+						success = success + 1
 					end
 				else
 					success = success + 1
@@ -208,7 +253,7 @@ else
 			end
 		end
 	end
-	if args.write then
+	if args["write-all"] then
 		print("Wrote test results.")
 	else
 		print(("%s/%s tests success."):format(success, total))

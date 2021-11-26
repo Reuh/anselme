@@ -42,7 +42,6 @@ local function parse_line(line, state, namespace)
 	-- choice
 	elseif l:match("^>") then
 		r.type = "choice"
-		r.push_event = "choice"
 		r.child = true
 		r.text = l:match("^>%s*(.-)$")
 	-- function & checkpoint
@@ -271,7 +270,6 @@ local function parse_line(line, state, namespace)
 	-- text
 	elseif l:match("[^%s]") then
 		r.type = "text"
-		r.push_event = "text"
 		r.text = l
 	-- flush events
 	else

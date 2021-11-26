@@ -17,24 +17,24 @@ _[49]={}
 _[48]={}
 _[47]={}
 _[46]={}
-_[45]={data="c",tags=_[63]}
-_[44]={data="a",tags=_[62]}
-_[43]={data="Force p checkpoint:",tags=_[61]}
-_[42]={data="d",tags=_[60]}
-_[41]={data="c",tags=_[59]}
-_[40]={data="b",tags=_[58]}
-_[39]={data="From q checkpoint again:",tags=_[57]}
-_[38]={data="d",tags=_[56]}
-_[37]={data="c",tags=_[55]}
-_[36]={data="b",tags=_[54]}
-_[35]={data="From q checkpoint:",tags=_[53]}
-_[34]={data="d",tags=_[52]}
-_[33]={data="c",tags=_[51]}
-_[32]={data="a",tags=_[50]}
-_[31]={data="From p checkpoint:",tags=_[49]}
-_[30]={data="d",tags=_[48]}
-_[29]={data="x",tags=_[47]}
-_[28]={data="From start:",tags=_[46]}
+_[45]={tags=_[63],text="c"}
+_[44]={tags=_[62],text="a"}
+_[43]={tags=_[61],text="Force p checkpoint:"}
+_[42]={tags=_[60],text="d"}
+_[41]={tags=_[59],text="c"}
+_[40]={tags=_[58],text="b"}
+_[39]={tags=_[57],text="From q checkpoint again:"}
+_[38]={tags=_[56],text="d"}
+_[37]={tags=_[55],text="c"}
+_[36]={tags=_[54],text="b"}
+_[35]={tags=_[53],text="From q checkpoint:"}
+_[34]={tags=_[52],text="d"}
+_[33]={tags=_[51],text="c"}
+_[32]={tags=_[50],text="a"}
+_[31]={tags=_[49],text="From p checkpoint:"}
+_[30]={tags=_[48],text="d"}
+_[29]={tags=_[47],text="x"}
+_[28]={tags=_[46],text="From start:"}
 _[27]={_[45]}
 _[26]={_[43],_[44]}
 _[25]={_[42]}
@@ -65,71 +65,71 @@ _[1]={"text",_[15]}
 return {_[1],_[2],_[3],_[4],_[5],_[6],_[7],_[8],_[9],_[10],_[11],_[12],_[13],_[14]}
 --[[
 { "text", { {
-      data = "From start:",
-      tags = {}
+      tags = {},
+      text = "From start:"
     }, {
-      data = "x",
-      tags = {}
+      tags = {},
+      text = "x"
     } } }
 { "text", { {
-      data = "d",
-      tags = {}
+      tags = {},
+      text = "d"
     } } }
 { "text", { {
-      data = "From p checkpoint:",
-      tags = {}
+      tags = {},
+      text = "From p checkpoint:"
     }, {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     } } }
 { "text", { {
-      data = "d",
-      tags = {}
+      tags = {},
+      text = "d"
     } } }
 { "text", { {
-      data = "From q checkpoint:",
-      tags = {}
+      tags = {},
+      text = "From q checkpoint:"
     }, {
-      data = "b",
-      tags = {}
+      tags = {},
+      text = "b"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     } } }
 { "text", { {
-      data = "d",
-      tags = {}
+      tags = {},
+      text = "d"
     } } }
 { "text", { {
-      data = "From q checkpoint again:",
-      tags = {}
+      tags = {},
+      text = "From q checkpoint again:"
     }, {
-      data = "b",
-      tags = {}
+      tags = {},
+      text = "b"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     } } }
 { "text", { {
-      data = "d",
-      tags = {}
+      tags = {},
+      text = "d"
     } } }
 { "text", { {
-      data = "Force p checkpoint:",
-      tags = {}
+      tags = {},
+      text = "Force p checkpoint:"
     }, {
-      data = "a",
-      tags = {}
+      tags = {},
+      text = "a"
     } } }
 { "text", { {
-      data = "c",
-      tags = {}
+      tags = {},
+      text = "c"
     } } }
 { "return" }
 ]]--

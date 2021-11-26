@@ -56,7 +56,7 @@ HELLO SIR, HOW ARE YOU TODAY
     > Sure is!
         YEAH. YEAH.
     > I've seen better.
-        ENTITLED PRICK.
+        NOT NICE.
 
 WELL, GOOD BYE.
 ```
@@ -156,12 +156,16 @@ There's different types of lines, depending on their first character(s) (after i
     This is.
 ```
 
-* `>`: write a choice into the event buffer. Followed by arbitrary text. Support [text interpolation](#text-interpolation).
+* `>`: write a choice into the event buffer. Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer.
 
 ```
+$ f
+    Third choice
+
 > First choice
 > Second choice
 > Last choice
+> {f}
 ```
 
 * `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body. Also define a new namespace for its children (using the function name if it has no arguments, or a unique name otherwise).
@@ -268,9 +272,9 @@ $ inane dialog
 Checkpoints always have the following variable defined in its namespace by default:
 
 `👁️`: number, number of times the checkpoint was executed before
-`🏁`: number, number of times the checkpoint was reached before (including times where it was resumed from and executed)
+`🏁`: number, number of times the checkpoint was reached before (includes times where it was resumed from and executed)
 
-* `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any event sent from its children. Can be nested.
+* `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any `choice` or `text` event sent from its children. Can be nested.
 
 ```
 # "color": "red"
@@ -298,7 +302,9 @@ $ hey
 {hey} = 5
 ```
 
-Be careful when using `@` in a choice block. Choice blocks are not ran right as they are read, but at the next event flush (i.e. empty line). This means that if there is no flush in the function itself, the choice will be ran *after* the function has already been executed and returning a value at this point makes no sense:
+Please note that Anselme will discard returns values sent from within a choice block. Returns inside choice block still have the expected behaviour of stopping the execution of the choice block.
+
+This is the case because choice blocks are not ran right as they are read, but only at the next event flush (i.e. empty line). This means that if there is no flush in the function itself, the choice will be ran *after* the function has already been executed and returning a value at this point makes no sense:
 
 ```
 $ f
@@ -315,9 +321,7 @@ $ f
 
 ```
 
-For this reason, Anselme will discard returns values sent from within a choice block. Returns inside choice block still have the expected behaviour of stopping the execution of the block.
-
-* empty line: flush events, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.
+* empty line: flush the event buffer, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.
 
 * regular text: write some text into the event buffer. Support [text interpolation](#text-interpolation).
 
@@ -395,21 +399,47 @@ $ loop
 
 ### Text interpolation
 
-Text and choice lines allow for arbitrary text. Expression can be evaluated and inserted into the text as the line is executed by enclosing the [expression](#expressions) into brackets.
+Text and choice lines allow for arbitrary text. Expression can be evaluated and inserted into the text as the line is executed by enclosing the [expression](#expressions) into brackets. The expressions are evaluated in the same order as the reading direction.
+
+The expression is automatically wrapped in a call to `{}(expr)`. You can overload `{}` to change its behaviour for custom types; main intended use is to provide some pretty-printing function.
+
+Note that events can be sent from the interpolated expression as usual. So you may not want to send a choice event or flush the event buffer from, for example, an interpolated expression in a text line, as your text line will be cut in two with the flush or choice between the two halves.
+
+Text interpolated in choices have the special property of capturing text events into the choice text.
 
 ```
 :a = 5
 
 Value of a: {a}
-```
 
-The expression is automatically wrapped in a call to `{}(expr)`. You can overload `{}` to change its behaviour for custom types.
+(in text and choices, text events created from an interpolated expression are included in the final text)
+$ f
+    wor
+    (the returned value comes after)
+    @"ld."
+
+(Will print "Hello world.")
+Hello {f}
+
+> Hello {f}
+
+(keep in mind that events are also sent as usual in places that would usually not send event and thus can't really handle them in a sensible manner)
+(for example in text litterals: this will send a "wor" text event and put "ld." in b)
+:b = "{f}"
+```
 
 ### Event buffer
 
-Since Lua mainly run into a signle thread, Anselme need to give back control to the game at some point. This is done with flush event lines (empty lines), where the intrepreter yield its coroutine and returns a buch of data to your game (called the event buffer). It's called an event buffer because, well, it's a buffer, and events are what we call whatever Anselme sends back to your game.
+Anselme need to give back control to the game at some point. This is done through events: the interpreter regularly yield its coroutine and returns a buch of data to your game (called the event buffer or just "event"). It's called an event buffer because, well, it's a buffer, and events are what we call whatever Anselme sends back to your game.
 
-As Anselme interpret the script, it keeps a buffer of events that will be sent to your game on the next event flush line. These events are, by default, either text, choice or return (this one sent when the script end).
+Each event have a type (`text`, `choice`, `return` or `error` by default, custom types can also be defined) and associated data; the data associated with each event depends on its type. For the default events this data is:
+
+* `text` (text to display) is a list of text elements, each with a `text` field, containing the text contents, and a `tags` field, containing the tags associated with this text.
+* `choice` (choices to choose from) is a list of tableas, each associated to a choice. Each of these choice is a list of text elements like for the `text` event.
+* `return` (when the script ends) is the returned value.
+* `error` (when the script error) is the error message.
+
+For some event types (`text` and `choice`), Anselme does not immediately sends the event as soon as they are available but appends them to a buffer of events that will be sent to your game on the next event flush line (empty lines).
 
 ```
 Some text.
@@ -419,7 +449,7 @@ Another text.
 Text in another event.
 ```
 
-Beyond theses pragmatic reasons, the event buffering also serves as a way to group together several lines. For example, choice A and B will be sent to the game at the same time and can therefore be assumed to be part of the same "choice block", as opposed to choice C wich will be sent alone:
+Beyond technical reasons, the event buffering also serves as a way to group together several lines. For example, choice A and B will be sent to the game at the same time and can therefore be assumed to be part of the same "choice block", as opposed to choice C wich will be sent alone:
 
 ```
 > Choice A
@@ -439,14 +469,12 @@ $ reusable choice
 > Choice C
 ```
 
-Anselme will also flush events when the current event type change, so your game only has to handle a single event of a single type at a time. For example, this will send a text event, flush it, and then buffer a choice event:
+Besides empty lines, Anselme will also automatically flush events when the current event type change (when reaching a choice line with a text event in the event buffer, or vice versa), so your game only has to handle a single event of a single type at a time. For example, this will send a text event, flush it, and then buffer a choice event:
 
 ```
 Text
 > Choice
 ```
-
-Every event have a type (`text`, `choice`, `return` or `error` by default, custom types can also be defined), and consist of a `data` field, containing its contents, and a `tags` field, containing the tags at the time the event was created.
 
 ### Identifiers
 

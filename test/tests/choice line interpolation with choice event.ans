@@ -1,0 +1,10 @@
+~ choose(1)
+> Press {jump button} to jump.
+	ok
+> No
+	ko
+
+$ jump button
+	A # 1
+	> Suprise choice!
+	@"JOIN"
