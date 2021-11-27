@@ -32,17 +32,17 @@ local unops_prio = {
 --- parse an expression
 -- return expr, remaining if success
 -- returns nil, err if error
-local function expression(s, state, namespace, currentPriority, operatingOn)
+local function expression(s, state, namespace, current_priority, operating_on)
 	s = s:match("^%s*(.*)$")
-	currentPriority = currentPriority or 0
-	if not operatingOn then
+	current_priority = current_priority or 0
+	if not operating_on then
 		-- number
 		if s:match("^%d*%.%d+") or s:match("^%d+") then
 			local d, r = s:match("^(%d*%.%d+)(.*)$")
 			if not d then
 				d, r = s:match("^(%d+)(.*)$")
 			end
-			return expression(r, state, namespace, currentPriority, {
+			return expression(r, state, namespace, current_priority, {
 				type = "number",
 				value = tonumber(d)
 			})
@@ -76,7 +76,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 					l[j] = ls:gsub("\\.", string_escapes)
 				end
 			end
-			return expression(r, state, namespace, currentPriority, {
+			return expression(r, state, namespace, current_priority, {
 				type = "string",
 				value = l
 			})
@@ -93,7 +93,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 			else
 				exp = { type = "nil", value = nil }
 			end
-			return expression(r, state, namespace, currentPriority, {
+			return expression(r, state, namespace, current_priority, {
 				type = "parentheses",
 				expression = exp
 			})
@@ -108,7 +108,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 				if not exp then return nil, "invalid expression inside list parentheses: "..r_paren end
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of list parenthesis expression"):format(r_paren) end
 			end
-			return expression(r, state, namespace, currentPriority, {
+			return expression(r, state, namespace, current_priority, {
 				type = "list_brackets",
 				expression = exp
 			})
@@ -132,12 +132,12 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 				-- find compatible variant
 				local variant, err = find_function_variant(state, namespace, ":", args, true)
 				if not variant then return variant, err end
-				return expression(r, state, namespace, currentPriority, variant)
+				return expression(r, state, namespace, current_priority, variant)
 			end
 			-- variables
 			local var, vfqm = find(state.aliases, state.variables, namespace, name)
 			if var then
-				return expression(r, state, namespace, currentPriority, {
+				return expression(r, state, namespace, current_priority, {
 					type = "variable",
 					name = vfqm
 				})
@@ -147,7 +147,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 			if sname then
 				local svar, svfqm = find(state.aliases, state.variables, namespace, sname)
 				if svar then
-					return expression(suffix..r, state, namespace, currentPriority, {
+					return expression(suffix..r, state, namespace, current_priority, {
 						type = "variable",
 						name = svfqm
 					})
@@ -171,7 +171,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 			-- find compatible variant
 			local variant, err = find_function_variant(state, namespace, name, args, explicit_call)
 			if not variant then return variant, err end
-			return expression(r, state, namespace, currentPriority, variant)
+			return expression(r, state, namespace, current_priority, variant)
 		end
 		-- unops
 		for prio, oplist in ipairs(unops_prio) do
@@ -183,7 +183,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 					-- find variant
 					local variant, err = find_function_variant(state, namespace, op, right, true)
 					if not variant then return variant, err end
-					return expression(r, state, namespace, currentPriority, variant)
+					return expression(r, state, namespace, current_priority, variant)
 				end
 			end
 		end
@@ -191,7 +191,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 	else
 		-- binop
 		for prio, oplist in ipairs(binops_prio) do
-			if prio >= currentPriority then
+			if prio >= current_priority then
 				for _, op in ipairs(oplist) do
 					local escaped = escape(op)
 					if s:match("^"..escaped) then
@@ -216,27 +216,27 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 							end
 							-- add first argument
 							if not args then
-								args = operatingOn
+								args = operating_on
 							else
 								args = {
 									type = "list",
-									left = operatingOn,
+									left = operating_on,
 									right = args
 								}
 							end
 							-- find compatible variant
 							local variant, err = find_function_variant(state, namespace, name, args, explicit_call)
 							if not variant then return variant, err end
-							return expression(r, state, namespace, currentPriority, variant)
+							return expression(r, state, namespace, current_priority, variant)
 						-- other binops
 						else
 							local right, r = expression(sright, state, namespace, prio)
 							if not right then return nil, ("invalid expression after binop %q: %s"):format(op, r) end
 							-- list constructor
 							if op == "," then
-								return expression(r, state, namespace, currentPriority, {
+								return expression(r, state, namespace, current_priority, {
 									type = "list",
-									left = operatingOn,
+									left = operating_on,
 									right = right
 								})
 							-- special binops
@@ -245,7 +245,7 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 								if op ~= ":=" then
 									local args = {
 										type = "list",
-										left = operatingOn,
+										left = operating_on,
 										right = right
 									}
 									local variant, err = find_function_variant(state, namespace, op:match("^(.*)%=$"), args, true)
@@ -253,32 +253,32 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 									right = variant
 								end
 								-- assign to a function
-								if operatingOn.type == "function" then
+								if operating_on.type == "function" then
 									-- remove non-assignment functions
-									for i=#operatingOn.variants, 1, -1 do
-										if not operatingOn.variants[i].assignment then
-											table.remove(operatingOn.variants, i)
+									for i=#operating_on.variants, 1, -1 do
+										if not operating_on.variants[i].assignment then
+											table.remove(operating_on.variants, i)
 										end
 									end
-									if #operatingOn.variants == 0 then
-										return nil, ("trying to perform assignment on function %s with no compatible assignment variant"):format(operatingOn.called_name)
+									if #operating_on.variants == 0 then
+										return nil, ("trying to perform assignment on function %s with no compatible assignment variant"):format(operating_on.called_name)
 									end
 									-- rewrite function to perform assignment
-									operatingOn.assignment = right
-									return expression(r, state, namespace, currentPriority, operatingOn)
-								elseif operatingOn.type ~= "variable" then
-									return nil, ("trying to perform assignment on a %s expression"):format(operatingOn.type)
+									operating_on.assignment = right
+									return expression(r, state, namespace, current_priority, operating_on)
+								elseif operating_on.type ~= "variable" then
+									return nil, ("trying to perform assignment on a %s expression"):format(operating_on.type)
 								end
 								-- assign to a variable
-								return expression(r, state, namespace, currentPriority, {
+								return expression(r, state, namespace, current_priority, {
 									type = ":=",
-									left = operatingOn,
+									left = operating_on,
 									right = right
 								})
 							elseif op == "&" or op == "|" then
-								return expression(r, state, namespace, currentPriority, {
+								return expression(r, state, namespace, current_priority, {
 									type = op,
-									left = operatingOn,
+									left = operating_on,
 									right = right
 								})
 							-- normal binop
@@ -286,13 +286,13 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 								-- find variant
 								local args = {
 									type = "list",
-									left = operatingOn,
+									left = operating_on,
 									-- wrap in parentheses to avoid appending to argument list if right is a list
 									right = { type = "parentheses", expression = right }
 								}
 								local variant, err = find_function_variant(state, namespace, op, args, true)
 								if not variant then return variant, err end
-								return expression(r, state, namespace, currentPriority, variant)
+								return expression(r, state, namespace, current_priority, variant)
 							end
 						end
 					end
@@ -306,13 +306,13 @@ local function expression(s, state, namespace, currentPriority, operatingOn)
 			local right, r_paren = expression(content, state, namespace)
 			if not right then return right, r_paren end
 			if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of index expression"):format(r_paren) end
-			local args = { type = "list", left = operatingOn, right = right }
+			local args = { type = "list", left = operating_on, right = right }
 			local variant, err = find_function_variant(state, namespace, "()", args, true)
 			if not variant then return variant, err end
-			return expression(r, state, namespace, currentPriority, variant)
+			return expression(r, state, namespace, current_priority, variant)
 		end
 		-- nothing to operate
-		return operatingOn, s
+		return operating_on, s
 	end
 end
 
