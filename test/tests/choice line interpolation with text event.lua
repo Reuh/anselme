@@ -4,20 +4,20 @@ _[29]={}
 _[28]={}
 _[27]={1}
 _[26]={}
-_[25]={tags=_[26],text=" to move."}
-_[24]={tags=_[26],text=" joystick"}
-_[23]={tags=_[30],text="left"}
-_[22]={tags=_[26],text="Use "}
-_[21]={tags=_[29],text="Other"}
+_[25]={text=" to move.",tags=_[26]}
+_[24]={text="joystick",tags=_[26]}
+_[23]={text="left ",tags=_[30]}
+_[22]={text="Use ",tags=_[26]}
+_[21]={text="Other",tags=_[29]}
 _[20]={}
-_[19]={tags=_[28],text="No"}
-_[18]={tags=_[20],text=" to jump."}
-_[17]={tags=_[27],text="A"}
-_[16]={tags=_[20],text="Press "}
-_[15]={tags=_[26],text="ok"}
+_[19]={text="No",tags=_[28]}
+_[18]={text="to jump.",tags=_[20]}
+_[17]={text="A ",tags=_[27]}
+_[16]={text="Press ",tags=_[20]}
+_[15]={text="ok",tags=_[26]}
 _[14]={_[22],_[23],_[24],_[25]}
 _[13]={_[21]}
-_[12]={tags=_[20],text="ok"}
+_[12]={text="ok",tags=_[20]}
 _[11]={_[19]}
 _[10]={_[16],_[17],_[18]}
 _[9]={_[15]}
@@ -36,10 +36,10 @@ return {_[1],_[2],_[3],_[4],_[5]}
         text = "Press "
       }, {
         tags = { 1 },
-        text = "A"
+        text = "A "
       }, {
         tags = <table 1>,
-        text = " to jump."
+        text = "to jump."
       } }, { {
         tags = {},
         text = "No"
@@ -56,10 +56,10 @@ return {_[1],_[2],_[3],_[4],_[5]}
         text = "Use "
       }, {
         tags = { 1 },
-        text = "left"
+        text = "left "
       }, {
         tags = <table 1>,
-        text = " joystick"
+        text = "joystick"
       }, {
         tags = <table 1>,
         text = " to move."

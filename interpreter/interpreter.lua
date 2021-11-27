@@ -18,9 +18,9 @@ local function post_process_text(state, text)
 		for i=1, #text-1 do
 			local a, b = text[i], text[i+1]
 			local na = #a.text:match(" *$")
-			local nb = #b.text:match(" *$")
+			local nb = #b.text:match("^ *")
 			if na > 0 and nb > 0 then -- remove duplicated spaces from second element first
-				b.text = b.text:match("^(.-) *$")
+				b.text = b.text:match("^ *(.-)$")
 			end
 			if na > 1 then
 				a.text = a.text:match("^(.- ) *$")
