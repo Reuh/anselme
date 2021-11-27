@@ -2,6 +2,33 @@ local eval
 local truthy, merge_state, to_lua, escape, get_variable, eval_text_callback
 local run_line, run_block
 
+local function post_process_text(state, text)
+	-- remove trailing spaces
+	if state.feature_flags["strip trailing spaces"] then
+		local final = text[#text]
+		if final then
+			final.text = final.text:match("^(.-) *$")
+			if final.text == "" then
+				table.remove(text)
+			end
+		end
+	end
+	-- remove duplicate spaces
+	if state.feature_flags["strip duplicate spaces"] then
+		for i=1, #text-1 do
+			local a, b = text[i], text[i+1]
+			local na = #a.text:match(" *$")
+			local nb = #b.text:match(" *$")
+			if na > 0 and nb > 0 then -- remove duplicated spaces from second element first
+				b.text = b.text:match("^(.-) *$")
+			end
+			if na > 1 then
+				a.text = a.text:match("^(.- ) *$")
+			end
+		end
+	end
+end
+
 --- tag management
 local tags = {
 	--- push new tags on top of the stack, from Anselme values
@@ -132,6 +159,15 @@ local events = {
 				for _, c in ipairs(buffer) do
 					table.insert(choices, c._state)
 					c._state = nil
+				end
+			end
+			-- text post processing
+			if type == "text" then
+				post_process_text(state, buffer)
+			end
+			if type == "choice" then
+				for _, c in ipairs(buffer) do
+					post_process_text(state, c)
 				end
 			end
 			-- yield event

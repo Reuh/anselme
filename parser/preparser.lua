@@ -326,19 +326,19 @@ local function transform_indented(indented)
 			table.remove(indented, i)
 		else
 			-- condition decorator
-			if l.content:match("^.-%s*[^~]%~[^#~$]-$") then
+			if l.content:match("^.-[^~]%~[^#~$]-$") then
 				local decorator
-				l.content, decorator = l.content:match("^(..-)%s*(%~[^#~$]-)$")
+				l.content, decorator = l.content:match("^(..-)(%~[^#~$]-)$")
 				indented[i] = { content = decorator, source = l.source, children = { l } }
 			-- tag decorator
-			elseif l.content:match("^..-%s*%#[^#~$]-$") then
+			elseif l.content:match("^..-%#[^#~$]-$") then
 				local decorator
-				l.content, decorator = l.content:match("^(..-)%s*(%#[^#~$]-)$")
+				l.content, decorator = l.content:match("^(..-)(%#[^#~$]-)$")
 				indented[i] = { content = decorator, source = l.source, children = { l } }
 			-- function decorator
-			elseif l.content:match("^..-%s*%$[^#~$]-$") then
+			elseif l.content:match("^..-%$[^#~$]-$") then
 				local name
-				l.content, name = l.content:match("^(..-)%s*%$([^#~$]-)$")
+				l.content, name = l.content:match("^(..-)%$([^#~$]-)$")
 				indented[i] = { content = "~"..name, source = l.source }
 				table.insert(indented, i+1, { content = "$"..name, source = l.source, children = { l } })
 				i = i + 1 -- $ line should not contain any decorator anymore

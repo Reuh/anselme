@@ -156,7 +156,7 @@ There's different types of lines, depending on their first character(s) (after i
     This is.
 ```
 
-* `>`: write a choice into the event buffer. Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer.
+* `>`: write a choice into the [event buffer](#event-buffer). Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer.
 
 ```
 $ f
@@ -323,7 +323,7 @@ $ f
 
 * empty line: flush the event buffer, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.
 
-* regular text: write some text into the event buffer. Support [text interpolation](#text-interpolation).
+* regular text: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation).
 
 ```
 Hello,
@@ -348,7 +348,7 @@ is equivalent to:
 ```
 $ fn
     ~ 👁️
-        run this line only once
+        run this line only once 
 ```
 
 * `#`: tag decorator. Same as a tag line, behaving as if this line was it sole child.
@@ -361,7 +361,7 @@ is equivalent to:
 
 ```
 # 42
-    tagged
+    tagged 
 ```
 
 * `$`: function decorator. Same as a function line, behaving as if this line was it sole child, but also run the function.
@@ -375,7 +375,7 @@ is equivalent to:
 ```
 ~ f
 $ f
-    text
+    text 
 ```
 
 This is typically used for immediatletly running functions when defining them, for example for a looping choice :
@@ -428,18 +428,20 @@ Hello {f}
 :b = "{f}"
 ```
 
-### Event buffer
+### Events
 
-Anselme need to give back control to the game at some point. This is done through events: the interpreter regularly yield its coroutine and returns a buch of data to your game (called the event buffer or just "event"). It's called an event buffer because, well, it's a buffer, and events are what we call whatever Anselme sends back to your game.
+Anselme need to give back control to the game at some point. This is done through events: the interpreter regularly yield its coroutine and returns a bunch of data to your game. This is the "event", it is what we call whatever Anselme sends back to your game.
 
-Each event have a type (`text`, `choice`, `return` or `error` by default, custom types can also be defined) and associated data; the data associated with each event depends on its type. For the default events this data is:
+Each event is composed of two elements: a type (string; `text`, `choice`, `return` or `error` by default, custom types can also be defined) and associated data; the data associated with each event depends on its type. For the default events this data is:
 
 * `text` (text to display) is a list of text elements, each with a `text` field, containing the text contents, and a `tags` field, containing the tags associated with this text.
 * `choice` (choices to choose from) is a list of tableas, each associated to a choice. Each of these choice is a list of text elements like for the `text` event.
 * `return` (when the script ends) is the returned value.
 * `error` (when the script error) is the error message.
 
-For some event types (`text` and `choice`), Anselme does not immediately sends the event as soon as they are available but appends them to a buffer of events that will be sent to your game on the next event flush line (empty lines).
+#### Event buffer
+
+For some event types (`text` and `choice`), Anselme does not immediately sends the event as soon as they are available but appends them to a buffer of events that will be sent to your game on the next event flush line (empty line): this is the "event buffer".
 
 ```
 Some text.
@@ -449,7 +451,7 @@ Another text.
 Text in another event.
 ```
 
-Beyond technical reasons, the event buffering also serves as a way to group together several lines. For example, choice A and B will be sent to the game at the same time and can therefore be assumed to be part of the same "choice block", as opposed to choice C wich will be sent alone:
+Beyond technical reasons, the event buffer serves as a way to group together several lines. For example, choice A and B will be sent to the game at the same time and can therefore be assumed to be part of the same "choice block", as opposed to choice C wich will be sent alone:
 
 ```
 > Choice A
@@ -475,6 +477,27 @@ Besides empty lines, Anselme will also automatically flush events when the curre
 Text
 > Choice
 ```
+
+By default, some processing is done on the event buffer before sending it to your game. You can disable these by disabling the associated features flages using `vm:disable` (see #api-reference).
+
+* strip trailing spaces: will remove any space caracters at the end of the text (for text event), or at the end of each choice (for choice event).
+
+```
+(There is a space between the text and the tag decorator that would be included in the text event otherwise.)
+Some text # tag
+```
+
+* strip duplicate spaces: will remove any duplicated space caracters between each element that constitute the text (for text event), or for each choice (for choice event).
+
+```
+(There is a space between the text and the tag decorator; but there is a space as well after the text interpolation in the last line. The two spaces are converted into a single space (the space will belong to the first text element, i.e. the "text " element).)
+$ f
+    text # tag
+
+Some {text} here.
+```
+
+TODO: check if spacing rules are language-specific and move this to language files if appropriate
 
 ### Identifiers
 

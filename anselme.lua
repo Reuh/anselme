@@ -6,11 +6,11 @@ local anselme = {
 	-- api is incremented a each update which may break Lua API compatibility
 	versions = {
 		save = 1,
-		language = 16,
+		language = 17,
 		api = 2
 	},
 	-- version is incremented at each update
-	version = 17,
+	version = 18,
 	--- currently running interpreter
 	running = nil
 }
@@ -429,6 +429,26 @@ local vm_mt = {
 		return self
 	end,
 
+	--- enable feature flags
+	-- available flags:
+	-- * "strip trailing spaces": remove trailing spaces from choice and text events (enabled by default)
+	-- * "strip duplicate spaces": remove duplicated spaces between text elements from choice and text events (enabled by default)
+	-- returns self
+	enable = function(self, ...)
+		for _, flag in ipairs{...} do
+			self.state.feature_flags[flag] = true
+		end
+		return self
+	end,
+	--- disable features flags
+	-- returns self
+	disable = function(self, ...)
+		for _, flag in ipairs{...} do
+			self.state.feature_flags[flag] = nil
+		end
+		return self
+	end,
+
 	--- run code
 	-- expr: expression to evaluate (string or parsed expression), or a block to run
 	-- will merge state after successful execution
@@ -447,6 +467,7 @@ local vm_mt = {
 		local interpreter
 		interpreter = {
 			state = {
+				feature_flags = self.state.feature_flags,
 				builtin_aliases = self.state.builtin_aliases,
 				aliases = self.state.aliases,
 				functions = self.state.functions,
@@ -497,6 +518,10 @@ return setmetatable(anselme, {
 	__call = function()
 		-- global state
 		local state = {
+			feature_flags = {
+				["strip trailing spaces"] = true,
+				["strip duplicate spaces"] = true
+			},
 			builtin_aliases = {
 				-- ["👁️"] = "seen",
 				-- ["🔖"] = "checkpoint",
