@@ -125,16 +125,25 @@ local events = {
 			state.interpreter.event_type = nil
 			state.interpreter.event_buffer = nil
 			state.interpreter.skip_choices_until_flush = nil
-			-- yield
+			-- extract some needed state data for each choice block
+			local choices
+			if type == "choice" then
+				choices = {}
+				for _, c in ipairs(buffer) do
+					table.insert(choices, c._state)
+					c._state = nil
+				end
+			end
+			-- yield event
 			coroutine.yield(type, buffer)
 			-- run choice
 			if type == "choice" then
 				local sel = state.interpreter.choice_selected
 				state.interpreter.choice_selected = nil
-				if not sel or sel < 1 or sel > #buffer then
+				if not sel or sel < 1 or sel > #choices then
 					return nil, "invalid choice"
 				else
-					local choice = buffer[sel]._d
+					local choice = choices[sel]
 					-- execute in expected tag & event capture state
 					local capture_state = state.interpreter.event_capture_stack
 					state.interpreter.event_capture_stack = {}
@@ -184,14 +193,15 @@ run_line = function(state, line)
 		local v, e = events:make_space_for(state, "choice")
 		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
 		local currentTags = tags:current(state)
-		v, e = events:append(state, "choice", { _d = { tags = currentTags, block = line.child }}) -- new choice
+		local choice_block_state = { tags = currentTags, block = line.child }
+		v, e = events:append(state, "choice", { _state = choice_block_state }) -- new choice
 		if not v then return v, e end
 		events:push_capture(state, "text", function(event)
-			local v2, e2 = events:append_in_last(state, "choice", event, { _d = { tags = currentTags, block = line.child }})
+			local v2, e2 = events:append_in_last(state, "choice", event, { _state = choice_block_state })
 			if not v2 then return v2, e2 end
 		end)
 		v, e = eval_text_callback(state, line.text, function(text)
-			local v2, e2 = events:append_in_last(state, "choice", { text = text, tags = currentTags }, { _d = { tags = currentTags, block = line.child }})
+			local v2, e2 = events:append_in_last(state, "choice", { text = text, tags = currentTags }, { _state = choice_block_state })
 			if not v2 then return v2, e2 end
 		end)
 		events:pop_capture(state, "text")

@@ -21,20 +21,6 @@ local function format_text(t)
 	return r
 end
 
---- remove unneeded things from a result table (namely private fields)
-local function strip(t, visited)
-	visited = visited or {}
-	for k, v in pairs(t) do
-		if type(k) == "string" and k:match("^_") then
-			t[k] = nil
-		end
-		if type(v) == "table" and not visited[v] then
-			visited[v] = true
-			strip(v, visited)
-		end
-	end
-end
-
 local function compare(a, b)
 	if type(a) == "table" and type(b) == "table" then
 		for k, v in pairs(a) do
@@ -213,8 +199,6 @@ else
 		else
 			table.insert(result, { "error", err })
 		end
-
-		strip(result)
 
 		if args["write-all"] then
 			write_result(filebase, result)
