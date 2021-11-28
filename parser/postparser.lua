@@ -55,10 +55,11 @@ local function parse(state)
 				state.variables[line.fqm].value.expression = line.expression
 			end
 		end
-		-- text
+		-- text (text & choice lines)
 		if line.text then
-			local txt, err = parse_text(line.text, state, namespace)
-			if err then return nil, ("%s; at %s"):format(err, line.source) end
+			local txt, err = parse_text(line.text, state, namespace, "#~", true)
+			if not txt then return nil, ("%s; at %s"):format(err, line.source) end
+			if err:match("[^%s]") then return nil, ("expected end of expression in end-of-text expression before %q"):format(err) end
 			line.text = txt
 		end
 		state.queued_lines[i] = nil

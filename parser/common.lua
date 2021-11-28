@@ -28,7 +28,8 @@ common = {
 		-- operators not included here:
 		-- * assignment operators (:=, +=, -=, //=, /=, *=, %=, ^=): handled with its own syntax (function assignment)
 		-- * list operator (,): is used when calling every functions, sounds like more trouble than it's worth
-		-- * | and & oprators: are lazy and don't behave like regular functions
+		-- * |, & and ~ operators: are lazy and don't behave like regular functions
+		-- * # operator: need to set tag state before evaluating the left arg
 		-- * . operator: don't behave like regular functions either
 		";",
 		"!=", "==", ">=", "<=", "<", ">",
@@ -45,7 +46,11 @@ common = {
 		["\\\\"] = "\\",
 		["\\\""] = "\"",
 		["\\n"] = "\n",
-		["\\t"] = "\t"
+		["\\t"] = "\t",
+		["\\~"] = "~",
+		["\\#"] = "#",
+		["\\$"] = "$", -- FIXME
+		["\\{"] = "{"
 	},
 	--- escape a string to be used as an exact match pattern
 	escape = function(str)
@@ -116,38 +121,90 @@ common = {
 	flatten_list = function(list, t)
 		t = t or {}
 		if list.type == "list" then
-			table.insert(t, list.left)
-			common.flatten_list(list.right, t)
+			table.insert(t, 1, list.right)
+			common.flatten_list(list.left, t)
 		else
-			table.insert(t, list)
+			table.insert(t, 1, list)
 		end
 		return t
 	end,
 	-- parse interpolated expressions in a text
-	-- * list of strings and expressions
+	-- allow_subtext (bool) to enable or not [subtext] support
+	-- if allow_binops is given, if one of the caracters of allow_binops appear unescaped in the text, it will interpreter a binary operator expression
+	-- * returns a text expression, remaining (if the right expression stop before the end of the text)
+	-- if allow_binops is not given:
+	-- * returns a list of strings and expressions (text elements)
 	-- * nil, err: in case of error
-	parse_text = function(text, state, namespace)
+	parse_text = function(text, state, namespace, allow_binops, allow_subtext, in_subtext)
 		local l = {}
-		while text:match("[^%{]+") do
-			local t, e = text:match("^([^%{]*)(.-)$")
+		local text_exp
+		local delimiters = ""
+		if allow_binops then
+			text_exp = { type = "text", text = l }
+			delimiters = allow_binops
+		end
+		if allow_subtext then
+			delimiters = delimiters .. "%["
+		end
+		if in_subtext then
+			delimiters = delimiters .. "%]"
+		end
+		while text:match(("[^{%s]+"):format(delimiters)) do
+			local t, r = text:match(("^([^{%s]*)(.-)$"):format(delimiters))
 			-- text
-			if t ~= "" then table.insert(l, t) end
+			if t ~= "" then
+				-- handle \{ escape: skip to next { until it's not escaped
+				while t:match("\\$") and r:match(("^[{%s]"):format(delimiters)) do
+					local t2, r2 = r:match(("^([{%s][^{%s]*)(.-)$"):format(delimiters, delimiters))
+					t = t:match("^(.-)\\$") .. t2
+					r = r2
+				end
+				-- replace other escape codes
+				local escaped = t:gsub("\\.", common.string_escapes)
+				table.insert(l, escaped)
+			end
 			-- expr
-			if e:match("^{") then
-				local exp, rem = expression(e:gsub("^{", ""), state, namespace)
+			if r:match("^{") then
+				local exp, rem = expression(r:gsub("^{", ""), state, namespace)
 				if not exp then return nil, rem end
 				if not rem:match("^%s*}") then return nil, ("expected closing } at end of expression before %q"):format(rem) end
 				-- wrap in format() call
-				local variant, err = common.find_function_variant(state, namespace, "{}", exp, true)
+				local variant, err = common.find_function_variant(state, namespace, "{}", { type = "parentheses", expression = exp }, true)
 				if not variant then return variant, err end
 				-- add to text
 				table.insert(l, variant)
 				text = rem:match("^%s*}(.*)$")
-			else
+			-- start subtext
+			elseif allow_subtext and r:match("^%[") then
+				local exp, rem = common.parse_text(r:gsub("^%[", ""), state, namespace, allow_binops, allow_subtext, true)
+				if not exp then return nil, rem end
+				if not rem:match("^%]") then return nil, ("expected closing ] at end of subtext before %q"):format(rem) end
+				-- add to text
+				table.insert(l, exp)
+				text = rem:match("^%](.*)$")
+			-- end subtext
+			elseif in_subtext and r:match("^%]") then
+				if allow_binops then
+					return text_exp, r
+				else
+					return l
+				end
+			-- binop expression at the end of the text
+			elseif allow_binops and r:match(("^[%s]"):format(allow_binops)) then
+				local exp, rem = expression(r, state, namespace, nil, text_exp)
+				if not exp then return nil, rem end
+				return exp, rem
+			elseif r == "" then
 				break
+			else
+				error(("unexpected %q at end of text or string"):format(r))
 			end
 		end
-		return l
+		if allow_binops then
+			return text_exp, ""
+		else
+			return l
+		end
 	end,
 	-- find compatible function variants from a fully qualified name
 	-- this functions does not guarantee that functions are fully compatible with the given arguments and only performs a pre-selection without the ones which definitely aren't

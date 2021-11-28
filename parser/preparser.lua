@@ -325,18 +325,8 @@ local function transform_indented(indented)
 		if l.content:match("^%(") then
 			table.remove(indented, i)
 		else
-			-- condition decorator
-			if l.content:match("^.-[^~]%~[^#~$]-$") then
-				local decorator
-				l.content, decorator = l.content:match("^(..-)(%~[^#~$]-)$")
-				indented[i] = { content = decorator, source = l.source, children = { l } }
-			-- tag decorator
-			elseif l.content:match("^..-%#[^#~$]-$") then
-				local decorator
-				l.content, decorator = l.content:match("^(..-)(%#[^#~$]-)$")
-				indented[i] = { content = decorator, source = l.source, children = { l } }
 			-- function decorator
-			elseif l.content:match("^..-%$[^#~$]-$") then
+			if l.content:match("^.-[^\\]%$[^#~$]-$") then -- FIXME
 				local name
 				l.content, name = l.content:match("^(..-)%$([^#~$]-)$")
 				indented[i] = { content = "~"..name, source = l.source }

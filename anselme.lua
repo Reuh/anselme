@@ -6,11 +6,11 @@ local anselme = {
 	-- api is incremented a each update which may break Lua API compatibility
 	versions = {
 		save = 1,
-		language = 17,
+		language = 18,
 		api = 2
 	},
 	-- version is incremented at each update
-	version = 18,
+	version = 19,
 	--- currently running interpreter
 	running = nil
 }

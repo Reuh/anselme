@@ -1,5 +1,5 @@
 local expression
-local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable
+local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list
 
 local run
 
@@ -54,20 +54,28 @@ local function eval(state, exp)
 		end
 	-- list
 	elseif exp.type == "list" then
+		local flat = flatten_list(exp)
 		local l = {}
-		local ast = exp
-		while ast.type == "list" do
-			local left, lefte = eval(state, ast.left)
-			if not left then return left, lefte end
-			table.insert(l, left)
-			ast = ast.right
+		for _, ast in ipairs(flat) do
+			local v, e = eval(state, ast)
+			if not v then return v, e end
+			table.insert(l, v)
 		end
-		local right, righte = eval(state, ast)
-		if not right then return right, righte end
-		table.insert(l, right)
 		return {
 			type = "list",
 			value = l
+		}
+	-- text: only triggered from choice/text lines
+	elseif exp.type == "text" then
+		local currentTags = tags:current(state)
+		local v, e = eval_text_callback(state, exp.text, function(text)
+			local v2, e2 = events:append(state, "text", { text = text, tags = currentTags })
+			if not v2 then return v2, e2 end
+		end)
+		if not v then return v, e end
+		return {
+			type = "nil",
+			value = nil
 		}
 	-- assignment
 	elseif exp.type == ":=" then
@@ -113,6 +121,28 @@ local function eval(state, exp)
 			type = "number",
 			value = truthy(right) and 1 or 0
 		}
+	-- conditional
+	elseif exp.type == "~" then
+		local right, righte = eval(state, exp.right)
+		if not right then return right, righte end
+		if truthy(right) then
+			local left, lefte = eval(state, exp.left)
+			if not left then return left, lefte end
+			return left
+		end
+		return {
+			type = "nil",
+			value = nil
+		}
+	-- tag
+	elseif exp.type == "#" then
+		local right, righte = eval(state, exp.right)
+		if not right then return right, righte end
+		local i = tags:push(state, right)
+		local left, lefte = eval(state, exp.left)
+		tags:trim(state, i-1)
+		if not left then return left, lefte end
+		return left
 	-- variable
 	elseif exp.type == "variable" then
 		return get_variable(state, exp.name)
@@ -390,7 +420,8 @@ end
 package.loaded[...] = eval
 run = require((...):gsub("expression$", "interpreter")).run
 expression = require((...):gsub("interpreter%.expression$", "parser.expression"))
+flatten_list = require((...):gsub("interpreter%.expression$", "parser.common")).flatten_list
 local common = require((...):gsub("expression$", "common"))
-to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable
+to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events
 
 return eval

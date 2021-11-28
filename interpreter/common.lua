@@ -1,5 +1,32 @@
 local atypes, ltypes
-local eval
+local eval, run_block
+
+local function post_process_text(state, text)
+	-- remove trailing spaces
+	if state.feature_flags["strip trailing spaces"] then
+		local final = text[#text]
+		if final then
+			final.text = final.text:match("^(.-) *$")
+			if final.text == "" then
+				table.remove(text)
+			end
+		end
+	end
+	-- remove duplicate spaces
+	if state.feature_flags["strip duplicate spaces"] then
+		for i=1, #text-1 do
+			local a, b = text[i], text[i+1]
+			local na = #a.text:match(" *$")
+			local nb = #b.text:match("^ *")
+			if na > 0 and nb > 0 then -- remove duplicated spaces from second element first
+				b.text = b.text:match("^ *(.-)$")
+			end
+			if na > 1 then
+				a.text = a.text:match("^(.- ) *$")
+			end
+		end
+	end
+end
 
 local common
 common = {
@@ -150,12 +177,190 @@ common = {
 		else
 			return var.type
 		end
-	end
+	end,
+	--- tag management
+	tags = {
+		--- push new tags on top of the stack, from Anselme values
+		push = function(self, state, val)
+			local new = {}
+			-- copy
+			local last = self:current(state)
+			for k,v in pairs(last) do new[k] = v end
+			-- merge with new values
+			if val.type ~= "list" then val = { type = "list", value = { val } } end
+			for k, v in pairs(common.to_lua(val)) do new[k] = v end
+			-- add
+			table.insert(state.interpreter.tags, new)
+			return self:len(state)
+		end,
+		--- same but do not merge with last stack item
+		push_lua_no_merge = function(self, state, val)
+			table.insert(state.interpreter.tags, val)
+			return self:len(state)
+		end,
+		-- pop tag table on top of the stack
+		pop = function(self, state)
+			table.remove(state.interpreter.tags)
+		end,
+		--- return current lua tags table
+		current = function(self, state)
+			return state.interpreter.tags[#state.interpreter.tags] or {}
+		end,
+		--- returns length of tags stack
+		len = function(self, state)
+			return #state.interpreter.tags
+		end,
+		--- pop item until we reached desired stack length
+		-- try to prefer this to pop if possible, so in case we mess up the stack somehow it will restore the stack to a good state
+		-- (we may allow tag push/pop from the user side at some point TODO)
+		trim = function(self, state, len)
+			while #state.interpreter.tags > len do
+				self:pop(state)
+			end
+		end
+	},
+	--- event buffer management
+	-- i.e. only for text and choice events
+	events = {
+		--- add a new element to the event buffer
+		-- will flush if needed
+		-- returns true in case of success
+		-- returns nil, err in case of error
+		append = function(self, state, type, data)
+			if state.interpreter.event_capture_stack[type] then
+				local r, e = state.interpreter.event_capture_stack[type][#state.interpreter.event_capture_stack[type]](data)
+				if not r then return r, e end
+			else
+				local r, e = self:make_space_for(state, type)
+				if not r then return r, e end
+
+				if not state.interpreter.event_buffer then
+					state.interpreter.event_type = type
+					state.interpreter.event_buffer = {}
+				end
+
+				table.insert(state.interpreter.event_buffer, data)
+			end
+			return true
+		end,
+		--- add a new item in the last element (a list of elements) of the event buffer
+		-- will flush if needed
+		-- will use default or a new list if buffer is empty
+		-- returns true in case of success
+		-- returns nil, err in case of error
+		append_in_last = function(self, state, type, data, default)
+			local r, e = self:make_space_for(state, type)
+			if not r then return r, e end
+
+			if not state.interpreter.event_buffer then
+				r, e = self:append(state, type, default or {})
+				if not r then return r, e end
+			end
+
+			table.insert(state.interpreter.event_buffer[#state.interpreter.event_buffer], data)
+
+			return true
+		end,
+
+		--- start capturing events of a certain type
+		-- when an event of the type is appended, fn will be called with this event data
+		-- and the event will not be added to the event buffer
+		-- fn returns nil, err in case of error
+		push_capture = function(self, state, type, fn)
+			if not state.interpreter.event_capture_stack[type] then
+				state.interpreter.event_capture_stack[type] = {}
+			end
+			table.insert(state.interpreter.event_capture_stack[type], fn)
+		end,
+		--- stop capturing events of a certain type.
+		-- must be called after a push_capture
+		-- this is handled by a stack so nested capturing is allowed.
+		pop_capture = function(self, state, type)
+			table.remove(state.interpreter.event_capture_stack[type])
+			if #state.interpreter.event_capture_stack[type] == 0 then
+				state.interpreter.event_capture_stack[type] = nil
+			end
+		end,
+
+		-- flush event buffer if it's neccessary to push an event of the given type
+		-- returns true in case of success
+		-- returns nil, err in case of error
+		make_space_for = function(self, state, type)
+			if state.interpreter.event_buffer and state.interpreter.event_type ~= type and not state.interpreter.event_capture_stack[type] then
+				return self:flush(state)
+			end
+			return true
+		end,
+		--- flush events and send them to the game if possible
+		-- returns true in case of success
+		-- returns nil, err in case of error
+		flush = function(self, state)
+			while state.interpreter.event_buffer do
+				local type, buffer = state.interpreter.event_type, state.interpreter.event_buffer
+				state.interpreter.event_type = nil
+				state.interpreter.event_buffer = nil
+				state.interpreter.skip_choices_until_flush = nil
+				-- choice processing
+				local choices
+				if type == "choice" then
+					choices = {}
+					-- discard empty choices
+					for i=#buffer, 1, -1 do
+						if #buffer[i] == 0 then
+							table.remove(buffer, i)
+						end
+					end
+					-- extract some needed state data for each choice block
+					for _, c in ipairs(buffer) do
+						table.insert(choices, c._state)
+						c._state = nil
+					end
+					-- nervermind
+					if #choices == 0 then
+						return true
+					end
+				end
+				-- text & choice text content post processing
+				if type == "text" then
+					post_process_text(state, buffer)
+				end
+				if type == "choice" then
+					for _, c in ipairs(buffer) do
+						post_process_text(state, c)
+					end
+				end
+				-- yield event
+				coroutine.yield(type, buffer)
+				-- run choice
+				if type == "choice" then
+					local sel = state.interpreter.choice_selected
+					state.interpreter.choice_selected = nil
+					if not sel or sel < 1 or sel > #choices then
+						return nil, "invalid choice"
+					else
+						local choice = choices[sel]
+						-- execute in expected tag & event capture state
+						local capture_state = state.interpreter.event_capture_stack
+						state.interpreter.event_capture_stack = {}
+						local i = common.tags:push_lua_no_merge(state, choice.tags)
+						local _, e = run_block(state, choice.block)
+						common.tags:trim(state, i-1)
+						state.interpreter.event_capture_stack = capture_state
+						if e then return nil, e end
+						-- we discard return value from choice block as the execution is delayed until an event flush
+						-- and we don't want to stop the execution of another function unexpectedly
+					end
+				end
+			end
+			return true
+		end
+	}
 }
 
 package.loaded[...] = common
 local types = require((...):gsub("interpreter%.common$", "stdlib.types"))
 atypes, ltypes = types.anselme, types.lua
 eval = require((...):gsub("common$", "expression"))
+run_block = require((...):gsub("common$", "interpreter")).run_block
 
 return common

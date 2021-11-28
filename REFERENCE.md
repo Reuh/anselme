@@ -156,7 +156,7 @@ There's different types of lines, depending on their first character(s) (after i
     This is.
 ```
 
-* `>`: write a choice into the [event buffer](#event-buffer). Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer.
+* `>`: write a choice into the [event buffer](#event-buffer). Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer. Support [escape codes](#escape-codes). Empty choices are discarded.
 
 ```
 $ f
@@ -166,6 +166,18 @@ $ f
 > Second choice
 > Last choice
 > {f}
+```
+
+If an unescaped `~` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
+
+```
+(Conditionnaly executing a line)
+$ fn
+    > show this choice only once ~ 👁️
+
+(Tagging a single line)
+> tagged # 42
+    not tagged
 ```
 
 * `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body. Also define a new namespace for its children (using the function name if it has no arguments, or a unique name otherwise).
@@ -223,7 +235,7 @@ $ f(x::string)
 ~ f("hello")
 ```
 
-Every operator, except assignement operators, `|`, `&` and `,` can also be use as a function name in order to overload the operator:
+Every operator, except assignement operators, `|`, `&`, `,`, `~` and `#` can also be use as a function name in order to overload the operator:
 
 ```
 $ /(a::string, b::string)
@@ -323,7 +335,7 @@ $ f
 
 * empty line: flush the event buffer, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.
 
-* regular text: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation).
+* regular text: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes).
 
 ```
 Hello,
@@ -332,37 +344,20 @@ this is some text.
 And this is more text, in a different event.
 ```
 
-### Line decorators
-
-Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour. Decorators are just syntaxic sugar to make some common operations simpler to write.
-
-* `~`: condition decorator. Same as an condition line, behaving as if this line was it sole child. Typically used to conditionally execute line.
+If an unescaped `~` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
 
 ```
+(Conditionnaly executing a line)
 $ fn
     run this line only once ~ 👁️
-```
 
-is equivalent to:
-
-```
-$ fn
-    ~ 👁️
-        run this line only once 
-```
-
-* `#`: tag decorator. Same as a tag line, behaving as if this line was it sole child.
-
-```
+(Tagging a single line)
 tagged # 42
 ```
 
-is equivalent to:
+### Line decorators
 
-```
-# 42
-    tagged 
-```
+Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour. Decorators are just syntaxic sugar to make some common operations simpler to write.
 
 * `$`: function decorator. Same as a function line, behaving as if this line was it sole child, but also run the function.
 
@@ -428,6 +423,17 @@ Hello {f}
 :b = "{f}"
 ```
 
+Text interpolation in text and choices lines also support subtexts: this will process text in squares brackets `[]` in the same way as a regular text line.
+
+```
+Hello [world].
+
+(Typically used to tag part of a line in a compact manner)
+Hello [world#5]
+
+> Hello [world#5]
+```
+
 ### Events
 
 Anselme need to give back control to the game at some point. This is done through events: the interpreter regularly yield its coroutine and returns a bunch of data to your game. This is the "event", it is what we call whatever Anselme sends back to your game.
@@ -483,14 +489,14 @@ By default, some processing is done on the event buffer before sending it to you
 * strip trailing spaces: will remove any space caracters at the end of the text (for text event), or at the end of each choice (for choice event).
 
 ```
-(There is a space between the text and the tag decorator that would be included in the text event otherwise.)
+(There is a space between the text and the tag expression that would be included in the text event otherwise.)
 Some text # tag
 ```
 
 * strip duplicate spaces: will remove any duplicated space caracters between each element that constitute the text (for text event), or for each choice (for choice event).
 
 ```
-(There is a space between the text and the tag decorator; but there is a space as well after the text interpolation in the last line. The two spaces are converted into a single space (the space will belong to the first text element, i.e. the "text " element).)
+(There is a space between the text and the tag expression; but there is a space as well after the text interpolation in the last line. The two spaces are converted into a single space (the space will belong to the first text element, i.e. the "text " element).)
 $ f
     text # tag
 
@@ -577,7 +583,7 @@ Default types are:
 
 * `number`: a number (double). Can be defined using the forms `42`, `.42`, `42.42`.
 
-* `string`: a string. Can be defined between double quotes `"string"`. Support [text interpolation](#text-interpolation). Support the escape codes `\\` for `\`, `\"` for `"`, `\n` for a newline and `\t` for a tabulation.
+* `string`: a string. Can be defined between double quotes `"string"`. Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes).
 
 * `list`: a list of values. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
 
@@ -608,6 +614,19 @@ How conservions are handled from Lua to Anselme:
 * `table` -> `list`. First add the sequential part of the table in the list, then add pairs for the remaining elements, e.g. `{1,2,key="value",3}` -> `[1,2,3,"key":"value"]`
 
 * `boolean` -> `number`, 0 for false, 1 for true.
+
+#### Escapes codes
+
+These can be used to represent some caracters in string and other text elements that would otherwise be difficult to express due to conflicts with Anselme syntax.
+
+* `\{` for `{`
+* `\~` for `~`
+* `\#` for `#`
+* `\$` for `$`
+* `\\` for `\`
+* `\"` for `"`
+* `\n` for a newline
+* `\t` for a tabulation
 
 #### Truethness
 
@@ -696,7 +715,7 @@ $ f(a, b, c)
 {f(1,2,3)} = {f(c=3,b=2,a=1)} = {f(1,2,c=3)}
 ```
 
-Anselme actually treat argument list are regular lists; named arguments are actually pairs.
+Anselme actually treat argument list are regular lists; named arguments are actually pairs. Arguments are evaluated left-to-right.
 
 This means that pairs can't be passed directly as arguments to a function (as they will be considered named arguments). If you want to use pairs, always wrap them in a list.
 
@@ -792,7 +811,7 @@ Please also be aware that when resuming from a checkpoint, Anselme will try to r
 
 * if the checkpoint is in a condition block, it will assume the condition was true (but will not re-evaluate it)
 * if the checkpoint is in a choice block, it will assume this choice was selected (but will not re-evaluate any of the choices from the same choice group)
-* will try to re-add every tag from parent lines; this require Anselme to re-evaluate every tag line and decorator that's a parent of the checkpoint in the function. Be careful if your tag expressions have side-effects.
+* will try to re-add every tag from parent lines; this require Anselme to re-evaluate every tag lines that are a parent of the checkpoint in the function. Be careful if your tag expressions have side-effects.
 
 ##### Operator priority
 
@@ -802,7 +821,7 @@ From lowest to highest priority:
 ;
 :=  +=  -=  //= /=  *=  %=  ^=
 ,
-|   &
+|   &   ~   #
 !=  ==  >=  <=  <   >
 +   -
 *   //  /   %
@@ -811,6 +830,8 @@ unary -, unary !
 ^
 .
 ```
+
+A series of operators with the same priority are evaluated left-to-right.
 
 #### Operators
 
@@ -867,6 +888,10 @@ This only works on strings:
 `a : b`: evaluate a and b, returns a new pair with a as key and b as value.
 
 `a :: b`: evaluate a and b, returns a new typed value with a as value and b as type.
+
+`a ~ b`: evaluates b, if true evaluates and returns a, otherwise returns nil (lazy).
+
+`a # b`: evaluates b, then evaluates a whith b added to the active tags.
 
 `a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name. Operator is named `()`.
 

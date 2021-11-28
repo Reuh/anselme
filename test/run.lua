@@ -79,7 +79,7 @@ if args.help then
 	print("")
 	print("For script or game mode:")
 	print("  --lang code: load a language file")
-	print("  --save: print VM state at the end of the script")
+	print("  --save: print save data at the end of the script")
 	os.exit()
 end
 

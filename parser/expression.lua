@@ -1,11 +1,11 @@
-local identifier_pattern, format_identifier, find, escape, find_function_variant, parse_text, string_escapes
+local identifier_pattern, format_identifier, find, escape, find_function_variant, parse_text
 
 --- binop priority
 local binops_prio = {
 	[1] = { ";" },
 	[2] = { ":=", "+=", "-=", "//=", "/=", "*=", "%=", "^=" },
 	[3] = { "," },
-	[4] = { "|", "&" },
+	[4] = { "|", "&", "~", "#" },
 	[5] = { "!=", "==", ">=", "<=", "<", ">" },
 	[6] = { "+", "-" },
 	[7] = { "*", "//", "/", "%" },
@@ -70,12 +70,6 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			-- parse interpolated expressions
 			local l, e = parse_text(d, state, namespace)
 			if not l then return l, e end
-			-- escape the string parts
-			for j, ls in ipairs(l) do
-				if type(ls) == "string" then
-					l[j] = ls:gsub("\\.", string_escapes)
-				end
-			end
 			return expression(r, state, namespace, current_priority, {
 				type = "string",
 				value = l
@@ -191,7 +185,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 	else
 		-- binop
 		for prio, oplist in ipairs(binops_prio) do
-			if prio >= current_priority then
+			if prio > current_priority then
 				for _, op in ipairs(oplist) do
 					local escaped = escape(op)
 					if s:match("^"..escaped) then
@@ -275,7 +269,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 									left = operating_on,
 									right = right
 								})
-							elseif op == "&" or op == "|" then
+							elseif op == "&" or op == "|" or op == "~" or op == "#" then
 								return expression(r, state, namespace, current_priority, {
 									type = op,
 									left = operating_on,
@@ -287,8 +281,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 								local args = {
 									type = "list",
 									left = operating_on,
-									-- wrap in parentheses to avoid appending to argument list if right is a list
-									right = { type = "parentheses", expression = right }
+									right = right
 								}
 								local variant, err = find_function_variant(state, namespace, op, args, true)
 								if not variant then return variant, err end
@@ -318,6 +311,6 @@ end
 
 package.loaded[...] = expression
 local common = require((...):gsub("expression$", "common"))
-identifier_pattern, format_identifier, find, escape, find_function_variant, parse_text, string_escapes = common.identifier_pattern, common.format_identifier, common.find, common.escape, common.find_function_variant, common.parse_text, common.string_escapes
+identifier_pattern, format_identifier, find, escape, find_function_variant, parse_text = common.identifier_pattern, common.format_identifier, common.find, common.escape, common.find_function_variant, common.parse_text
 
 return expression

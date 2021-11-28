@@ -1,21 +1,22 @@
 local _={}
+_[25]={}
 _[24]={}
 _[23]={}
 _[22]={}
-_[21]={}
-_[20]={tags=_[24],text="escaping expressions abc and stuff \\ and quotes \""}
-_[19]={tags=_[23],text="\9"}
-_[18]={tags=_[23],text=" "}
-_[17]={tags=_[23],text="\\"}
-_[16]={tags=_[23],text=" "}
-_[15]={tags=_[23],text="\n"}
-_[14]={tags=_[23],text="other codes "}
-_[13]={tags=_[22],text="\""}
-_[12]={tags=_[22],text="quote "}
-_[11]={tags=_[21],text="a"}
-_[10]={tags=_[21],text="expression "}
-_[9]={_[20]}
-_[8]={_[14],_[15],_[16],_[17],_[18],_[19]}
+_[21]={text="escaping expressions abc and {stuff} \\ and quotes \"",tags=_[25]}
+_[20]={text=" {braces}",tags=_[24]}
+_[19]={text="\9",tags=_[24]}
+_[18]={text=" ",tags=_[24]}
+_[17]={text="\\",tags=_[24]}
+_[16]={text=" ",tags=_[24]}
+_[15]={text="\n",tags=_[24]}
+_[14]={text="other codes ",tags=_[24]}
+_[13]={text="\"",tags=_[23]}
+_[12]={text="quote ",tags=_[23]}
+_[11]={text="a",tags=_[22]}
+_[10]={text="expression ",tags=_[22]}
+_[9]={_[21]}
+_[8]={_[14],_[15],_[16],_[17],_[18],_[19],_[20]}
 _[7]={_[12],_[13]}
 _[6]={_[10],_[11]}
 _[5]={"return"}
@@ -57,10 +58,13 @@ return {_[1],_[2],_[3],_[4],_[5]}
     }, {
       tags = <table 1>,
       text = "\t"
+    }, {
+      tags = <table 1>,
+      text = " {braces}"
     } } }
 { "text", { {
       tags = {},
-      text = 'escaping expressions abc and stuff \\ and quotes "'
+      text = 'escaping expressions abc and {stuff} \\ and quotes "'
     } } }
 { "return" }
 ]]--
