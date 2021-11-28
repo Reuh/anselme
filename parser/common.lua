@@ -23,7 +23,7 @@ local disallowed_set = ("~`^+-=<>/[]*{}|\\_!?,;:()\"@&$#%"):gsub("[^%w]", "%%%1"
 common = {
 	--- valid identifier pattern
 	identifier_pattern = "%s*[^0-9%s"..disallowed_set.."][^"..disallowed_set.."]*",
-	-- names allowed for a function that aren't valide identifiers, mainly for overloading operators
+	-- names allowed for a function that aren't valid identifiers, mainly for overloading operators
 	special_functions_names = {
 		-- operators not included here:
 		-- * assignment operators (:=, +=, -=, //=, /=, *=, %=, ^=): handled with its own syntax (function assignment)
@@ -43,14 +43,20 @@ common = {
 	-- escapement code and their value in strings
 	-- I don't think there's a point in supporting form feed, carriage return, and other printer and terminal related codes
 	string_escapes = {
+		-- usual escape codes
 		["\\\\"] = "\\",
 		["\\\""] = "\"",
 		["\\n"] = "\n",
 		["\\t"] = "\t",
+		-- string interpolation
+		["\\{"] = "{",
+		-- subtext
+		["\\["] = "[",
+		-- end of text line expressions
 		["\\~"] = "~",
 		["\\#"] = "#",
-		["\\$"] = "$", -- FIXME
-		["\\{"] = "{"
+		-- decorators
+		["\\$"] = "$"
 	},
 	--- escape a string to be used as an exact match pattern
 	escape = function(str)
@@ -59,7 +65,7 @@ common = {
 		end
 		return escapeCache[str]
 	end,
-	--- trim a string
+	--- trim a string by removing whitespace at the start and end
 	trim = function(str)
 		return str:match("^%s*(.-)%s*$")
 	end,
@@ -153,13 +159,13 @@ common = {
 			local t, r = text:match(("^([^{%s]*)(.-)$"):format(delimiters))
 			-- text
 			if t ~= "" then
-				-- handle \{ escape: skip to next { until it's not escaped
+				-- handle \{ and binop escape: skip to next { until it's not escaped
 				while t:match("\\$") and r:match(("^[{%s]"):format(delimiters)) do
 					local t2, r2 = r:match(("^([{%s][^{%s]*)(.-)$"):format(delimiters, delimiters))
-					t = t:match("^(.-)\\$") .. t2
+					t = t .. t2 -- don't need to remove \ as it will be stripped with other escapes codes 3 lines later
 					r = r2
 				end
-				-- replace other escape codes
+				-- replace escape codes
 				local escaped = t:gsub("\\.", common.string_escapes)
 				table.insert(l, escaped)
 			end

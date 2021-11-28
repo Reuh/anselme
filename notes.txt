@@ -21,7 +21,7 @@ Using other unicode symbols may be also alright, but there also should be a way 
 
 TODO: add alias to §
 
-Reserved symbols that are still not used in expressions: ~`\_?@$#
+Reserved symbols that are still not used in expressions: `\_?@$
 
 Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&%
 

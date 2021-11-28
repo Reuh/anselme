@@ -5,3 +5,5 @@ quote \"
 other codes \n \\ \t
 
 decorators \# tag \~ condition \$ fn
+
+sub \[text]

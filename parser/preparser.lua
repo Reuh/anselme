@@ -326,9 +326,9 @@ local function transform_indented(indented)
 			table.remove(indented, i)
 		else
 			-- function decorator
-			if l.content:match("^.-[^\\]%$[^#~$]-$") then -- FIXME
+			if l.content:match("^.-[^\\]%$"..identifier_pattern.."$") then
 				local name
-				l.content, name = l.content:match("^(..-)%$([^#~$]-)$")
+				l.content, name = l.content:match("^(.-[^\\])%$("..identifier_pattern..")$")
 				indented[i] = { content = "~"..name, source = l.source }
 				table.insert(indented, i+1, { content = "$"..name, source = l.source, children = { l } })
 				i = i + 1 -- $ line should not contain any decorator anymore
