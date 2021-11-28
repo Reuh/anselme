@@ -1,5 +1,5 @@
 local eval
-local truthy, merge_state, escape, get_variable, eval_text_callback, tags, events
+local truthy, merge_state, escape, get_variable, tags, events
 local run_line, run_block
 
 -- returns var in case of success and there is a return
@@ -206,7 +206,7 @@ local interpreter = {
 package.loaded[...] = interpreter
 eval = require((...):gsub("interpreter$", "expression"))
 local common = require((...):gsub("interpreter$", "common"))
-truthy, merge_state, tags, get_variable, eval_text_callback, events = common.truthy, common.merge_state, common.tags, common.get_variable, common.eval_text_callback, common.events
+truthy, merge_state, tags, get_variable, events = common.truthy, common.merge_state, common.tags, common.get_variable, common.events
 escape = require((...):gsub("interpreter%.interpreter$", "parser.common")).escape
 
 return interpreter

@@ -41,6 +41,50 @@ Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&
 
 # Other
 
+Broad goals and ideas that may never be implemented. Mostly used as personal post-it notes.
+
+TODO: some sensible way to capture text event in string litterals (string interpolation)?
+
+TODO: the function decorator feels a bit glued-on to the current syntax
+
+TODO: simplify language, it is much too complicated. Less line types? (var def, func, checkpoint, tag). Rewrite some ad hoc syntax using the expression system?
+
+TODO: functions/checkpoint: separate from scoping and/or actual functions?
+
+TODO: fn/checkpoint/tag: maybe consider them a regular func call that takes children as arg; can keep compatibility using $/§ as shortcut for the actual call.
+     would allow more flexibility esp. for tags...
+     a func def would be:
+
+     :a
+     	stuff
+
+     but then args?
+
+     :a = $(args)
+     	stuff
+
+     how are children passed on? overloading?
+
+     if not possible, at least make checkpoint or fn defined using the other or some superset... -> checkpoints defined using fn
+
+     OK for tag though: pushtag/poptag fn:
+
+     # color:red
+     	a
+
+     translate to
+
+     ~ tag.push(color:red)
+     a
+     ~ tag.pop()
+
+TODO: perform seen/reached/etc default variable not in interpreter but using parse-time macro
+
+TODO: no function call without () (reference to fn instead?). Fn could be stored in save but replaced with new versions on code reload... -> how to track these references?
+                      if we make fn first class this means anonymous fn, is it ok?
+
+TODO: make language simple enough to be able to reimplement it in, say, nim. Especially the interpreter (we could precompile a lot of stuff...)
+
 TODO: test reacheability of script paths
 
 TODO: redisign the checkpoint system to work better when used with parallel scripts (if both change the same variable, will be overwritten)
