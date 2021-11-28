@@ -47,9 +47,9 @@ run_line = function(state, line)
 	elseif line.type == "tag" then
 		local v, e = eval(state, line.expression)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
-		local i = tags:push(state, v)
+		tags:push(state, v)
 		v, e = run_block(state, line.child)
-		tags:trim(state, i-1)
+		tags:pop(state)
 		if e then return v, e end
 		if v then return v end
 	elseif line.type == "return" then
@@ -180,7 +180,7 @@ local function run(state, block, resume_from_there, i, j)
 	local v, e = run_block(state, block, resume_from_there, i, j)
 	-- return to previous tag state
 	-- when resuming is done, tag stack pop when exiting the tag block
-	-- stray elements may be left on the stack if there is a return before we exit all the tag block, so we trim them
+	-- stray elements may be left on the stack if there is a return before we go up all the tag blocks, so we trim them
 	if resume_from_there then
 		tags:trim(state, tags_len)
 	end

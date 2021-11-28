@@ -138,9 +138,9 @@ local function eval(state, exp)
 	elseif exp.type == "#" then
 		local right, righte = eval(state, exp.right)
 		if not right then return right, righte end
-		local i = tags:push(state, right)
+		tags:push(state, right)
 		local left, lefte = eval(state, exp.left)
-		tags:trim(state, i-1)
+		tags:pop(state)
 		if not left then return left, lefte end
 		return left
 	-- variable

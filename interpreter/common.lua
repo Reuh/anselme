@@ -191,12 +191,10 @@ common = {
 			for k, v in pairs(common.to_lua(val)) do new[k] = v end
 			-- add
 			table.insert(state.interpreter.tags, new)
-			return self:len(state)
 		end,
 		--- same but do not merge with last stack item
 		push_lua_no_merge = function(self, state, val)
 			table.insert(state.interpreter.tags, val)
-			return self:len(state)
 		end,
 		-- pop tag table on top of the stack
 		pop = function(self, state)
@@ -211,8 +209,7 @@ common = {
 			return #state.interpreter.tags
 		end,
 		--- pop item until we reached desired stack length
-		-- try to prefer this to pop if possible, so in case we mess up the stack somehow it will restore the stack to a good state
-		-- (we may allow tag push/pop from the user side at some point TODO)
+		-- so in case there's a possibility to mess up the stack somehow, it will restore the stack to a good state
 		trim = function(self, state, len)
 			while #state.interpreter.tags > len do
 				self:pop(state)
@@ -342,9 +339,9 @@ common = {
 						-- execute in expected tag & event capture state
 						local capture_state = state.interpreter.event_capture_stack
 						state.interpreter.event_capture_stack = {}
-						local i = common.tags:push_lua_no_merge(state, choice.tags)
+						common.tags:push_lua_no_merge(state, choice.tags)
 						local _, e = run_block(state, choice.block)
-						common.tags:trim(state, i-1)
+						common.tags:pop(state)
 						state.interpreter.event_capture_stack = capture_state
 						if e then return nil, e end
 						-- we discard return value from choice block as the execution is delayed until an event flush
