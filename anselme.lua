@@ -139,6 +139,7 @@ local interpreter_methods = {
 	end,
 
 	--- run an expression or block: may trigger events and must be called from within the interpreter coroutine
+	-- no automatic merge if this change the interpreter state, merge is done once we reach end of script in a call to :step as usual
 	-- return lua value (nil if nothing returned)
 	run = function(self, expr, namespace)
 		-- check status
@@ -165,7 +166,9 @@ local interpreter_methods = {
 		return to_lua(r)
 	end,
 	--- evaluate an expression or block
-	-- can be called from outside the coroutine
+	-- can be called from outside the coroutine. Will create a new coroutine that operate on this interpreter state.
+	-- no automatic merge if this change the interpreter state, merge is done once we reach end of script in a call to :step as usual
+	-- the expression can't yield events
 	-- return value in case of success (nil if nothing returned)
 	-- return nil, err in case of error
 	eval = function(self, expr, namespace)
@@ -469,8 +472,8 @@ local vm_mt = {
 			state = {
 				feature_flags = self.state.feature_flags,
 				builtin_aliases = self.state.builtin_aliases,
-				aliases = self.state.aliases,
-				functions = self.state.functions,
+				aliases = setmetatable({}, { __index = self.state.aliases }),
+				functions = self.state.functions, -- no need for a cache as we can't define or modify any function from the interpreter for now
 				variables = setmetatable({}, { __index = self.state.variables }),
 				interpreter = {
 					-- constant
@@ -497,8 +500,8 @@ local vm_mt = {
 		return setmetatable(interpreter, interpreter_methods)
 	end,
 	--- eval code
-	-- unlike :run, this does not support events and will return the result of the expression directly.
-	-- does not merge state after execution automatically
+	-- behave like :run, except the expression can not emit events and will return the result of the expression directly.
+	-- merge state after sucessful execution automatically like :run
 	-- expr: expression to evaluate (string or parsed expression), or a block to evaluate
 	-- namespace(default=""): namespace to evaluate the expression in
 	-- tags(default={}): defaults tag when evaluating the expression
@@ -507,7 +510,10 @@ local vm_mt = {
 	eval = function(self, expr, namespace, tags)
 		local interpreter, err = self:run("()", namespace, tags)
 		if not interpreter then return interpreter, err end
-		return interpreter:eval(expr, namespace)
+		local r, e = interpreter:eval(expr, namespace)
+		if e then return r, e end
+		assert(interpreter:step() == "return") -- trigger merge / end-of-script things
+		return r
 	end
 }
 vm_mt.__index = vm_mt

@@ -32,9 +32,13 @@ local common
 common = {
 	--- merge interpreter state with global state
 	merge_state = function(state)
-		local global_vars = state.interpreter.global_state.variables
+		local global = state.interpreter.global_state
+		for alias, fqm in pairs(state.aliases) do
+			global.aliases[alias] = fqm
+			state.aliases[alias] = nil
+		end
 		for var, value in pairs(state.variables) do
-			global_vars[var] = value
+			global.variables[var] = value
 			state.variables[var] = nil
 		end
 	end,
