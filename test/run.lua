@@ -195,6 +195,19 @@ else
 					local t, d = istate:step()
 					table.insert(result, { t, d })
 				until t == "return" or t == "error"
+
+				local postrun = vm:eval(namespace..".post run")
+				if postrun then
+					istate, e = vm:run(namespace.."."..postrun)
+					if not istate then
+						table.insert(result, { "error", e })
+					else
+						repeat
+							local t, d = istate:step()
+							table.insert(result, { t, d })
+						until t == "return" or t == "error"
+					end
+				end
 			end
 		else
 			table.insert(result, { "error", err })

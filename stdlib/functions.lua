@@ -91,6 +91,7 @@ functions = {
 	["()(l::list, i::number) := v"] = {
 		mode = "raw",
 		value = function(l, i, v)
+			l.modified = true
 			local lv = l.type == "type" and l.value[1] or l
 			local iv = i.type == "type" and i.value[1] or i
 			lv.value[iv.value] = v
@@ -100,6 +101,7 @@ functions = {
 	["()(l::list, k::string) := v"] = {
 		mode = "raw",
 		value = function(l, k, v)
+			l.modified = true
 			local lv = l.type == "type" and l.value[1] or l
 			local kv = k.type == "type" and k.value[1] or k
 			-- update index
@@ -168,27 +170,33 @@ functions = {
 	["insert(l::list, v)"] = {
 		mode = "raw",
 		value = function(l, v)
+			l.modified = true
 			local lv = l.type == "type" and l.value[1] or l
 			table.insert(lv.value, v)
+			return l
 		end
 	},
 	["insert(l::list, i::number, v)"] = {
 		mode = "raw",
 		value = function(l, i, v)
+			l.modified = true
 			local lv = l.type == "type" and l.value[1] or l
 			local iv = i.type == "type" and i.value[1] or i
 			table.insert(lv.value, iv.value, v)
+			return l
 		end
 	},
 	["remove(l::list)"] = {
 		mode = "untyped raw",
 		value = function(l)
+			l.modified = true
 			return table.remove(l.value)
 		end
 	},
 	["remove(l::list, i::number)"] = {
 		mode = "untyped raw",
 		value = function(l, i)
+			l.modified = true
 			return table.remove(l.value, i.value)
 		end
 	},

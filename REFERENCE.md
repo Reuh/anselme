@@ -24,9 +24,9 @@ Another line.
 
 #### Checkpoints
 
-When executing a piece of Anselme code, it will not directly modify the global state (i.e. the values of variables used by every script), but only locally, in this execution.
+When executing a piece of Anselme code, your scripts will not directly modify the global state (i.e. the values of variables used by every script), but only locally, in its associated interpreter instance. Meaning that if you change a variable, its value will only be set in the local state, so the new value will be accessible from the current interpreter but not other interpreters, at least until the next checkpoint. Similarly, the first time your script reads a variable its value at this time is kept into the local state so it can not be affected by other scripts, at least until the next checkpoint.
 
-Right after reaching a checkpoint line, Anselme will merge the local state with the global one, i.e., make every change accessible to other scripts.
+Right after reaching a checkpoint line, Anselme will merge the local state with the global one, i.e., make every change accessible to other scripts, and get checkpointed changes from other scripts.
 
 ```
 $ main
@@ -51,7 +51,9 @@ $ parallel
 ~ main
 ```
 
-The purpose of this system is both to allow several scripts to run at the same time with an easy way to avoid interferences, and to make sure the global state is always in a consistent (and not in the middle of a calculation): since scripts can be interrupted at any time, when it is interrupted, anything that was changed between the last checkpoint and the interruption will be discarded. When running the script again, it will resume correctly at the last reached checkpoint. See [function calls](#function-calls) for more details on how to call/resume a function.
+The purpose of this system is both to allow several scripts to run at the same time with an easy way to avoid interferences, and to make sure the global state is always in a consistent (and not in the middle of a calculation): since scripts can be interrupted at any time, when it is interrupted, anything that was changed between the last checkpoint and the interruption will be discarded. If you're a RDBMS person, that's more-or-less equivalent to a transaction with a repeatable read isolation level (without any sort of locking or lost update protection though).
+
+When running the script again, it will resume correctly at the last reached checkpoint. See [function calls](#function-calls) for more details on how to call/resume a function.
 
 Checkpoints are set per function, and are expected to be defined inside functions only.
 

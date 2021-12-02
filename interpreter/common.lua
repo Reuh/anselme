@@ -32,11 +32,23 @@ local common
 common = {
 	--- merge interpreter state with global state
 	merge_state = function(state)
+		-- merge alias state
 		local global = state.interpreter.global_state
 		for alias, fqm in pairs(state.aliases) do
 			global.aliases[alias] = fqm
 			state.aliases[alias] = nil
 		end
+		-- variable state
+		-- move values modifed in-place from read cache to variables
+		local cache = getmetatable(state.variables).cache
+		for var, value in pairs(cache) do
+			if value.modified then
+				value.modified = nil
+				state.variables[var] = value
+			end
+			cache[var] = nil
+		end
+		-- merge modified variables
 		for var, value in pairs(state.variables) do
 			global.variables[var] = value
 			state.variables[var] = nil

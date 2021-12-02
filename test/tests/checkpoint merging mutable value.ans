@@ -1,0 +1,26 @@
+:post run = "after error"
+
+:l = [1,2]
+
+1,2: {l}
+
+~ l.insert(3)
+
+1,2,3: {l}
+
+§ a
+
+~ l.insert(4)
+
+1,2,3,4: {l}
+
+§ b
+
+~ l.insert(5)
+
+1,2,3,4,5: {l}
+
+~ error("cancel merge")
+
+$ after error
+	1,2,3,4: {l}

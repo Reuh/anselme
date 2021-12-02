@@ -1,0 +1,26 @@
+:post run = "after error"
+
+:l = 1
+
+1: {l}
+
+~ l := 2
+
+2: {l}
+
+§ a
+
+~ l := 3
+
+3: {l}
+
+§ b
+
+~ l := 4
+
+4: {l}
+
+~ error("cancel merge")
+
+$ after error
+	3: {l}

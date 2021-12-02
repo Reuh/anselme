@@ -6,11 +6,11 @@ local anselme = {
 	-- api is incremented a each update which may break Lua API compatibility
 	versions = {
 		save = 1,
-		language = 18,
-		api = 2
+		language = 19,
+		api = 3
 	},
 	-- version is incremented at each update
-	version = 19,
+	version = 20,
 	--- currently running interpreter
 	running = nil
 }
@@ -57,6 +57,25 @@ local function is_file(path)
 	else
 		local lfs = require("lfs")
 		return lfs.attributes(path, "mode") == "file"
+	end
+end
+
+--- recursively copy a table, handle cyclic references, no metatable
+local function copy(t, cache)
+	if type(t) == "table" then
+		cache = cache or {}
+		if cache[t] then
+			return cache[t]
+		else
+			local c = {}
+			cache[t] = c
+			for k, v in pairs(t) do
+				c[k] = copy(v, cache)
+			end
+			return c
+		end
+	else
+		return t
 	end
 end
 
@@ -474,7 +493,16 @@ local vm_mt = {
 				builtin_aliases = self.state.builtin_aliases,
 				aliases = setmetatable({}, { __index = self.state.aliases }),
 				functions = self.state.functions, -- no need for a cache as we can't define or modify any function from the interpreter for now
-				variables = setmetatable({}, { __index = self.state.variables }),
+				variables = setmetatable({}, {
+					__index = function(variables, k)
+						local cache = getmetatable(variables).cache
+						if cache[k] == nil then
+							cache[k] = copy(self.state.variables[k])
+						end
+						return cache[k]
+					end,
+					cache = {} -- cache of previously read values, to get repeatable reads & handle mutable types without changing global state
+				}),
 				interpreter = {
 					-- constant
 					global_state = self.state,
