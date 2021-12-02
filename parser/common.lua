@@ -135,18 +135,17 @@ common = {
 		return t
 	end,
 	-- parse interpolated expressions in a text
+	-- type sets the type of the returned expression (text is in text field)
 	-- allow_subtext (bool) to enable or not [subtext] support
 	-- if allow_binops is given, if one of the caracters of allow_binops appear unescaped in the text, it will interpreter a binary operator expression
-	-- * returns a text expression, remaining (if the right expression stop before the end of the text)
-	-- if allow_binops is not given:
-	-- * returns a list of strings and expressions (text elements)
+	-- * returns an expression with given type (string by default) and as a value a list of strings and expressions (text elements)
+	-- * if allow_binops is given, also returns remaining string (if the right expression stop before the end of the text)
 	-- * nil, err: in case of error
-	parse_text = function(text, state, namespace, allow_binops, allow_subtext, in_subtext)
+	parse_text = function(text, state, namespace, type, allow_binops, allow_subtext, in_subtext)
 		local l = {}
-		local text_exp
+		local text_exp = { type = type, text = l }
 		local delimiters = ""
 		if allow_binops then
-			text_exp = { type = "text", text = l }
 			delimiters = allow_binops
 		end
 		if allow_subtext then
@@ -182,7 +181,7 @@ common = {
 				text = rem:match("^%s*}(.*)$")
 			-- start subtext
 			elseif allow_subtext and r:match("^%[") then
-				local exp, rem = common.parse_text(r:gsub("^%[", ""), state, namespace, allow_binops, allow_subtext, true)
+				local exp, rem = common.parse_text(r:gsub("^%[", ""), state, namespace, "text", allow_binops, allow_subtext, true)
 				if not exp then return nil, rem end
 				if not rem:match("^%]") then return nil, ("expected closing ] at end of subtext before %q"):format(rem) end
 				-- add to text
@@ -193,7 +192,7 @@ common = {
 				if allow_binops then
 					return text_exp, r
 				else
-					return l
+					return text_exp
 				end
 			-- binop expression at the end of the text
 			elseif allow_binops and r:match(("^[%s]"):format(allow_binops)) then
@@ -209,7 +208,7 @@ common = {
 		if allow_binops then
 			return text_exp, ""
 		else
-			return l
+			return text_exp
 		end
 	end,
 	-- find compatible function variants from a fully qualified name

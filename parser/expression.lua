@@ -29,6 +29,30 @@ local unops_prio = {
 	[11] = {},
 }
 
+local function get_text_in_litteral(s, start_pos)
+	local d, r
+	-- find end of string
+	start_pos = start_pos or 2
+	local i = start_pos
+	while true do
+		local skip
+		skip = s:match("^[^%\\\"]-%b{}()", i) -- skip interpolated expressions
+		if skip then i = skip end
+		skip = s:match("^[^%\\\"]-\\.()", i) -- skip escape codes (need to skip every escape code in order to correctly parse \\": the " is not escaped)
+		if skip then i = skip end
+		if not skip then -- nothing skipped
+			local end_pos = s:match("^[^%\"]-\"()", i) -- search final double quote
+			if end_pos then
+				d, r = s:sub(start_pos, end_pos-2), s:sub(end_pos)
+				break
+			else
+				return nil, ("expected \" to finish string near %q"):format(s:sub(i))
+			end
+		end
+	end
+	return d, r
+end
+
 --- parse an expression
 -- return expr, remaining if success
 -- returns nil, err if error
@@ -48,32 +72,16 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			})
 		-- string
 		elseif s:match("^%\"") then
-			local d, r
-			-- find end of string
-			local i = 2
-			while true do
-				local skip
-				skip = s:match("^[^%\\\"]-%b{}()", i) -- skip interpolated expressions
-				if skip then i = skip end
-				skip = s:match("^[^%\\\"]-\\.()", i) -- skip escape codes (need to skip every escape code in order to correctly parse \\": the " is not escaped)
-				if skip then i = skip end
-				if not skip then -- nothing skipped
-					local end_pos = s:match("^[^%\"]-\"()", i) -- search final double quote
-					if end_pos then
-						d, r = s:sub(2, end_pos-2), s:sub(end_pos)
-						break
-					else
-						return nil, ("expected \" to finish string near %q"):format(s:sub(i))
-					end
-				end
-			end
-			-- parse interpolated expressions
-			local l, e = parse_text(d, state, namespace)
+			local d, r = get_text_in_litteral(s)
+			local l, e = parse_text(d, state, namespace, "string") -- parse interpolated expressions
 			if not l then return l, e end
-			return expression(r, state, namespace, current_priority, {
-				type = "string",
-				value = l
-			})
+			return expression(r, state, namespace, current_priority, l)
+		-- text
+		elseif s:match("^t%\"") then
+			local d, r = get_text_in_litteral(s, 3)
+			local l, e = parse_text(d, state, namespace, "text", nil, true) -- parse interpolated expressions and subtext
+			if not l then return l, e end
+			return expression(r, state, namespace, current_priority, l)
 		-- paranthesis
 		elseif s:match("^%b()") then
 			local content, r = s:match("^(%b())(.*)$")
@@ -119,7 +127,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					type = "list",
 					left = {
 						type = "string",
-						value = { name }
+						text = { name }
 					},
 					right = val
 				}

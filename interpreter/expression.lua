@@ -23,7 +23,7 @@ local function eval(state, exp)
 		}
 	-- string
 	elseif exp.type == "string" then
-		local t, e = eval_text(state, exp.value)
+		local t, e = eval_text(state, exp.text)
 		if not t then return t, e end
 		return {
 			type = "string",
@@ -32,7 +32,7 @@ local function eval(state, exp)
 	-- parentheses
 	elseif exp.type == "parentheses" then
 		return eval(state, exp.expression)
-	-- list parentheses
+	-- list defined in brackets
 	elseif exp.type == "list_brackets" then
 		if exp.expression then
 			local v, e = eval(state, exp.expression)
@@ -52,7 +52,7 @@ local function eval(state, exp)
 				value = {}
 			}
 		end
-	-- list
+	-- list defined using , operator
 	elseif exp.type == "list" then
 		local flat = flatten_list(exp)
 		local l = {}
@@ -65,17 +65,19 @@ local function eval(state, exp)
 			type = "list",
 			value = l
 		}
-	-- text: only triggered from choice/text lines
+	-- event buffer with from a text line
 	elseif exp.type == "text" then
-		local currentTags = tags:current(state)
+		local l = {}
+		events:push_buffer(state, l)
+		local current_tags = tags:current(state)
 		local v, e = eval_text_callback(state, exp.text, function(text)
-			local v2, e2 = events:append(state, "text", { text = text, tags = currentTags })
-			if not v2 then return v2, e2 end
+			events:append(state, "text", { text = text, tags = current_tags })
 		end)
+		events:pop_buffer(state)
 		if not v then return v, e end
 		return {
-			type = "nil",
-			value = nil
+			type = "eventbuffer",
+			value = l
 		}
 	-- assignment
 	elseif exp.type == ":=" then

@@ -57,7 +57,7 @@ local function parse(state)
 		end
 		-- text (text & choice lines)
 		if line.text then
-			local txt, err = parse_text(line.text, state, namespace, "#~", true)
+			local txt, err = parse_text(line.text, state, namespace, "text", "#~", true)
 			if not txt then return nil, ("%s; at %s"):format(err, line.source) end
 			if err:match("[^%s]") then return nil, ("expected end of expression in end-of-text expression before %q"):format(err) end
 			line.text = txt

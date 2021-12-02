@@ -157,7 +157,7 @@ local interpreter_methods = {
 			r, e = eval(self.state, expr)
 		end
 		if not r then coroutine.yield("error", e) end
-		if self.state.interpreter.event_buffer then -- flush final events
+		if self.state.interpreter.current_event then -- flush final events
 			local rf, re = run_line(self.state, { type = "flush_events" })
 			if re then coroutine.yield("error", re) end
 			if rf then r = rf end
@@ -478,15 +478,14 @@ local vm_mt = {
 					coroutine = coroutine.create(function() return "return", interpreter:run(expr, namespace) end),
 					-- status
 					running_line = nil,
-					-- events
-					event_type = nil,
-					event_buffer = nil,
 					-- choice event
 					choice_selected = nil,
 					-- skip next choices until next event change (to skip currently running choice block when resuming from a checkpoint)
 					skip_choices_until_flush = nil,
-					-- captured events stack {[event type]=stack{fn, ...}, ...}
-					event_capture_stack = {},
+					-- active event buffer stack
+					event_buffer_stack = {},
+					-- current event waiting to be sent
+					current_event = nil,
 					-- interrupt
 					interrupt = nil,
 					-- tag stack

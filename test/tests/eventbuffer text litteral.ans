@@ -1,0 +1,6 @@
+:a = t"Some text."
+:b = t"Tagged text" # 1
+
+a: {a}
+
+b: {b}

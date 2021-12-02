@@ -1,4 +1,4 @@
-local format, to_lua, from_lua
+local format, to_lua, from_lua, events, anselme
 
 local types = {}
 types.lua = {
@@ -131,6 +131,13 @@ types.anselme = {
 			return { [k] = v }
 		end
 	},
+	eventbuffer = {
+		format = function(val)
+			local v, e = events:write_buffer(anselme.running.state, val)
+			if not v then return v, e end
+			return ""
+		end,
+	},
 	type = {
 		format = function(val)
 			local k, ke = format(val[1])
@@ -149,6 +156,7 @@ types.anselme = {
 
 package.loaded[...] = types
 local common = require((...):gsub("stdlib%.types$", "interpreter.common"))
-format, to_lua, from_lua = common.format, common.to_lua, common.from_lua
+format, to_lua, from_lua, events = common.format, common.to_lua, common.from_lua, common.events
+anselme = require((...):gsub("stdlib%.types$", "anselme"))
 
 return types

@@ -219,84 +219,95 @@ common = {
 	--- event buffer management
 	-- i.e. only for text and choice events
 	events = {
-		--- add a new element to the event buffer
-		-- will flush if needed
-		-- returns true in case of success
-		-- returns nil, err in case of error
+		--- add a new element to the last event in the current buffer
+		-- will create new event if needed
 		append = function(self, state, type, data)
-			if state.interpreter.event_capture_stack[type] then
-				local r, e = state.interpreter.event_capture_stack[type][#state.interpreter.event_capture_stack[type]](data)
-				if not r then return r, e end
-			else
-				local r, e = self:make_space_for(state, type)
-				if not r then return r, e end
-
-				if not state.interpreter.event_buffer then
-					state.interpreter.event_type = type
-					state.interpreter.event_buffer = {}
-				end
-
-				table.insert(state.interpreter.event_buffer, data)
+			local buffer = self:current_buffer(state)
+			local last = buffer[#buffer]
+			if not last or last.type ~= type then
+				last = { type = type }
+				table.insert(buffer, last)
 			end
-			return true
-		end,
-		--- add a new item in the last element (a list of elements) of the event buffer
-		-- will flush if needed
-		-- will use default or a new list if buffer is empty
-		-- returns true in case of success
-		-- returns nil, err in case of error
-		append_in_last = function(self, state, type, data, default)
-			local r, e = self:make_space_for(state, type)
-			if not r then return r, e end
-
-			if not state.interpreter.event_buffer then
-				r, e = self:append(state, type, default or {})
-				if not r then return r, e end
-			end
-
-			table.insert(state.interpreter.event_buffer[#state.interpreter.event_buffer], data)
-
-			return true
+			table.insert(last, data)
 		end,
 
-		--- start capturing events of a certain type
-		-- when an event of the type is appended, fn will be called with this event data
-		-- and the event will not be added to the event buffer
-		-- fn returns nil, err in case of error
-		push_capture = function(self, state, type, fn)
-			if not state.interpreter.event_capture_stack[type] then
-				state.interpreter.event_capture_stack[type] = {}
-			end
-			table.insert(state.interpreter.event_capture_stack[type], fn)
+		--- new events will be collected in this event buffer (any table) until the next pop
+		-- this is handled by a stack so nesting is allowed
+		push_buffer = function(self, state, buffer)
+			table.insert(state.interpreter.event_buffer_stack, buffer)
 		end,
 		--- stop capturing events of a certain type.
-		-- must be called after a push_capture
-		-- this is handled by a stack so nested capturing is allowed.
-		pop_capture = function(self, state, type)
-			table.remove(state.interpreter.event_capture_stack[type])
-			if #state.interpreter.event_capture_stack[type] == 0 then
-				state.interpreter.event_capture_stack[type] = nil
-			end
+		-- must be called after a push_buffer
+		pop_buffer = function(self, state)
+			table.remove(state.interpreter.event_buffer_stack)
+		end,
+		--- returns the current buffer
+		current_buffer = function(self, state)
+			return state.interpreter.event_buffer_stack[#state.interpreter.event_buffer_stack]
 		end,
 
 		-- flush event buffer if it's neccessary to push an event of the given type
 		-- returns true in case of success
 		-- returns nil, err in case of error
 		make_space_for = function(self, state, type)
-			if state.interpreter.event_buffer and state.interpreter.event_type ~= type and not state.interpreter.event_capture_stack[type] then
-				return self:flush(state)
+			if #state.interpreter.event_buffer_stack == 0 and state.interpreter.current_event and state.interpreter.current_event.type ~= type then -- FIXME useful?
+				return self:manual_flush(state)
 			end
 			return true
 		end,
+
+		--- write all the data in a buffer into the current buffer, or to the game is no buffer is currently set
+		write_buffer = function(self, state, buffer)
+			for _, event in ipairs(buffer) do
+				if #state.interpreter.event_buffer_stack == 0 then
+					if event.type == "flush" then
+						local r, e = self:manual_flush(state)
+						if not r then return r, e end
+					elseif state.interpreter.current_event then
+						if state.interpreter.current_event.type == event.type then
+							for _, v in ipairs(event) do
+								table.insert(state.interpreter.current_event, v)
+							end
+						else
+							local r, e = self:manual_flush(state)
+							if not r then return r, e end
+							state.interpreter.current_event = event
+						end
+					else
+						state.interpreter.current_event = event
+					end
+				else
+					local current_buffer = self:current_buffer(state)
+					table.insert(current_buffer, event)
+				end
+			end
+			return true
+		end,
+
+		--- same as manual_flush but add the flush to the current buffer if one is set instead of directly to the game
+		flush = function(self, state)
+			if #state.interpreter.event_buffer_stack == 0 then
+				return self:manual_flush(state)
+			else
+				local current_buffer = self:current_buffer(state)
+				table.insert(current_buffer, { type = "flush" })
+				return true
+			end
+		end,
+
 		--- flush events and send them to the game if possible
 		-- returns true in case of success
 		-- returns nil, err in case of error
-		flush = function(self, state)
-			while state.interpreter.event_buffer do
-				local type, buffer = state.interpreter.event_type, state.interpreter.event_buffer
-				state.interpreter.event_type = nil
-				state.interpreter.event_buffer = nil
+		manual_flush = function(self, state)
+			while state.interpreter.current_event do
+				local event = state.interpreter.current_event
+				state.interpreter.current_event = nil
+
+				local type, buffer = event.type, event
+				buffer.type = nil
+
 				state.interpreter.skip_choices_until_flush = nil
+
 				-- choice processing
 				local choices
 				if type == "choice" then
