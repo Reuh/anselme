@@ -45,17 +45,17 @@ run_line = function(state, line)
 					-- create new choice block if needed
 					local last_choice_block = final_buffer[#final_buffer]
 					if not last_choice_block or last_choice_block.type ~= "choice" then
-						last_choice_block = { type = "choice" }
+						last_choice_block = { type = "choice", value = {} }
 						table.insert(final_buffer, last_choice_block)
 					end
 					-- create new choice item in choice block if needed
-					local last_choice = last_choice_block[#last_choice_block]
+					local last_choice = last_choice_block.value[#last_choice_block.value]
 					if not last_choice then
 						last_choice = { _state = choice_block_state }
-						table.insert(last_choice_block, last_choice)
+						table.insert(last_choice_block.value, last_choice)
 					end
 					-- add text to last choice item
-					for _, txt in ipairs(event) do
+					for _, txt in ipairs(event.value) do
 						table.insert(last_choice, txt)
 					end
 				else

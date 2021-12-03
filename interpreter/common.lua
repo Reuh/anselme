@@ -2,21 +2,30 @@ local atypes, ltypes
 local eval, run_block
 local common
 
+--- copy some text & process it to be suited to be sent to Lua in an event
 local function post_process_text(state, text)
+	local r = {}
+	-- copy into r & convert tags to lua
+	for _, t in ipairs(text) do
+		table.insert(r, {
+			text = t.text,
+			tags = common.to_lua(t.tags)
+		})
+	end
 	-- remove trailing spaces
 	if state.feature_flags["strip trailing spaces"] then
-		local final = text[#text]
+		local final = r[#r]
 		if final then
 			final.text = final.text:match("^(.-) *$")
 			if final.text == "" then
-				table.remove(text)
+				table.remove(r)
 			end
 		end
 	end
 	-- remove duplicate spaces
 	if state.feature_flags["strip duplicate spaces"] then
-		for i=1, #text-1 do
-			local a, b = text[i], text[i+1]
+		for i=1, #r-1 do
+			local a, b = r[i], r[i+1]
 			local na = #a.text:match(" *$")
 			local nb = #b.text:match("^ *")
 			if na > 0 and nb > 0 then -- remove duplicated spaces from second element first
@@ -27,10 +36,7 @@ local function post_process_text(state, text)
 			end
 		end
 	end
-	-- convert tags to lua
-	for _, t in ipairs(text) do
-		t.tags = common.to_lua(t.tags)
-	end
+	return r
 end
 
 common = {
@@ -245,10 +251,10 @@ common = {
 			local buffer = self:current_buffer(state)
 			local last = buffer[#buffer]
 			if not last or last.type ~= type then
-				last = { type = type }
+				last = { type = type, value = {} }
 				table.insert(buffer, last)
 			end
-			table.insert(last, data)
+			table.insert(last.value, data)
 		end,
 
 		--- new events will be collected in this event buffer (any table) until the next pop
@@ -261,7 +267,7 @@ common = {
 		pop_buffer = function(self, state)
 			table.remove(state.interpreter.event_buffer_stack)
 		end,
-		--- returns the current buffer
+		--- returns the current buffer value
 		current_buffer = function(self, state)
 			return state.interpreter.event_buffer_stack[#state.interpreter.event_buffer_stack]
 		end,
@@ -285,8 +291,8 @@ common = {
 						if not r then return r, e end
 					elseif state.interpreter.current_event then
 						if state.interpreter.current_event.type == event.type then
-							for _, v in ipairs(event) do
-								table.insert(state.interpreter.current_event, v)
+							for _, v in ipairs(event.value) do
+								table.insert(state.interpreter.current_event.value, v)
 							end
 						else
 							local r, e = self:manual_flush(state)
@@ -322,43 +328,40 @@ common = {
 			while state.interpreter.current_event do
 				local event = state.interpreter.current_event
 				state.interpreter.current_event = nil
-
-				local type, buffer = event.type, event
-				buffer.type = nil
-
 				state.interpreter.skip_choices_until_flush = nil
 
-				-- choice processing
+				local type = event.type
+				local buffer
+
 				local choices
-				if type == "choice" then
+				-- copy & process text buffer
+				if type == "text" then
+					buffer = post_process_text(state, event.value)
+				-- copy & process choice buffer
+				elseif type == "choice" then
+					-- copy & process choice text content into buffer, and needed private state into choices for each choice
+					buffer = {}
 					choices = {}
+					for _, c in ipairs(event.value) do
+						table.insert(buffer, post_process_text(state, c))
+						table.insert(choices, c._state)
+					end
 					-- discard empty choices
 					for i=#buffer, 1, -1 do
 						if #buffer[i] == 0 then
 							table.remove(buffer, i)
+							table.remove(choices, i)
 						end
-					end
-					-- extract some needed state data for each choice block
-					for _, c in ipairs(buffer) do
-						table.insert(choices, c._state)
-						c._state = nil
 					end
 					-- nervermind
 					if #choices == 0 then
 						return true
 					end
 				end
-				-- text & choice text content post processing
-				if type == "text" then
-					post_process_text(state, buffer)
-				end
-				if type == "choice" then
-					for _, c in ipairs(buffer) do
-						post_process_text(state, c)
-					end
-				end
+
 				-- yield event
 				coroutine.yield(type, buffer)
+
 				-- run choice
 				if type == "choice" then
 					local sel = state.interpreter.choice_selected
