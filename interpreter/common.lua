@@ -1,5 +1,6 @@
 local atypes, ltypes
 local eval, run_block
+local common
 
 local function post_process_text(state, text)
 	-- remove trailing spaces
@@ -26,9 +27,12 @@ local function post_process_text(state, text)
 			end
 		end
 	end
+	-- convert tags to lua
+	for _, t in ipairs(text) do
+		t.tags = common.to_lua(t.tags)
+	end
 end
 
-local common
 common = {
 	--- merge interpreter state with global state
 	merge_state = function(state)
@@ -198,18 +202,18 @@ common = {
 	tags = {
 		--- push new tags on top of the stack, from Anselme values
 		push = function(self, state, val)
-			local new = {}
+			local new = { type = "list", value = {} }
 			-- copy
 			local last = self:current(state)
-			for k,v in pairs(last) do new[k] = v end
-			-- merge with new values
+			for _, v in ipairs(last.value) do table.insert(new.value, v) end
+			-- append new values
 			if val.type ~= "list" then val = { type = "list", value = { val } } end
-			for k, v in pairs(common.to_lua(val)) do new[k] = v end
+			for _, v in ipairs(val.value) do table.insert(new.value, v) end
 			-- add
 			table.insert(state.interpreter.tags, new)
 		end,
 		--- same but do not merge with last stack item
-		push_lua_no_merge = function(self, state, val)
+		push_no_merge = function(self, state, val)
 			table.insert(state.interpreter.tags, val)
 		end,
 		-- pop tag table on top of the stack
@@ -218,7 +222,7 @@ common = {
 		end,
 		--- return current lua tags table
 		current = function(self, state)
-			return state.interpreter.tags[#state.interpreter.tags] or {}
+			return state.interpreter.tags[#state.interpreter.tags] or { type = "list", value = {} }
 		end,
 		--- returns length of tags stack
 		len = function(self, state)
@@ -366,7 +370,7 @@ common = {
 						-- execute in expected tag & event capture state
 						local capture_state = state.interpreter.event_capture_stack
 						state.interpreter.event_capture_stack = {}
-						common.tags:push_lua_no_merge(state, choice.tags)
+						common.tags:push_no_merge(state, choice.tags)
 						local _, e = run_block(state, choice.block)
 						common.tags:pop(state)
 						state.interpreter.event_capture_stack = capture_state
