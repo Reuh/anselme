@@ -169,6 +169,8 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					if not args then return args, err end
 					if err:match("[^%s]") then return nil, ("unexpected %q at end of argument list"):format(err) end
 				end
+			elseif r:match("^%!") then -- optional, to call with no arg, no explicit call
+				r = r:match("^%!(.*)$")
 			end
 			-- find compatible variant
 			local variant, err = find_function(state, namespace, name, args, explicit_call)
@@ -314,18 +316,27 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			end
 		end
 		-- index / call
-		if s:match("^%b()") then
-			local content, r = s:match("^(%b())(.*)$")
-			content = content:gsub("^%(", ""):gsub("%)$", "")
-			-- get arguments
+		if s:match("^%b()") or s:match("^%!") then
 			local args = operating_on
-			if content:match("[^%s]") then
-				local right, r_paren = expression(content, state, namespace)
-				if not right then return right, r_paren end
-				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of index/call expression"):format(r_paren) end
-				args = { type = "list", left = args, right = right }
+			local explicit_call, r
+			-- call with args, explicit call
+			if s:match("^%b()") then
+				explicit_call = true
+				local content
+				content, r = s:match("^(%b())(.*)$")
+				content = content:gsub("^%(", ""):gsub("%)$", "")
+				-- get arguments
+				if content:match("[^%s]") then
+					local right, r_paren = expression(content, state, namespace)
+					if not right then return right, r_paren end
+					if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of index/call expression"):format(r_paren) end
+					args = { type = "list", left = args, right = right }
+				end
+			-- call with no arg, no explicit call
+			elseif s:match("^%!") then
+				r = s:match("^%!(.*)$")
 			end
-			local variant, err = find_function(state, namespace, "()", args, true)
+			local variant, err = find_function(state, namespace, "()", args, explicit_call)
 			if not variant then return variant, err end
 			return expression(r, state, namespace, current_priority, variant)
 		end

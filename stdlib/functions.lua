@@ -119,6 +119,9 @@ functions = {
 			return v
 		end
 	},
+	["()(fn::function reference, l...)"] = {
+		-- bypassed, this case is manually handled in the expression interpreter
+	},
 	-- format
 	["{}(v)"] = {
 		mode = "raw",

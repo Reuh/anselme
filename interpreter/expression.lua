@@ -1,6 +1,5 @@
 local expression
 local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list
-local copy
 
 local run
 
@@ -445,6 +444,5 @@ expression = require((...):gsub("interpreter%.expression$", "parser.expression")
 flatten_list = require((...):gsub("interpreter%.expression$", "parser.common")).flatten_list
 local common = require((...):gsub("expression$", "common"))
 to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events
-copy = require((...):gsub("interpreter%.expression$", "common")).copy
 
 return eval
