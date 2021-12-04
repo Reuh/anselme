@@ -36,7 +36,7 @@ run_line = function(state, line)
 		v, e = eval(state, line.text)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
 		-- convert text events to choices
-		if v.type == "eventbuffer" then
+		if v.type == "event buffer" then
 			local current_tags = tags:current(state)
 			local choice_block_state = { tags = current_tags, block = line.child }
 			local final_buffer = {}
@@ -82,7 +82,7 @@ run_line = function(state, line)
 		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
 		v, e = eval(state, line.text)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
-		if v.type == "eventbuffer" then
+		if v.type == "event buffer" then
 			v, e = events:write_buffer(state, v.value)
 			if not v then return v, ("%s; at %s"):format(e, line.source) end
 		end

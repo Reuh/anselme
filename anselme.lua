@@ -29,6 +29,7 @@ local identifier_pattern = require(anselme_root.."parser.common").identifier_pat
 local merge_state = require(anselme_root.."interpreter.common").merge_state
 local stdfuncs = require(anselme_root.."stdlib.functions")
 local bootscript = require(anselme_root.."stdlib.bootscript")
+local copy = require(anselme_root.."common").copy
 
 -- wrappers for love.filesystem / luafilesystem
 local function list_directory(path)
@@ -57,25 +58,6 @@ local function is_file(path)
 	else
 		local lfs = require("lfs")
 		return lfs.attributes(path, "mode") == "file"
-	end
-end
-
---- recursively copy a table, handle cyclic references, no metatable
-local function copy(t, cache)
-	if type(t) == "table" then
-		cache = cache or {}
-		if cache[t] then
-			return cache[t]
-		else
-			local c = {}
-			cache[t] = c
-			for k, v in pairs(t) do
-				c[k] = copy(v, cache)
-			end
-			return c
-		end
-	else
-		return t
 	end
 end
 

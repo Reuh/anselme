@@ -131,7 +131,7 @@ types.anselme = {
 			return { [k] = v }
 		end
 	},
-	eventbuffer = {
+	["event buffer"] = {
 		format = function(val)
 			local v, e = events:write_buffer(anselme.running.state, val)
 			if not v then return v, e end

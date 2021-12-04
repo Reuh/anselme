@@ -1,5 +1,6 @@
 local expression
 local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list
+local copy
 
 local run
 
@@ -76,7 +77,7 @@ local function eval(state, exp)
 		events:pop_buffer(state)
 		if not v then return v, e end
 		return {
-			type = "eventbuffer",
+			type = "event buffer",
 			value = l
 		}
 	-- assignment
@@ -149,13 +150,32 @@ local function eval(state, exp)
 	elseif exp.type == "variable" then
 		return get_variable(state, exp.name)
 	-- function
-	elseif exp.type == "function" then
+	elseif exp.type == "function reference" then
+		return {
+			type = "function reference",
+			value = exp.names
+		}
+	elseif exp.type == "function call" then
 		-- eval args: list_brackets
 		local args = {}
 		if exp.argument then
 			local arg, arge = eval(state, exp.argument)
 			if not arg then return arg, arge end
 			args = arg.value
+		end
+		-- function reference: call the referenced function
+		local variants = exp.variants
+		if exp.called_name == "()" and args[1].type == "function reference" then
+			-- remove func ref as first arg
+			local refv = args[1].value
+			table.remove(args, 1)
+			-- get variants of the referenced function
+			variants = {}
+			for _, ffqm in ipairs(refv) do
+				for _, variant in ipairs(state.functions[ffqm]) do
+					table.insert(variants, variant)
+				end
+			end
 		end
 		-- map named arguments
 		local named_args = {}
@@ -174,7 +194,7 @@ local function eval(state, exp)
 		-- try to select a function
 		local tried_function_error_messages = {}
 		local selected_variant = { depths = { assignment = nil }, variant = nil }
-		for _, fn in ipairs(exp.variants) do
+		for _, fn in ipairs(variants) do
 			-- checkpoint: no args, nothing to select on
 			if fn.type == "checkpoint" then
 				if not selected_variant.variant then
@@ -425,5 +445,6 @@ expression = require((...):gsub("interpreter%.expression$", "parser.expression")
 flatten_list = require((...):gsub("interpreter%.expression$", "parser.common")).flatten_list
 local common = require((...):gsub("expression$", "common"))
 to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events
+copy = require((...):gsub("interpreter%.expression$", "common")).copy
 
 return eval

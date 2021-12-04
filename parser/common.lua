@@ -174,7 +174,7 @@ common = {
 				if not exp then return nil, rem end
 				if not rem:match("^%s*}") then return nil, ("expected closing } at end of expression before %q"):format(rem) end
 				-- wrap in format() call
-				local variant, err = common.find_function_variant(state, namespace, "{}", { type = "parentheses", expression = exp }, true)
+				local variant, err = common.find_function(state, namespace, "{}", { type = "parentheses", expression = exp }, true)
 				if not variant then return variant, err end
 				-- add to text
 				table.insert(l, variant)
@@ -211,13 +211,13 @@ common = {
 			return text_exp
 		end
 	end,
-	-- find compatible function variants from a fully qualified name
-	-- this functions does not guarantee that functions are fully compatible with the given arguments and only performs a pre-selection without the ones which definitely aren't
-	-- * list of variants: if success
+	-- find a list of compatible function variants from a fully qualified name
+	-- this functions does not guarantee that the returned variants are fully compatible with the given arguments and only performs a pre-selection without the ones which definitely aren't
+	-- * list of compatible variants: if success
 	-- * nil, err: if error
 	find_function_variant_from_fqm = function(fqm, state, arg)
 		local err = ("compatible function %q variant not found"):format(fqm)
-		local func = state.functions[fqm] or {}
+		local func = state.functions[fqm]
 		local args = arg and common.flatten_list(arg) or {}
 		local variants = {}
 		for _, variant in ipairs(func) do
@@ -248,7 +248,7 @@ common = {
 	--- same as find_function_variant_from_fqm, but will search every function from the current namespace and up using find
 	-- returns directly a function expression in case of success
 	-- return nil, err otherwise
-	find_function_variant = function(state, namespace, name, arg, explicit_call)
+	find_function = function(state, namespace, name, arg, explicit_call)
 		local variants = {}
 		local err = ("compatible function %q variant not found"):format(name)
 		local l = common.find_all(state.aliases, state.functions, namespace, name)
@@ -263,7 +263,7 @@ common = {
 		end
 		if #variants > 0 then
 			return {
-				type = "function",
+				type = "function call",
 				called_name = name,
 				explicit_call = explicit_call,
 				variants = variants,

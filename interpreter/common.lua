@@ -1,5 +1,6 @@
 local atypes, ltypes
 local eval, run_block
+local copy
 local common
 
 --- copy some text & process it to be suited to be sent to Lua in an event
@@ -393,5 +394,6 @@ local types = require((...):gsub("interpreter%.common$", "stdlib.types"))
 atypes, ltypes = types.anselme, types.lua
 eval = require((...):gsub("common$", "expression"))
 run_block = require((...):gsub("common$", "interpreter")).run_block
+copy = require((...):gsub("interpreter%.common$", "common")).copy
 
 return common
