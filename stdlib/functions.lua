@@ -1,5 +1,6 @@
 local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable
 
+--- mark a table as modified, so it will be merged on the next checkpoint if it appears somewhere in a value
 local function mark_as_modified(v)
 	local modified = getmetatable(anselme.running.state.variables).modified_tables
 	table.insert(modified, v)

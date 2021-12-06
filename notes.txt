@@ -43,7 +43,11 @@ Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&
 
 Broad goals and ideas that may never be implemented. Mostly used as personal post-it notes.
 
-TODO: some sensible way to capture text event in string litterals (string interpolation)?
+TODO: rewrite cycle, ... using function references
+
+TODO: consider something like :identifier to create a string "identifier", might simplify the identifier=value special syntax and free up the = operator
+
+TODO: some sensible way to capture text event in string litterals (string interpolation)? -> meh, this means we can capture choice events, and choice events contain their code block, and we don't want to store code blocks in the save file (as code can be updated/translated/whatever)
 
 TODO: the function decorator feels a bit glued-on to the current syntax
 

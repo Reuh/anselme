@@ -903,7 +903,13 @@ This only works on strings:
 
 #### Built-in variables
 
-TODO see stdlib/bootscript.lua
+Variables for default types (each is associated to a string of the internal variable type name): `nil`, `number`, `string`, `list`, `pair`, `function reference`.
+
+#### Built-in languages
+
+Anselme provides some scripts that define translated aliases for built-in variables and functions. Currently `enUS` (English) and `frFR` (French) are provided.
+
+See the `stdlib/languages` for details on each language.
 
 API reference
 -------------
