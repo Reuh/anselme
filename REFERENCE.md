@@ -176,7 +176,10 @@ $ f(x::string)
 Every operator, except assignement operators, `|`, `&`, `,`, `~` and `#` can also be use as a function name in order to overload the operator:
 
 ```
-$ /(a::string, b::string)
+(binary operator names: _op_)
+(prefix unary operator: op_)
+(suffix unary operator: _op)
+$ _/_(a::string, b::string)
     @"{a}/{b}"
 ```
 
@@ -523,11 +526,15 @@ Default types are:
 
 * `string`: a string. Can be defined between double quotes `"string"`. Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes).
 
-* `list`: a list of values. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
-
 * `pair`: a couple of values. Types can be mixed. Can be defined using colon `"key":5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax.
 
 * `type`: a couple of values. Types can be mixed. Can be defined using colon `expr::type`. The second value is used in type checks, this is intended to be use to give a custom type to a value.
+
+* `function reference`: reference to one or more function(s) with a given name. Can be defined using `&function name`, which will create a reference to every function with this name accessible from the current namespace. Can be called as if it was the original function using `func ref!` and `func ref(args)`.
+
+* `list`: a list of values. Mutable. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
+
+Every type is immutable, except `list`.
 
 How conversions are handled from Anselme to Lua:
 
@@ -573,13 +580,15 @@ Only `0` and `nil` are false. Everything else is considered true.
 
 #### Function calls
 
-The simplest way to call a function is simply to use its name. If the function has no arguments, parantheses are optional:
+The simplest way to call a function is simply to use its name. If the function has no arguments, parantheses are optional, or can be replaced with a `!`:
 
 ```
 $ f
     called
 
 ~ f
+(equivalent to)
+~ f!
 
 $ f(a)
     called with {a}
@@ -607,18 +616,18 @@ Force no checkpoint, will write "a" and "c":
 
 ```
 
-Functions with arguments can also be called with a "method-like" syntax (though Anselme has no concept of classes and methods):
+Functions with arguments can also be called with a "method-like" syntax using the `!` operator (though Anselme has no concept of classes and methods):
 
 ```
 $ f(a)
     called with {a}
 
-"an argument".f
+"an argument"!f
 
 $ f(a, b)
     called with {a} and {b}
 
-"an argument".f("another argument")
+"an argument"!f("another argument")
 ```
 
 If the function has a return value, any of these calls will of course return the value.
@@ -721,6 +730,7 @@ Force run the function starting from checkpoint, will write "b" and "c" and set 
 
 Will correctly resumes from the last set checkpoint, and write "b" and "c":
 ~ f
+f! can also be used for the exact same result.
 
 Function can always be restarted from the begining using parantheses:
 ~ f()
@@ -757,20 +767,23 @@ Please also be aware that when resuming from a checkpoint, Anselme will try to r
 From lowest to highest priority:
 
 ```
-;
-:=  +=  -=  //= /=  *=  %=  ^=
-,
-|   &   ~   #
-!=  ==  >=  <=  <   >
-+   -
-*   //  /   %
-::  :
-unary -, unary !
-^
-.
+_;_
+_:=_  _+=_  _-=_  _//=_  _/=_  _*=_  _%=_  _^=_
+_,_
+_|_   _&_   _~_   _#_
+_!=_  _==_  _>=_  _<=_  _<_   _>_
+_+_   _-_
+_*_   _//_  _/_   _%_
+_::_  _:_
+-_  !_
+_^_
+_._   _!_
+&_
 ```
 
 A series of operators with the same priority are evaluated left-to-right.
+
+The function called for a binary operator op is named `_op_`, for a prefix unary operator `op_`, for a suffix unary operator `_op`. Theses names are used to defined new operator behaviour; see function line.
 
 #### Operators
 
@@ -820,6 +833,16 @@ This only works on strings:
 
 `a | b`: or operator, lazy
 
+##### Functions
+
+`fn(args)`: call the function, checkpoint or function reference with the given arguments.
+
+`fn!`: call the function, checkpoint or function reference without arguments. Can leads to different behaviour that the syntax with parantheses; see [function calls](#function-calls).
+
+`&fn`: returns a function reference to the given function.
+
+`a!fn(args)`: call the function or function reference with the variable as first argument. Parantheses are optional.
+
 ##### Various
 
 `a ; b`: evaluate a, discard its result, then evaluate b. Returns the result of b.
@@ -831,6 +854,8 @@ This only works on strings:
 `a ~ b`: evaluates b, if true evaluates a and returns it, otherwise returns nil (lazy).
 
 `a # b`: evaluates b, then evaluates a whith b added to the active tags. Returns a.
+
+`a.b`: if a is a function reference, returns the variable named `b` in the referenced function namespace. When overloading this operator, if `b` is an identifier, the operator will interpret it as a string (and not returns the evaluated value of the variable eventually associated to the identifier).
 
 `a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name. Operator is named `()`.
 
