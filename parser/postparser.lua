@@ -29,7 +29,7 @@ local function parse(state)
 					end
 					param.default = default_exp
 					-- extract type annotation from default value
-					if default_exp.type == "function call" and default_exp.called_name == "::" then
+					if default_exp.type == "function call" and default_exp.called_name == "_::_" then
 						param.type_annotation = default_exp.argument.expression.right
 					end
 				end

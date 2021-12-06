@@ -1,7 +1,7 @@
-$ -(f)
+$ -_(f)
 	@"generic minus"
 
-$ -(f::string)
+$ -_(f::string)
 	@"minus "+f
 
 {-5}

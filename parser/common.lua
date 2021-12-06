@@ -25,20 +25,28 @@ common = {
 	identifier_pattern = "%s*[^0-9%s"..disallowed_set.."][^"..disallowed_set.."]*",
 	-- names allowed for a function that aren't valid identifiers, mainly for overloading operators
 	special_functions_names = {
-		-- operators not included here:
+		-- operators not included here and why:
 		-- * assignment operators (:=, +=, -=, //=, /=, *=, %=, ^=): handled with its own syntax (function assignment)
 		-- * list operator (,): is used when calling every functions, sounds like more trouble than it's worth
 		-- * |, & and ~ operators: are lazy and don't behave like regular functions
-		-- * # operator: need to set tag state before evaluating the left arg
-		-- * . operator: don't behave like regular functions either
-		";",
-		"!=", "==", ">=", "<=", "<", ">",
-		"+", "-",
-		"*", "//", "/", "%",
-		"::", ":",
-		"!",
-		"^",
-		"()", "{}"
+		-- * # operator: need to set tag state _before_ evaluating the left arg
+
+		-- prefix unop
+		"-_", "!_",
+		"&_",
+		-- binop
+		"_;_",
+		"_!=_", "_==_", "_>=_", "_<=_", "_<_", "_>_",
+		"_+_", "_-_",
+		"_*_", "_//_", "_/_", "_%_",
+		"_::_", "_:_",
+		"_^_",
+		"_._", "_!_",
+		-- suffix unop
+		"_!",
+		-- special
+		"()",
+		"{}"
 	},
 	-- escapement code and their value in strings
 	-- I don't think there's a point in supporting form feed, carriage return, and other printer and terminal related codes
@@ -248,7 +256,7 @@ common = {
 	--- same as find_function_variant_from_fqm, but will search every function from the current namespace and up using find
 	-- returns directly a function expression in case of success
 	-- return nil, err otherwise
-	find_function = function(state, namespace, name, arg, explicit_call)
+	find_function = function(state, namespace, name, arg, paren_call, implicit_call)
 		local variants = {}
 		local err = ("compatible function %q variant not found"):format(name)
 		local l = common.find_all(state.aliases, state.functions, namespace, name)
@@ -264,9 +272,10 @@ common = {
 		if #variants > 0 then
 			return {
 				type = "function call",
-				called_name = name,
-				explicit_call = explicit_call,
-				variants = variants,
+				called_name = name, -- name of the called function
+				paren_call = paren_call, -- was call with parantheses?
+				implicit_call = implicit_call, -- was call implicitely (no ! or parentheses)?
+				variants = variants, -- list of potential variants
 				argument = { -- wrap everything in a list literal to simplify later things (otherwise may be nil, single value, list constructor)
 					type = "list_brackets",
 					expression = arg

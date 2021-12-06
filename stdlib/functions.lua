@@ -1,14 +1,14 @@
-local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier
+local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable
 
 local functions
 functions = {
 	-- discard left
-	[";(a, b)"] = {
+	["_;_(a, b)"] = {
 		mode = "raw",
 		value = function(a, b) return b end
 	},
 	-- comparaison
-	["==(a, b)"] = {
+	["_==_(a, b)"] = {
 		mode = "raw",
 		value = function(a, b)
 			return {
@@ -17,7 +17,7 @@ functions = {
 			}
 		end
 	},
-	["!=(a, b)"] = {
+	["_!=_(a, b)"] = {
 		mode = "raw",
 		value = function(a, b)
 			return {
@@ -26,21 +26,21 @@ functions = {
 			}
 		end
 	},
-	[">(a::number, b::number)"] = function(a, b) return a > b end,
-	["<(a::number, b::number)"] = function(a, b) return a < b end,
-	[">=(a::number, b::number)"] = function(a, b) return a >= b end,
-	["<=(a::number, b::number)"] = function(a, b) return a <= b end,
+	["_>_(a::number, b::number)"] = function(a, b) return a > b end,
+	["_<_(a::number, b::number)"] = function(a, b) return a < b end,
+	["_>=_(a::number, b::number)"] = function(a, b) return a >= b end,
+	["_<=_(a::number, b::number)"] = function(a, b) return a <= b end,
 	-- arithmetic
-	["+(a::number, b::number)"] = function(a, b) return a + b end,
-	["+(a::string, b::string)"] = function(a, b) return a .. b end,
-	["-(a::number, b::number)"] = function(a, b) return a - b end,
-	["-(a::number)"] = function(a) return -a end,
-	["*(a::number, b::number)"] = function(a, b) return a * b end,
-	["/(a::number, b::number)"] = function(a, b) return a / b end,
-	["//(a::number, b::number)"] = function(a, b) return math.floor(a / b) end,
-	["^(a::number, b::number)"] = function(a, b) return a ^ b end,
+	["_+_(a::number, b::number)"] = function(a, b) return a + b end,
+	["_+_(a::string, b::string)"] = function(a, b) return a .. b end,
+	["_-_(a::number, b::number)"] = function(a, b) return a - b end,
+	["-_(a::number)"] = function(a) return -a end,
+	["_*_(a::number, b::number)"] = function(a, b) return a * b end,
+	["_/_(a::number, b::number)"] = function(a, b) return a / b end,
+	["_//_(a::number, b::number)"] = function(a, b) return math.floor(a / b) end,
+	["_^_(a::number, b::number)"] = function(a, b) return a ^ b end,
 	-- boolean
-	["!(a)"] = {
+	["!_(a)"] = {
 		mode = "raw",
 		value = function(a)
 			return {
@@ -50,7 +50,7 @@ functions = {
 		end
 	},
 	-- pair
-	[":(a, b)"] = {
+	["_:_(a, b)"] = {
 		mode = "raw",
 		value = function(a, b)
 			return {
@@ -60,13 +60,29 @@ functions = {
 		end
 	},
 	-- type
-	["::(a, b)"] = {
+	["_::_(a, b)"] = {
 		mode = "raw",
 		value = function(a, b)
 			return {
 				type = "type",
 				value = { a, b }
 			}
+		end
+	},
+	-- namespace
+	["_._(r::function reference, name::string)"] = {
+		mode = "raw",
+		value = function(r, n)
+			local state = anselme.running.state
+			local rval = r.value
+			local name = n.value
+			for _, ffqm in ipairs(rval) do
+				local var, vfqm = find(state.aliases, state.variables, ffqm..".", name)
+				if var then
+					return get_variable(state, vfqm)
+				end
+			end
+			return nil, ("can't find variable %q in function reference (searched in namespaces: %s)"):format(name, table.concat(rval, ", "))
 		end
 	},
 	-- index
@@ -120,6 +136,9 @@ functions = {
 		end
 	},
 	["()(fn::function reference, l...)"] = {
+		-- bypassed, this case is manually handled in the expression interpreter
+	},
+	["_!(fn::function reference, l...)"] = {
 		-- bypassed, this case is manually handled in the expression interpreter
 	},
 	-- format
@@ -281,7 +300,7 @@ functions = {
 
 package.loaded[...] = functions
 local icommon = require((...):gsub("stdlib%.functions$", "interpreter.common"))
-truthy, compare, is_of_type = icommon.truthy, icommon.compare, icommon.is_of_type
+truthy, compare, is_of_type, get_variable = icommon.truthy, icommon.compare, icommon.is_of_type, icommon.get_variable
 local pcommon = require((...):gsub("stdlib%.functions$", "parser.common"))
-identifier_pattern, format_identifier = pcommon.identifier_pattern, pcommon.format_identifier
+identifier_pattern, format_identifier, find = pcommon.identifier_pattern, pcommon.format_identifier, pcommon.find
 anselme = require((...):gsub("stdlib%.functions$", "anselme"))

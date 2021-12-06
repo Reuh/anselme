@@ -164,10 +164,15 @@ local function eval(state, exp)
 		end
 		-- function reference: call the referenced function
 		local variants = exp.variants
-		if exp.called_name == "()" and args[1].type == "function reference" then
+		local paren_call = exp.paren_call
+		if args[1] and args[1].type == "function reference" and (exp.called_name == "()" or exp.called_name == "_!") then
 			-- remove func ref as first arg
 			local refv = args[1].value
 			table.remove(args, 1)
+			-- set paren_call for _!
+			if exp.called_name == "_!" then
+				paren_call = false
+			end
 			-- get variants of the referenced function
 			variants = {}
 			for _, ffqm in ipairs(refv) do
@@ -333,7 +338,7 @@ local function eval(state, exp)
 		if selected_variant.variant then
 			local fn = selected_variant.variant
 			if fn.type == "checkpoint" then
-				local r, e = run(state, fn.child, not exp.explicit_call)
+				local r, e = run(state, fn.child, not paren_call)
 				if not r then return r, e end
 				return r
 			elseif fn.type == "function" then
@@ -361,9 +366,14 @@ local function eval(state, exp)
 						final_args[#final_args+1] = v
 					end
 					-- execute function
-					-- raw mode: pass raw anselme values to the Lua function
+					-- raw mode: pass raw anselme values to the Lua function; support return nil, err in case of error
 					if lua_fn.mode == "raw" then
-						ret = lua_fn.value(unpack(final_args))
+						local r, e = lua_fn.value(unpack(final_args))
+						if r then
+							ret = r
+						else
+							return nil, ("%s; in Lua function %q"):format(e, exp.called_name)
+						end
 					-- untyped raw mode: same as raw, but strips custom types from the arguments
 					elseif lua_fn.mode == "untyped raw" then
 						-- extract value from custom types
@@ -372,7 +382,12 @@ local function eval(state, exp)
 								final_args[i] = arg.value[1]
 							end
 						end
-						ret = lua_fn.value(unpack(final_args))
+						local r, e = lua_fn.value(unpack(final_args))
+						if r then
+							ret = r
+						else
+							return nil, ("%s; in Lua function %q"):format(e, exp.called_name)
+						end
 					-- normal mode: convert args to Lua and convert back Lua value to Anselme
 					elseif lua_fn.mode == nil then
 						local l_lua = {}
@@ -397,7 +412,7 @@ local function eval(state, exp)
 				else
 					local e
 					-- eval function from start
-					if exp.explicit_call or checkpoint.value == "" then
+					if paren_call or checkpoint.value == "" then
 						ret, e = run(state, fn.child)
 					-- resume at last checkpoint
 					else
