@@ -131,13 +131,6 @@ types.anselme = {
 			return { [k] = v }
 		end
 	},
-	["event buffer"] = {
-		format = function(val)
-			local v, e = events:write_buffer(anselme.running.state, val)
-			if not v then return v, e end
-			return ""
-		end,
-	},
 	type = {
 		format = function(val)
 			local k, ke = format(val[1])
@@ -151,7 +144,16 @@ types.anselme = {
 			if not k and ke then return k, ke end
 			return k
 		end
-	}
+	},
+	["function reference"] = nil,
+	-- internal types
+	["event buffer"] = {
+		format = function(val) -- triggered from subtexts
+			local v, e = events:write_buffer(anselme.running.state, val)
+			if not v then return v, e end
+			return ""
+		end
+	},
 }
 
 package.loaded[...] = types

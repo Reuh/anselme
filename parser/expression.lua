@@ -92,12 +92,6 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local l, e = parse_text(d, state, namespace, "string") -- parse interpolated expressions
 			if not l then return l, e end
 			return expression(r, state, namespace, current_priority, l)
-		-- text
-		elseif s:match("^t%\"") then
-			local d, r = get_text_in_litteral(s, 3)
-			local l, e = parse_text(d, state, namespace, "text", nil, true) -- parse interpolated expressions and subtext
-			if not l then return l, e end
-			return expression(r, state, namespace, current_priority, l)
 		-- paranthesis
 		elseif s:match("^%b()") then
 			local content, r = s:match("^(%b())(.*)$")

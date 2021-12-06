@@ -6,6 +6,5 @@ return [[
 :string="string"
 :list="list"
 :pair="pair"
-:event buffer="event buffer"
 :function reference="function reference"
 ]]

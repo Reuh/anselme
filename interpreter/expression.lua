@@ -65,7 +65,7 @@ local function eval(state, exp)
 			type = "list",
 			value = l
 		}
-	-- event buffer with from a text line
+	-- event buffer (internal type, only issued from a text or choice line)
 	elseif exp.type == "text" then
 		local l = {}
 		events:push_buffer(state, l)
