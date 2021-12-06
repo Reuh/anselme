@@ -1,6 +1,6 @@
 local atypes, ltypes
 local eval, run_block
-local copy
+local replace_with_copied_values
 local common
 
 --- copy some text & process it to be suited to be sent to Lua in an event
@@ -49,17 +49,13 @@ common = {
 			global.aliases[alias] = fqm
 			state.aliases[alias] = nil
 		end
-		-- variable state
-		-- move values modifed in-place from read cache to variables
-		local cache = getmetatable(state.variables).cache
-		for var, value in pairs(cache) do
-			if value.modified then
-				value.modified = nil
-				state.variables[var] = value
-			end
-			cache[var] = nil
-		end
-		-- merge modified variables
+		-- merge modified mutable varables
+		local mt = getmetatable(state.variables)
+		replace_with_copied_values(global.variables, mt.copy_cache, mt.modified_tables)
+		mt.copy_cache = {}
+		mt.modified = {}
+		mt.cache = {}
+		-- merge modified re-assigned variables
 		for var, value in pairs(state.variables) do
 			global.variables[var] = value
 			state.variables[var] = nil
@@ -105,6 +101,23 @@ common = {
 			end
 			for i, v in ipairs(a.value) do
 				if not common.compare(v, b.value[i]) then
+					return false
+				end
+			end
+			return true
+		elseif a.type == "function reference" then
+			if #a.value ~= #b.value then
+				return false
+			end
+			for _, aname in ipairs(a.value) do
+				local found = false
+				for _, bname in ipairs(b.value) do
+					if aname == bname then
+						found = true
+						break
+					end
+				end
+				if not found then
 					return false
 				end
 			end
@@ -394,6 +407,6 @@ local types = require((...):gsub("interpreter%.common$", "stdlib.types"))
 atypes, ltypes = types.anselme, types.lua
 eval = require((...):gsub("common$", "expression"))
 run_block = require((...):gsub("common$", "interpreter")).run_block
-copy = require((...):gsub("interpreter%.common$", "common")).copy
+replace_with_copied_values = require((...):gsub("interpreter%.common$", "common")).replace_with_copied_values
 
 return common

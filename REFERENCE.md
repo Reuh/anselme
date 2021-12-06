@@ -49,6 +49,8 @@ $ parallel
     parallel: {main.var}
 
 ~ main
+
+(note: if two scripts try to modify the same value at the same time, one of them will win, but which one is undefined/a surprise)
 ```
 
 The purpose of this system is both to allow several scripts to run at the same time with an easy way to avoid interferences, and to make sure the global state is always in a consistent (and not in the middle of a calculation): since scripts can be interrupted at any time, when it is interrupted, anything that was changed between the last checkpoint and the interruption will be discarded. If you're a RDBMS person, that's more-or-less equivalent to a transaction with a repeatable read isolation level (without any sort of locking or lost update protection though).

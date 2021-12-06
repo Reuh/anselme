@@ -479,11 +479,13 @@ local vm_mt = {
 					__index = function(variables, k)
 						local cache = getmetatable(variables).cache
 						if cache[k] == nil then
-							cache[k] = copy(self.state.variables[k])
+							cache[k] = copy(self.state.variables[k], getmetatable(variables).copy_cache)
 						end
 						return cache[k]
 					end,
-					cache = {} -- cache of previously read values, to get repeatable reads & handle mutable types without changing global state
+					copy_cache = {}, -- table of [original table] = copied table
+					modified_tables = {}, -- list of modified tables (copies) that should be merged with global state on next checkpoint
+					cache = {} -- cache of previously read values (copies), to get repeatable reads & handle mutable types without changing global state
 				}),
 				interpreter = {
 					-- constant

@@ -1,0 +1,17 @@
+:post run = "check"
+
+:a = [1]
+:b = [2]
+
+~ a!insert(b)
+
+§ c
+
+~ b!insert(3)
+
+§ d
+
+~ b!insert(4)
+
+$ check
+	\[1,\[2,3,4]]: {a}

@@ -44,7 +44,7 @@ local function write_result(filebase, result)
 	o:write(ser(result))
 	o:write("\n--[[\n")
 	for _, v in ipairs(result) do
-		o:write(inspect(v).."\n")
+		o:write(inspect(v):gsub("]]", "] ]").."\n") -- professional-level bandaid when ]] appear in the output
 	end
 	o:write("]]--")
 	o:close()
