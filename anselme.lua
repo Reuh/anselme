@@ -197,6 +197,8 @@ local interpreter_methods = {
 		anselme.running = previous
 		if not success then
 			return nil, event
+		elseif event == "error" then
+			return nil, data
 		elseif event ~= "return" then
 			return nil, ("evaluated expression generated an %q event; at %s"):format(event, self.state.interpreter.running_line.source)
 		else

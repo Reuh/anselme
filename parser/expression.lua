@@ -190,15 +190,27 @@ local function expression(s, state, namespace, current_priority, operating_on)
 				local escaped = escape(op)
 				if s:match("^"..escaped) then
 					local sright = s:match("^"..escaped.."(.*)$")
-					-- function reference
+					-- function and variable reference
 					if op == "&" and sright:match("^"..identifier_pattern) then
 						local name, r = sright:match("^("..identifier_pattern..")(.-)$")
 						name = format_identifier(name)
 						-- get all functions this name can reference
-						-- try prefixes until we find a valid function name
+						-- try prefixes until we find a valid function or variable name
 						local nl = split(name)
 						for i=#nl, 1, -1 do
 							local name_prefix = table.concat(nl, ".", 1, i)
+							-- variable ref
+							local var, vfqm = find(state.aliases, state.variables, namespace, name_prefix)
+							if var then
+								if i < #nl then
+									r = "."..table.concat(nl, ".", i+1, #nl)..r
+								end
+								return expression(r, state, namespace, current_priority, {
+									type = "variable reference",
+									name = vfqm
+								})
+							end
+							-- function ref
 							local lfnqm = find_all(state.aliases, state.functions, namespace, name_prefix)
 							if #lfnqm > 0 then
 								if i < #nl then

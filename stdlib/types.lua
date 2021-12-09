@@ -145,7 +145,22 @@ types.anselme = {
 			return k
 		end
 	},
-	["function reference"] = nil,
+	["function reference"] = {
+		format = function(val)
+			if #val > 1 then
+				return ("&(%s)"):format(table.concat(val, ", "))
+			else
+				return ("&%s"):format(table.concat(val, ", "))
+			end
+		end,
+		to_lua = nil
+	},
+	["variable reference"] = {
+		format = function(val)
+			return ("&%s"):format(val)
+		end,
+		to_lua = nil
+	},
 	-- internal types
 	["event buffer"] = {
 		format = function(val) -- triggered from subtexts

@@ -6,16 +6,19 @@ local common
 
 --- rewrite name to use defined aliases (under namespace only)
 -- namespace should not contain aliases
+-- returns the final fqm
 local replace_aliases = function(aliases, namespace, name)
-	namespace = namespace == "" and "" or namespace.."."
 	local name_list = common.split(name)
-	for i=1, #name_list, 1 do
-		local n = ("%s%s"):format(namespace, table.concat(name_list, ".", 1, i))
+	local prefix = namespace
+	for i=1, #name_list, 1 do -- search alias for each part of the fqm
+		local n = ("%s%s%s"):format(prefix, prefix == "" and "" or ".", name_list[i])
 		if aliases[n] then
-			name_list[i] = aliases[n]:match("[^%.]+$")
+			prefix = aliases[n]
+		else
+			prefix = n
 		end
 	end
-	return table.concat(name_list, ".")
+	return prefix
 end
 
 local disallowed_set = ("~`^+-=<>/[]*{}|\\_!?,;:()\"@&$#%"):gsub("[^%w]", "%%%1")
@@ -93,7 +96,7 @@ common = {
 		local ns = common.split(namespace)
 		for i=#ns, 1, -1 do
 			local current_namespace = table.concat(ns, ".", 1, i)
-			local fqm = ("%s.%s"):format(current_namespace, replace_aliases(aliases, current_namespace, name))
+			local fqm = replace_aliases(aliases, current_namespace, name)
 			if list[fqm] then
 				return list[fqm], fqm
 			end
@@ -112,7 +115,7 @@ common = {
 		local ns = common.split(namespace)
 		for i=#ns, 1, -1 do
 			local current_namespace = table.concat(ns, ".", 1, i)
-			local fqm = ("%s.%s"):format(current_namespace, replace_aliases(aliases, current_namespace, name))
+			local fqm = replace_aliases(aliases, current_namespace, name)
 			if list[fqm] then
 				table.insert(l, fqm)
 			end

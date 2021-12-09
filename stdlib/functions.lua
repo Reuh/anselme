@@ -145,8 +145,14 @@ functions = {
 	["()(fn::function reference, l...)"] = {
 		-- bypassed, this case is manually handled in the expression interpreter
 	},
-	["_!(fn::function reference, l...)"] = {
+	["_!(fn::function reference)"] = {
 		-- bypassed, this case is manually handled in the expression interpreter
+	},
+	["_!(fn::variable reference)"] = {
+		mode = "untyped raw",
+		value = function(v)
+			return anselme.running.state.variables[v.value]
+		end
 	},
 	-- format
 	["{}(v)"] = {
@@ -156,21 +162,40 @@ functions = {
 		end
 	},
 	-- alias
-	["alias(identifier::string, alias::string)"] = {
-		value = function(identifier, alias)
+	["alias(ref::function reference, alias::string)"] = {
+		mode = "untyped raw",
+		value = function(ref, alias)
 			-- check identifiers
-			local fqm = identifier:match("^"..identifier_pattern.."$")
-			if not fqm then error(("%q is not a valid identifier"):format(identifier)) end
-			fqm = format_identifier(fqm)
+			alias = alias.value
+			local aliasfqm = alias:match("^"..identifier_pattern.."$")
+			if not aliasfqm then error(("%q is not a valid identifier for an alias"):format(alias)) end
+			aliasfqm = format_identifier(aliasfqm)
+			-- define alias
+			for _, fnfqm in ipairs(ref.value) do
+				local aliases = anselme.running.state.aliases
+				if aliases[aliasfqm] ~= nil and aliases[aliasfqm] ~= fnfqm then
+					error(("trying to define alias %q for %q, but already exist and refer to %q"):format(aliasfqm, fnfqm, aliases[alias]))
+				end
+				aliases[aliasfqm] = fnfqm
+			end
+			return { type = "nil" }
+		end
+	},
+	["alias(ref::variable reference, alias::string)"] = {
+		mode = "untyped raw",
+		value = function(ref, alias)
+			-- check identifiers
+			alias = alias.value
 			local aliasfqm = alias:match("^"..identifier_pattern.."$")
 			if not aliasfqm then error(("%q is not a valid identifier for an alias"):format(alias)) end
 			aliasfqm = format_identifier(aliasfqm)
 			-- define alias
 			local aliases = anselme.running.state.aliases
-			if aliases[aliasfqm] ~= nil and aliases[aliasfqm] ~= fqm then
-				error(("trying to define alias %q for %q, but already exist and refer to %q"):format(aliasfqm, fqm, aliases[alias]))
+			if aliases[aliasfqm] ~= nil and aliases[aliasfqm] ~= ref.value then
+				error(("trying to define alias %q for %q, but already exist and refer to %q"):format(aliasfqm, ref.value, aliases[alias]))
 			end
-			aliases[aliasfqm] = fqm
+			aliases[aliasfqm] = ref.value
+			return { type = "nil" }
 		end
 	},
 	-- pair methods

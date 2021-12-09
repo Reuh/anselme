@@ -534,6 +534,8 @@ Default types are:
 
 * `function reference`: reference to one or more function(s) with a given name. Can be defined using `&function name`, which will create a reference to every function with this name accessible from the current namespace. Can be called as if it was the original function using `func ref!` and `func ref(args)`.
 
+* `variable reference`: reference to a single variable with a given name. Can be defined using `&variable name`, which will create a reference to the closest variable with this name accessible from the current namespace. Can get the referenced variable value using `var ref!`.
+
 * `list`: a list of values. Mutable. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
 
 Every type is immutable, except `list`.
@@ -835,7 +837,7 @@ This only works on strings:
 
 `a | b`: or operator, lazy
 
-##### Functions
+##### Functions and function references
 
 `fn(args)`: call the function, checkpoint or function reference with the given arguments.
 
@@ -844,6 +846,12 @@ This only works on strings:
 `&fn`: returns a function reference to the given function.
 
 `a!fn(args)`: call the function or function reference with the variable as first argument. Parantheses are optional.
+
+##### Variable references
+
+`&var`: returns a variable reference to the given variable.
+
+`a!`: returns the value associated with the reference variable.
 
 ##### Various
 
@@ -891,7 +899,7 @@ This only works on strings:
 
 ##### Various
 
-`alias(identifier::string, alias::string)`: define an alias `alias` for variable `identifier`. Expect fully qualified names.
+`alias(ref::reference, alias::string)`: define an alias `alias` for the variable or function referenced by `ref`. Expect fully qualified names for the alias.
 
 `rand([m[, n]])`: when called whitout arguments, returns a random float in [0,1). Otherwise, returns a random number in [m,n]; m=1 if not given.
 
@@ -903,7 +911,7 @@ This only works on strings:
 
 #### Built-in variables
 
-Variables for default types (each is associated to a string of the internal variable type name): `nil`, `number`, `string`, `list`, `pair`, `function reference`.
+Variables for default types (each is associated to a string of the internal variable type name): `nil`, `number`, `string`, `list`, `pair`, `function reference`, `variable reference`.
 
 #### Built-in languages
 

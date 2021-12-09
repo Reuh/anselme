@@ -148,12 +148,18 @@ local function eval(state, exp)
 	-- variable
 	elseif exp.type == "variable" then
 		return get_variable(state, exp.name)
-	-- function
+	-- references
 	elseif exp.type == "function reference" then
 		return {
 			type = "function reference",
 			value = exp.names
 		}
+	elseif exp.type == "variable reference" then
+		return {
+			type = "variable reference",
+			value = exp.name
+		}
+	-- function
 	elseif exp.type == "function call" then
 		-- eval args: list_brackets
 		local args = {}
@@ -372,7 +378,7 @@ local function eval(state, exp)
 						if r then
 							ret = r
 						else
-							return nil, ("%s; in Lua function %q"):format(e, exp.called_name)
+							return nil, ("%s; in Lua function %q"):format(e or "raw function returned nil and no error message", exp.called_name)
 						end
 					-- untyped raw mode: same as raw, but strips custom types from the arguments
 					elseif lua_fn.mode == "untyped raw" then
@@ -386,7 +392,7 @@ local function eval(state, exp)
 						if r then
 							ret = r
 						else
-							return nil, ("%s; in Lua function %q"):format(e, exp.called_name)
+							return nil, ("%s; in Lua function %q"):format(e or "untyped raw function returned nil and no error message", exp.called_name)
 						end
 					-- normal mode: convert args to Lua and convert back Lua value to Anselme
 					elseif lua_fn.mode == nil then
