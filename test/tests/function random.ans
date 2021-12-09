@@ -5,10 +5,14 @@ $ f
 		b
 	$ c
 		c
-	~ random("a","b","c")
+	~ random(&a,&b,&c)
 
 ~ f
+
 ~ f
+
 ~ f
+
 ~ f
+
 ~ f

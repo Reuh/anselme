@@ -5,10 +5,14 @@ $ f
 		b
 	$ c
 		c
-	~ next("a","b","c")
+	~ next(&a, &b, &c)
 
 ~ f
+
 ~ f
+
 ~ f
+
 ~ f
+
 ~ f

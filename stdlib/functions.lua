@@ -6,8 +6,8 @@ local function mark_as_modified(v)
 	table.insert(modified, v)
 end
 
-local functions
-functions = {
+local lua_functions
+lua_functions = {
 	-- discard left
 	["_;_(a, b)"] = {
 		mode = "raw",
@@ -314,20 +314,25 @@ functions = {
 		end
 		return anselme.running:run(f, anselme.running:current_namespace())
 	end,
-	["random(l...)"] = function(l)
-		return anselme.running:run(l[math.random(1, #l)], anselme.running:current_namespace())
-	end,
-	["next(l...)"] = function(l)
-		local f = l[#l]
-		for j=1, #l-1 do
-			local seen = assert(anselme.running:eval(l[j]..".👁️", anselme.running:current_namespace()))
-			if seen == 0 then
-				f = l[j]
-				break
-			end
-		end
-		return anselme.running:run(f, anselme.running:current_namespace())
-	end
+}
+
+local anselme_functions = [[
+$ random(l...)
+	~ l(rand(1, l!len))!
+
+$ next(l...)
+	~ l!len == 1 | l(1).👁️ == 0
+		~ l(1)!
+	~~
+		~ l!remove(1)
+		~ next(l=l)
+
+(TODO: cycle)
+]]
+
+local functions = {
+	lua = lua_functions,
+	anselme = anselme_functions
 }
 
 package.loaded[...] = functions
@@ -336,3 +341,5 @@ truthy, compare, is_of_type, get_variable = icommon.truthy, icommon.compare, ico
 local pcommon = require((...):gsub("stdlib%.functions$", "parser.common"))
 identifier_pattern, format_identifier, find = pcommon.identifier_pattern, pcommon.format_identifier, pcommon.find
 anselme = require((...):gsub("stdlib%.functions$", "anselme"))
+
+return functions

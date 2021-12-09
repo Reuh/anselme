@@ -568,10 +568,16 @@ return setmetatable(anselme, {
 			link_next_function_definition_to_lua_function = nil -- temporarly set to tell the preparser to link a anselme function definition with a lua function
 		}
 		local vm = setmetatable({ state = state }, vm_mt)
+		-- bootscript
 		local boot = assert(vm:loadstring(bootscript, "", "boot script"))
 		local _, e = vm:eval(boot)
 		if e then error(e) end
-		assert(vm:loadfunction(stdfuncs))
+		-- lua-defined functions
+		assert(vm:loadfunction(stdfuncs.lua))
+		-- anselme-defined functions
+		local ansfunc = assert(vm:loadstring(stdfuncs.anselme, "", "built-in functions"))
+		_, e = vm:eval(ansfunc)
+		if e then return error(e) end
 		return vm
 	end
 })
