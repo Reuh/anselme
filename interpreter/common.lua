@@ -2,6 +2,7 @@ local atypes, ltypes
 local eval, run_block
 local replace_with_copied_values
 local common
+local identifier_pattern
 
 --- copy some text & process it to be suited to be sent to Lua in an event
 local function post_process_text(state, text)
@@ -57,7 +58,9 @@ common = {
 		mt.cache = {}
 		-- merge modified re-assigned variables
 		for var, value in pairs(state.variables) do
-			global.variables[var] = value
+			if common.should_keep_variable(state, var) then
+				global.variables[var] = value
+			end
 			state.variables[var] = nil
 		end
 	end,
@@ -77,6 +80,20 @@ common = {
 		else
 			return var
 		end
+	end,
+	set_variable = function(state, name, val)
+		state.variables[name] = val
+	end,
+	--- mark a table as modified, so it will be merged on the next checkpoint if it appears somewhere in a value
+	mark_as_modified = function(state, v)
+		local modified = getmetatable(state.variables).modified_tables
+		table.insert(modified, v)
+	end,
+	--- returns true if a variable should be persisted on save/merge
+	-- will exclude: undefined variables, variables in functions defined with parentheses, internal anselme variables
+	should_keep_variable = function(state, name)
+		local v = state.variables[name]
+		return v.type ~= "undefined argument" and v.type ~= "pending definition" and name:match("^"..identifier_pattern.."$") and not name:match("^anselme%.")
 	end,
 	--- check truthyness of an anselme value
 	truthy = function(val)
@@ -408,5 +425,6 @@ atypes, ltypes = types.anselme, types.lua
 eval = require((...):gsub("common$", "expression"))
 run_block = require((...):gsub("common$", "interpreter")).run_block
 replace_with_copied_values = require((...):gsub("interpreter%.common$", "common")).replace_with_copied_values
+identifier_pattern = require((...):gsub("interpreter%.common$", "parser.common")).identifier_pattern
 
 return common

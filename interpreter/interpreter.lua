@@ -1,5 +1,5 @@
 local eval
-local truthy, merge_state, escape, get_variable, tags, events
+local truthy, merge_state, escape, get_variable, tags, events, set_variable
 local run_line, run_block
 
 -- returns var in case of success and there is a return
@@ -92,14 +92,14 @@ run_line = function(state, line)
 	elseif line.type == "checkpoint" then
 		local reached, reachede = get_variable(state, line.namespace.."🏁")
 		if not reached then return nil, reachede end
-		state.variables[line.namespace.."🏁"] = {
+		set_variable(state, line.namespace.."🏁", {
 			type = "number",
 			value = reached.value + 1
-		}
-		state.variables[line.parent_function.namespace.."🔖"] = {
+		})
+		set_variable(state, line.parent_function.namespace.."🔖", {
 			type = "string",
 			value = line.name
-		}
+		})
 		merge_state(state)
 	else
 		return nil, ("unknown line type %q; at %s"):format(line.type, line.source)
@@ -138,22 +138,22 @@ run_block = function(state, block, resume_from_there, i, j)
 		if not seen then return nil, seene end
 		local checkpoint, checkpointe = get_variable(state, parent_line.parent_function.namespace.."🔖")
 		if not checkpoint then return nil, checkpointe end
-		state.variables[parent_line.namespace.."👁️"] = {
+		set_variable(state, parent_line.namespace.."👁️", {
 			type = "number",
 			value = seen.value + 1
-		}
-		state.variables[parent_line.namespace.."🏁"] = {
+		})
+		set_variable(state, parent_line.namespace.."🏁", {
 			type = "number",
 			value = reached.value + 1
-		}
+		})
 		-- don't update checkpoint if an already more precise checkpoint is set
 		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
 		local current_checkpoint = checkpoint.value
 		if not current_checkpoint:match("^"..escape(parent_line.name)) then
-			state.variables[parent_line.parent_function.namespace.."🔖"] = {
+			set_variable(state, parent_line.parent_function.namespace.."🔖", {
 				type = "string",
 				value = parent_line.name
-			}
+			})
 		end
 		merge_state(state)
 	end
@@ -231,7 +231,7 @@ local interpreter = {
 package.loaded[...] = interpreter
 eval = require((...):gsub("interpreter$", "expression"))
 local common = require((...):gsub("interpreter$", "common"))
-truthy, merge_state, tags, get_variable, events = common.truthy, common.merge_state, common.tags, common.get_variable, common.events
+truthy, merge_state, tags, get_variable, events, set_variable = common.truthy, common.merge_state, common.tags, common.get_variable, common.events, common.set_variable
 escape = require((...):gsub("interpreter%.interpreter$", "parser.common")).escape
 
 return interpreter

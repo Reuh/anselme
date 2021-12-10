@@ -1,10 +1,4 @@
-local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable
-
---- mark a table as modified, so it will be merged on the next checkpoint if it appears somewhere in a value
-local function mark_as_modified(v)
-	local modified = getmetatable(anselme.running.state.variables).modified_tables
-	table.insert(modified, v)
-end
+local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable, mark_as_modified
 
 local lua_functions
 lua_functions = {
@@ -116,7 +110,7 @@ lua_functions = {
 			local lv = l.type == "type" and l.value[1] or l
 			local iv = i.type == "type" and i.value[1] or i
 			lv.value[iv.value] = v
-			mark_as_modified(lv.value)
+			mark_as_modified(anselme.running.state, lv.value)
 			return v
 		end
 	},
@@ -129,7 +123,7 @@ lua_functions = {
 			for _, x in ipairs(lv.value) do
 				if x.type == "pair" and compare(x.value[1], kv) then
 					x.value[2] = v
-					mark_as_modified(x.value)
+					mark_as_modified(anselme.running.state, x.value)
 					return v
 				end
 			end
@@ -138,7 +132,7 @@ lua_functions = {
 				type = "pair",
 				value = { kv, v }
 			})
-			mark_as_modified(lv.value)
+			mark_as_modified(anselme.running.state, lv.value)
 			return v
 		end
 	},
@@ -151,7 +145,7 @@ lua_functions = {
 	["_!(fn::variable reference)"] = {
 		mode = "untyped raw",
 		value = function(v)
-			return anselme.running.state.variables[v.value]
+			return get_variable(anselme.running.state, v.value)
 		end
 	},
 	-- format
@@ -226,7 +220,7 @@ lua_functions = {
 		value = function(l, v)
 			local lv = l.type == "type" and l.value[1] or l
 			table.insert(lv.value, v)
-			mark_as_modified(lv.value)
+			mark_as_modified(anselme.running.state, lv.value)
 			return l
 		end
 	},
@@ -236,21 +230,21 @@ lua_functions = {
 			local lv = l.type == "type" and l.value[1] or l
 			local iv = i.type == "type" and i.value[1] or i
 			table.insert(lv.value, iv.value, v)
-			mark_as_modified(lv.value)
+			mark_as_modified(anselme.running.state, lv.value)
 			return l
 		end
 	},
 	["remove(l::list)"] = {
 		mode = "untyped raw",
 		value = function(l)
-			mark_as_modified(l.value)
+			mark_as_modified(anselme.running.state, l.value)
 			return table.remove(l.value)
 		end
 	},
 	["remove(l::list, i::number)"] = {
 		mode = "untyped raw",
 		value = function(l, i)
-			mark_as_modified(l.value)
+			mark_as_modified(anselme.running.state, l.value)
 			return table.remove(l.value, i.value)
 		end
 	},
@@ -337,7 +331,7 @@ local functions = {
 
 package.loaded[...] = functions
 local icommon = require((...):gsub("stdlib%.functions$", "interpreter.common"))
-truthy, compare, is_of_type, get_variable = icommon.truthy, icommon.compare, icommon.is_of_type, icommon.get_variable
+truthy, compare, is_of_type, get_variable, mark_as_modified = icommon.truthy, icommon.compare, icommon.is_of_type, icommon.get_variable, icommon.mark_as_modified
 local pcommon = require((...):gsub("stdlib%.functions$", "parser.common"))
 identifier_pattern, format_identifier, find = pcommon.identifier_pattern, pcommon.format_identifier, pcommon.find
 anselme = require((...):gsub("stdlib%.functions$", "anselme"))

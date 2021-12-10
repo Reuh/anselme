@@ -25,11 +25,11 @@ local eval = require(anselme_root.."interpreter.expression")
 local run_line = require(anselme_root.."interpreter.interpreter").run_line
 local run = require(anselme_root.."interpreter.interpreter").run
 local to_lua = require(anselme_root.."interpreter.common").to_lua
-local identifier_pattern = require(anselme_root.."parser.common").identifier_pattern
 local merge_state = require(anselme_root.."interpreter.common").merge_state
 local stdfuncs = require(anselme_root.."stdlib.functions")
 local bootscript = require(anselme_root.."stdlib.bootscript")
 local copy = require(anselme_root.."common").copy
+local should_keep_variable = require(anselme_root.."interpreter.common").should_keep_variable
 
 -- wrappers for love.filesystem / luafilesystem
 local function list_directory(path)
@@ -410,7 +410,7 @@ local vm_mt = {
 	save = function(self)
 		local vars = {}
 		for k, v in pairs(self.state.variables) do
-			if v.type ~= "undefined argument" and v.type ~= "pending definition" and k:match("^"..identifier_pattern.."$") then
+			if should_keep_variable(self.state, k) then
 				vars[k] = v
 			end
 		end
@@ -479,15 +479,17 @@ local vm_mt = {
 				functions = self.state.functions, -- no need for a cache as we can't define or modify any function from the interpreter for now
 				variables = setmetatable({}, {
 					__index = function(variables, k)
-						local cache = getmetatable(variables).cache
+						local mt = getmetatable(variables)
+						local cache = mt.cache
 						if cache[k] == nil then
 							cache[k] = copy(self.state.variables[k], getmetatable(variables).copy_cache)
 						end
 						return cache[k]
 					end,
+					-- variables that keep current state and should be cleared at each checkpoint
 					copy_cache = {}, -- table of [original table] = copied table
 					modified_tables = {}, -- list of modified tables (copies) that should be merged with global state on next checkpoint
-					cache = {} -- cache of previously read values (copies), to get repeatable reads & handle mutable types without changing global state
+					cache = {}, -- cache of previously read values (copies), to get repeatable reads & handle mutable types without changing global state
 				}),
 				interpreter = {
 					-- constant

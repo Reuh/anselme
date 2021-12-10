@@ -1,5 +1,5 @@
 local expression
-local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list
+local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list, set_variable
 
 local run
 
@@ -85,7 +85,7 @@ local function eval(state, exp)
 			local name = exp.left.name
 			local val, vale = eval(state, exp.right)
 			if not val then return val, vale end
-			state.variables[name] = val
+			set_variable(state, name, val)
 			return val
 		else
 			return nil, ("don't know how to perform assignment on %s expression"):format(exp.left.type)
@@ -257,11 +257,11 @@ local function eval(state, exp)
 								depths[j] = math.huge
 							end
 							-- set
-							state.variables[param.full_name] = val
+							set_variable(state, param.full_name, val)
 						-- default: evaluate once function is selected
 						-- there's no need to type check because the type annotation is already the default value's type, because of syntax
 						elseif param.default then
-							state.variables[param.full_name] = { type = "pending definition", value = { expression = param.default, source = fn.source } }
+							set_variable(state, param.full_name, { type = "pending definition", value = { expression = param.default, source = fn.source } })
 						else
 							ok = false
 							table.insert(tried_function_error_messages, ("%s: missing mandatory argument %q in function %q call"):format(fn.pretty_signature, param.name, fn.name))
@@ -300,7 +300,7 @@ local function eval(state, exp)
 							depths.assignment = math.huge
 						end
 						-- set
-						state.variables[param.full_name] = assignment
+						set_variable(state, param.full_name, assignment)
 					end
 					if ok then
 						if not selected_variant.variant then
@@ -340,7 +340,7 @@ local function eval(state, exp)
 				return nil, ("unknown function type %q"):format(fn.type)
 			end
 		end
-		-- function successfully selected
+		-- function successfully selected: run
 		if selected_variant.variant then
 			local fn = selected_variant.variant
 			if fn.type == "checkpoint" then
@@ -398,7 +398,9 @@ local function eval(state, exp)
 					elseif lua_fn.mode == nil then
 						local l_lua = {}
 						for _, v in ipairs(final_args) do
-							table.insert(l_lua, to_lua(v))
+							local lv, e = to_lua(v)
+							if e then return nil, e end
+							table.insert(l_lua, lv)
 						end
 						local r, e
 						if _VERSION == "Lua 5.1" and not jit then -- PUC Lua 5.1 doesn't allow yield from a pcall
@@ -429,10 +431,10 @@ local function eval(state, exp)
 					if not ret then return ret, e end
 				end
 				-- update function vars
-				state.variables[fn.namespace.."👁️"] = {
+				set_variable(state, fn.namespace.."👁️", {
 					type = "number",
 					value = seen.value + 1
-				}
+				})
 				-- return value
 				if not ret then return nil, ("function %q didn't return a value"):format(exp.called_name) end
 				return ret
@@ -464,6 +466,6 @@ run = require((...):gsub("expression$", "interpreter")).run
 expression = require((...):gsub("interpreter%.expression$", "parser.expression"))
 flatten_list = require((...):gsub("interpreter%.expression$", "parser.common")).flatten_list
 local common = require((...):gsub("expression$", "common"))
-to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events
+to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, set_variable = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events, common.set_variable
 
 return eval
