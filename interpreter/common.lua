@@ -58,9 +58,7 @@ common = {
 		mt.cache = {}
 		-- merge modified re-assigned variables
 		for var, value in pairs(state.variables) do
-			if common.should_keep_variable(state, var) then
-				global.variables[var] = value
-			end
+			global.variables[var] = value
 			state.variables[var] = nil
 		end
 	end,
@@ -81,16 +79,62 @@ common = {
 			return var
 		end
 	end,
+	--- set the value of a variable
 	set_variable = function(state, name, val)
 		state.variables[name] = val
 	end,
+	--- handle scoped function
+	scope = {
+		push = function(self, state, fn)
+			local scoped = getmetatable(state.variables).scoped
+			if not fn.scoped then error("trying to push a scope for a non-scoped function") end
+			-- add scope
+			if not scoped[fn] then
+				scoped[fn] = {}
+			end
+			local last_scope = scoped[fn][#scoped[fn]]
+			local fn_scope = {}
+			table.insert(scoped[fn], fn_scope)
+			-- add scoped variables to scope
+			for _, name in ipairs(fn.scoped) do
+				-- preserve current values in last scope
+				if last_scope then
+					last_scope[name] = state.variables[name]
+				end
+				-- set last value to nil to force to copy again from global variables in new scope
+				state.variables[name] = nil
+				local value = state.variables[name]
+				fn_scope[name] = value
+			end
+		end,
+		pop = function(self, state, fn)
+			local scoped = getmetatable(state.variables).scoped
+			if not scoped[fn] then error("trying to pop a scope without any pushed scope") end
+			-- remove current scope
+			table.remove(scoped[fn])
+			-- set scopped variables to previous scope
+			local last_scope = scoped[fn][#scoped[fn]]
+			if last_scope then
+				for _, name in ipairs(fn.scoped) do
+					state.variables[name] = last_scope[name]
+				end
+			else -- no previous scope
+				for _, name in ipairs(fn.scoped) do
+					state.variables[name] = nil
+				end
+				-- no need to remove this I think, there's not going to be a million different functions in a single game so we can keep the tables
+				-- (anselme's performance is already bad enough, let's not create tables at each function call...)
+				-- scoped[fn] = nil
+			end
+		end
+	},
 	--- mark a table as modified, so it will be merged on the next checkpoint if it appears somewhere in a value
 	mark_as_modified = function(state, v)
 		local modified = getmetatable(state.variables).modified_tables
 		table.insert(modified, v)
 	end,
-	--- returns true if a variable should be persisted on save/merge
-	-- will exclude: undefined variables, variables in functions defined with parentheses, internal anselme variables
+	--- returns true if a variable should be persisted on save
+	-- will exclude: undefined variables, variables in scoped functions, internal anselme variables
 	should_keep_variable = function(state, name)
 		local v = state.variables[name]
 		return v.type ~= "undefined argument" and v.type ~= "pending definition" and name:match("^"..identifier_pattern.."$") and not name:match("^anselme%.")

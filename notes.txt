@@ -43,7 +43,7 @@ Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&
 
 Broad goals and ideas that may never be implemented. Mostly used as personal post-it notes.
 
-TODO: rewrite cycle, ... using function references
+TODO: a way to make loops
 
 TODO: consider something like :identifier to create a string "identifier", might simplify the identifier=value special syntax and free up the = operator
 
@@ -52,10 +52,6 @@ TODO: some sensible way to capture text event in string litterals (string interp
 TODO: the function decorator feels a bit glued-on to the current syntax
 
 TODO: simplify language, it is much too complicated. Less line types? (var def, func, checkpoint, tag). Rewrite some ad hoc syntax using the expression system?
-
-TODO: functions: might be nice to have actual scoping for functions that are called with arguments; to allow proper recursion & stuff (as right now if you call the same function from itself both instances will share variables...). Would require a fair amount of changes to the code though.
-
-TODO: a way to make loops
 
 TODO: fn/checkpoint/tag: maybe consider them a regular func call that takes children as arg; can keep compatibility using $/§ as shortcut for the actual call.
      would allow more flexibility esp. for tags...

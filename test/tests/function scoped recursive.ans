@@ -1,0 +1,19 @@
+:n = 0
+
+$ f(c=1)
+	:a = 1
+
+	start: {a}
+
+	~ a := a + 1
+
+	~ n += 1
+
+	before recursion {c}: {a}
+
+	~ n < 5
+		~ f(c+1)
+
+		after recursion {c}: {a}
+
+~ f

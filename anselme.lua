@@ -6,11 +6,11 @@ local anselme = {
 	-- api is incremented a each update which may break Lua API compatibility
 	versions = {
 		save = 1,
-		language = 20,
+		language = 21,
 		api = 4
 	},
 	-- version is incremented at each update
-	version = 21,
+	version = 22,
 	--- currently running interpreter
 	running = nil
 }
@@ -198,6 +198,7 @@ local interpreter_methods = {
 		if not success then
 			return nil, event
 		elseif event == "error" then
+			self.end_event = "error"
 			return nil, data
 		elseif event ~= "return" then
 			return nil, ("evaluated expression generated an %q event; at %s"):format(event, self.state.interpreter.running_line.source)
@@ -479,8 +480,7 @@ local vm_mt = {
 				functions = self.state.functions, -- no need for a cache as we can't define or modify any function from the interpreter for now
 				variables = setmetatable({}, {
 					__index = function(variables, k)
-						local mt = getmetatable(variables)
-						local cache = mt.cache
+						local cache = getmetatable(variables).cache
 						if cache[k] == nil then
 							cache[k] = copy(self.state.variables[k], getmetatable(variables).copy_cache)
 						end
@@ -490,6 +490,9 @@ local vm_mt = {
 					copy_cache = {}, -- table of [original table] = copied table
 					modified_tables = {}, -- list of modified tables (copies) that should be merged with global state on next checkpoint
 					cache = {}, -- cache of previously read values (copies), to get repeatable reads & handle mutable types without changing global state
+					-- keep track of scoped variables in scoped functions [fn line] = {{scoped variables}, next scope, ...}
+					-- (scoped variables aren't merged on checkpoint, shouldn't be cleared at checkpoints)
+					scoped = {}
 				}),
 				interpreter = {
 					-- constant

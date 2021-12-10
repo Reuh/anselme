@@ -93,6 +93,7 @@ local function parse_line(line, state, namespace)
 		-- get params
 		r.params = {}
 		if r.type == "function" and rem:match("^%b()") then
+			r.scoped = true
 			local content
 			content, rem = rem:match("^(%b())%s*(.*)$")
 			content = content:gsub("^%(", ""):gsub("%)$", "")

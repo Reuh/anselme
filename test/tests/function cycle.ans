@@ -5,10 +5,14 @@ $ f
 		b
 	$ c
 		c
-	~ cycle("a","b","c")
+	~ cycle(&a,&b,&c)
 
 ~ f
+
 ~ f
+
 ~ f
+
 ~ f
+
 ~ f

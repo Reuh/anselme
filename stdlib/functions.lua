@@ -296,18 +296,7 @@ lua_functions = {
 				value = is_of_type(v, t) or 0
 			}
 		end
-	},
-	["cycle(l...)"] = function(l)
-		local f, fseen = l[1], assert(anselme.running:eval(l[1]..".👁️", anselme.running:current_namespace()))
-		for j=2, #l do
-			local seen = assert(anselme.running:eval(l[j]..".👁️", anselme.running:current_namespace()))
-			if seen < fseen then
-				f = l[j]
-				break
-			end
-		end
-		return anselme.running:run(f, anselme.running:current_namespace())
-	end,
+	}
 }
 
 local anselme_functions = [[
@@ -315,13 +304,25 @@ $ random(l...)
 	~ l(rand(1, l!len))!
 
 $ next(l...)
-	~ l!len == 1 | l(1).👁️ == 0
-		~ l(1)!
-	~~
-		~ l!remove(1)
-		~ next(l=l)
+	:f = l(len(l))
+	$ find first not seen(j)
+		~ l(j).👁️ == 0
+			~ f := l(j)
+		~~ j < len(l)
+			~ find first not seen(j+1)
+	~ find first not seen(1)
+	~ f!
 
-(TODO: cycle)
+$ cycle(l...)
+	:f = l(1)
+	$ find first smaller(j)
+		~ l(j).👁️ < f.👁️
+			~ f := l(j)
+		~~ j < len(l)
+			~ find first smaller(j+1)
+	~ len(l) > 1
+		~ find first smaller(2)
+	~ f!
 ]]
 
 local functions = {

@@ -1,0 +1,32 @@
+(FIXME compare with fe/janet types
+
+
+$ f()
+	:a = 1
+
+	{a}
+
+	~ a := a + 1
+
+$ g
+	:a = 1
+
+	{a}
+
+	~ a := a + 1
+
+scoped:
+
+~ f
+
+~ f
+
+~ f
+
+unscoped:
+
+~ g
+
+~ g
+
+~ g

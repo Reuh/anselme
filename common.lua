@@ -1,5 +1,3 @@
-local identifier_pattern
-
 --- replace values recursively in table t according to to_replace ([old table] = new table)
 -- already_replaced is a temporary table to avoid infinite loop & duplicate processing, no need to give it
 local function replace_in_table(t, to_replace, already_replaced)
@@ -65,6 +63,5 @@ common = {
 }
 
 package.loaded[...] = common
-identifier_pattern = require((...):gsub("common$", "parser.common")).identifier_pattern
 
 return common

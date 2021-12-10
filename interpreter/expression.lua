@@ -1,5 +1,5 @@
 local expression
-local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list, set_variable
+local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list, set_variable, scope
 
 local run
 
@@ -63,20 +63,6 @@ local function eval(state, exp)
 		end
 		return {
 			type = "list",
-			value = l
-		}
-	-- event buffer (internal type, only issued from a text or choice line)
-	elseif exp.type == "text" then
-		local l = {}
-		events:push_buffer(state, l)
-		local current_tags = tags:current(state)
-		local v, e = eval_text_callback(state, exp.text, function(text)
-			events:append(state, "text", { text = text, tags = current_tags })
-		end)
-		events:pop_buffer(state)
-		if not v then return v, e end
-		return {
-			type = "event buffer",
 			value = l
 		}
 	-- assignment
@@ -203,7 +189,7 @@ local function eval(state, exp)
 		end
 		-- try to select a function
 		local tried_function_error_messages = {}
-		local selected_variant = { depths = { assignment = nil }, variant = nil }
+		local selected_variant = { depths = { assignment = nil }, variant = nil, args_to_set = nil }
 		for _, fn in ipairs(variants) do
 			-- checkpoint: no args, nothing to select on
 			if fn.type == "checkpoint" then
@@ -218,6 +204,7 @@ local function eval(state, exp)
 				if not fn.assignment or exp.assignment then
 					local ok = true
 					-- get and set args
+					local variant_args = {}
 					local used_args = {}
 					local depths = { assignment = nil }
 					for j, param in ipairs(fn.params) do
@@ -257,11 +244,11 @@ local function eval(state, exp)
 								depths[j] = math.huge
 							end
 							-- set
-							set_variable(state, param.full_name, val)
+							variant_args[param.full_name] = val
 						-- default: evaluate once function is selected
 						-- there's no need to type check because the type annotation is already the default value's type, because of syntax
 						elseif param.default then
-							set_variable(state, param.full_name, { type = "pending definition", value = { expression = param.default, source = fn.source } })
+							variant_args[param.full_name] = { type = "pending definition", value = { expression = param.default, source = fn.source } }
 						else
 							ok = false
 							table.insert(tried_function_error_messages, ("%s: missing mandatory argument %q in function %q call"):format(fn.pretty_signature, param.name, fn.name))
@@ -300,12 +287,13 @@ local function eval(state, exp)
 							depths.assignment = math.huge
 						end
 						-- set
-						set_variable(state, param.full_name, assignment)
+						variant_args[param.full_name] = assignment
 					end
 					if ok then
 						if not selected_variant.variant then
 							selected_variant.depths = depths
 							selected_variant.variant = fn
+							selected_variant.args_to_set = variant_args
 						else
 							-- check specificity order
 							local lower
@@ -330,6 +318,7 @@ local function eval(state, exp)
 							if lower then
 								selected_variant.depths = depths
 								selected_variant.variant = fn
+								selected_variant.args_to_set = variant_args
 							elseif lower == nil then -- equal, ambigous dispatch
 								return nil, ("function call %q is ambigous; may be at least either:\n\t%s\n\t%s"):format(exp.called_name, fn.pretty_signature, selected_variant.variant.pretty_signature)
 							end
@@ -349,6 +338,17 @@ local function eval(state, exp)
 				return r
 			elseif fn.type == "function" then
 				local ret
+				-- push scope
+				-- NOTE: if error happens between here and scope:pop, will leave the stack a mess
+				-- should not be an issue since an interpreter is supposed to be discarded after an error, but should change this if we ever
+				-- add some excepetion handling in anselme at some point
+				if fn.scoped then
+					scope:push(state, fn)
+				end
+				-- set arguments
+				for name, val in pairs(selected_variant.args_to_set) do
+					set_variable(state, name, val)
+				end
 				-- get function vars
 				local checkpoint, checkpointe = get_variable(state, fn.namespace.."🔖")
 				if not checkpoint then return nil, checkpointe end
@@ -435,6 +435,10 @@ local function eval(state, exp)
 					type = "number",
 					value = seen.value + 1
 				})
+				-- pop scope
+				if fn.scoped then
+					scope:pop(state, fn)
+				end
 				-- return value
 				if not ret then return nil, ("function %q didn't return a value"):format(exp.called_name) end
 				return ret
@@ -456,6 +460,20 @@ local function eval(state, exp)
 			called_name = called_name .. " := " .. pretty_type(assignment)
 		end
 		return nil, ("no compatible function found for call to %s; potential candidates were:\n\t%s"):format(called_name, table.concat(tried_function_error_messages, "\n\t"))
+	-- event buffer (internal type, only issued from a text or choice line)
+	elseif exp.type == "text" then
+		local l = {}
+		events:push_buffer(state, l)
+		local current_tags = tags:current(state)
+		local v, e = eval_text_callback(state, exp.text, function(text)
+			events:append(state, "text", { text = text, tags = current_tags })
+		end)
+		events:pop_buffer(state)
+		if not v then return v, e end
+		return {
+			type = "event buffer",
+			value = l
+		}
 	else
 		return nil, ("unknown expression %q"):format(tostring(exp.type))
 	end
@@ -466,6 +484,6 @@ run = require((...):gsub("expression$", "interpreter")).run
 expression = require((...):gsub("interpreter%.expression$", "parser.expression"))
 flatten_list = require((...):gsub("interpreter%.expression$", "parser.common")).flatten_list
 local common = require((...):gsub("expression$", "common"))
-to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, set_variable = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events, common.set_variable
+to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, set_variable, scope = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events, common.set_variable, common.scope
 
 return eval

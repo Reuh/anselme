@@ -153,6 +153,33 @@ $ f(a, b...)
 ~ f("discarded")
 ```
 
+When a parameter list is given (or just empty parentheses `()`), the function is considered `scoped` - this means that any variable defined in it will only be defined in a call to the function and can only be accessed from this specific call:
+
+```
+(Non-scoped function: usual behaviour, variables are accessible from everywhere and always.)
+$ f
+    :a = 1
+    ~ a += 1
+
+{f.a} is 1
+
+~ f
+{f.a} is 2
+
+(Scoped function: can't access g.a from outside the function)
+$ g()
+    :a = 1
+    {a}
+    ~ a += 1
+
+(Each time the function is called, it has access to its own version of g.a, and don't share it - so this display 1 both times:)
+~ g
+
+~ g
+```
+
+This is basically the behaviour you'd expect from functions in most other programming languages, and what you would use in Anselme any time you don't care about storing the function variables or want the exact same initial function variables each time you call the function (e.g. recursion). Scoped variables are not kept in save files, and are not affected by checkpointing.
+
 Functions with the same name can be defined, as long as they have a different arguments. Functions will be selected based on the number of arguments given, their name and their type annotation:
 
 ```
@@ -891,7 +918,7 @@ This only works on strings:
 
 ##### Sequential execution
 
-`cycle(...)`: given function/checkpoint identifiers as string as arguments, will execute them in the order given each time the function is ran; e.g., `cycle("a", "b")` will execute a on the first execution, then b, then a again, etc.
+`cycle(...)`: given function/checkpoint references as arguments, will execute them in the order given each time the function is ran; e.g., `cycle(&a, &b)` will execute a on the first execution, then b, then a again, etc.
 
 `next(...)`: same as cycle, but will not cycle; once the end of sequence is reached, will keep executing the last element.
 

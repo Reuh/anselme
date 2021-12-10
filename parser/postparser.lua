@@ -43,6 +43,16 @@ local function parse(state)
 				end
 				line.assignment.type_annotation = type_exp
 			end
+			-- get list of scoped variables
+			-- (note includes every variables in the namespace of subnamespace, so subfunctions are scoped alongside this function)
+			if line.scoped then
+				line.scoped = {}
+				for name in pairs(state.variables) do
+					if name:sub(1, #namespace) == namespace then
+						table.insert(line.scoped, name)
+					end
+				end
+			end
 		end
 		-- expressions
 		if line.expression then
