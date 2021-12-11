@@ -144,7 +144,22 @@ else
 	for _, file in ipairs(files) do
 		local filebase = file:match("^(.*)%.ans$")
 		local namespace = filebase:match("([^/]*)$")
-		math.randomseed(0)
+		-- simple random to get the same result across lua versions
+		local prev = 0
+		local function badrandom(a, b)
+			prev = (42424242424242 * prev + 242) % 2^32
+			return a + prev % (b-a+1)
+		end
+		function math.random(a, b)
+			if not a and not b then
+				return badrandom(0, 999) / 1000
+			elseif not b then
+				return badrandom(1, a)
+			else
+				return badrandom(a, b)
+			end
+		end
+		-- load vm
 		local vm = anselme()
 		vm:setaliases("seen", "checkpoint", "reached")
 		vm:loadfunction {

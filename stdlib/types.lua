@@ -99,6 +99,15 @@ types.anselme = {
 		end,
 		to_lua = function(val)
 			local l = {}
+			-- handle non-pair before pairs as LuaJIT's table.insert
+			-- will always insert after the last element even if there are some nil before unlike PUC
+			for _, v in ipairs(val) do
+				if v.type ~= "pair" then
+					local s, e = to_lua(v)
+					if not s and e then return s, e end
+					table.insert(l, s)
+				end
+			end
 			for _, v in ipairs(val) do
 				if v.type == "pair" then
 					local k, ke = to_lua(v.value[1])
@@ -106,10 +115,6 @@ types.anselme = {
 					local x, xe = to_lua(v.value[2])
 					if not x and xe then return x, xe end
 					l[k] = x
-				else
-					local s, e = to_lua(v)
-					if not s and e then return s, e end
-					table.insert(l, s)
 				end
 			end
 			return l
