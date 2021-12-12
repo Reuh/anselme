@@ -881,6 +881,8 @@ This only works on strings:
 
 `a ; b`: evaluate a, discard its result, then evaluate b. Returns the result of b.
 
+`a;`: evaluate a, discard its result, returns nil.
+
 `a : b`: evaluate a and b, returns a new pair with a as key and b as value.
 
 `a :: b`: evaluate a and b, returns a new typed value with a as value and b as type.

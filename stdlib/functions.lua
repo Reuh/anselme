@@ -7,6 +7,10 @@ lua_functions = {
 		mode = "raw",
 		value = function(a, b) return b end
 	},
+	["_;(a)"] = {
+		mode = "raw",
+		value = function(a) return { type = "nil", value = nil } end
+	},
 	-- comparaison
 	["_==_(a, b)"] = {
 		mode = "raw",

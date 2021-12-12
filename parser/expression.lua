@@ -31,7 +31,7 @@ local prefix_unops_prio = {
 	[12] = { "&" }
 }
 local suffix_unops_prio = {
-	[1] = {},
+	[1] = { ";" },
 	[2] = {},
 	[3] = {},
 	[4] = {},
