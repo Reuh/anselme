@@ -1,6 +1,6 @@
 -- anselme module
 local anselme = {
-	-- version
+	--- version
 	-- save is incremented a each update which may break save compatibility
 	-- language is incremented a each update which may break script file compatibility
 	-- api is incremented a each update which may break Lua API compatibility
@@ -9,7 +9,7 @@ local anselme = {
 		language = 21,
 		api = 4
 	},
-	-- version is incremented at each update
+	--- version is incremented at each update
 	version = 22,
 	--- currently running interpreter
 	running = nil
@@ -63,11 +63,12 @@ end
 
 --- interpreter methods
 local interpreter_methods = {
-	-- interpreter state
+	--- interpreter state
+	-- for internal use, you shouldn't touch this
 	state = nil,
-	-- VM this interpreter belongs to
+	--- VM this interpreter belongs to
 	vm = nil,
-	-- event that stopped the interpreter
+	--- event that stopped the interpreter
 	end_event = nil,
 
 	--- run the VM until the next event
@@ -211,10 +212,12 @@ interpreter_methods.__index = interpreter_methods
 
 --- vm methods
 local vm_mt = {
-	-- anselme state
+	--- anselme state
+	-- for internal use, you shouldn't touch this
 	state = nil,
 
-	-- loaded game state
+	--- loaded game state
+	-- for internal use, you shouldn't touch this
 	game = nil,
 
 	--- wrapper for loading a whole set of scripts

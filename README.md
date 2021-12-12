@@ -68,4 +68,6 @@ TODO: stupidly complex script
 Reference
 ------------------
 
-See [REFERENCE.md](REFERENCE.md).
+See [LANGUAGE.md](LANGUAGE.md) for a reference of the language.
+
+See [API.md](API.md) for the Lua API's documentation.

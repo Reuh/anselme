@@ -1,8 +1,5 @@
-Anselme reference
-=================
-
-Language reference
-------------------
+Anselme language reference
+==========================
 
 ### Main structure
 
@@ -940,13 +937,8 @@ This only works on strings:
 
 Variables for default types (each is associated to a string of the internal variable type name): `nil`, `number`, `string`, `list`, `pair`, `function reference`, `variable reference`.
 
-#### Built-in languages
+#### Built-in language scripts
 
 Anselme provides some scripts that define translated aliases for built-in variables and functions. Currently `enUS` (English) and `frFR` (French) are provided.
 
 See the `stdlib/languages` for details on each language.
-
-API reference
--------------
-
-TODO see anselme.lua
