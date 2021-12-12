@@ -29,11 +29,17 @@ local function parse_line(line, state, namespace)
 	local r = {
 		source = line.source
 	}
-	-- else-condition & condition
-	if l:match("^~~?") then
-		r.type = l:match("^~~") and "else-condition" or "condition"
+	-- else-condition, condition & while
+	if l:match("^~[~%?]?") then
+		if l:match("^~~") then
+			r.type = "else-condition"
+		elseif l:match("^~%?") then
+			r.type = "while"
+		else
+			r.type = "condition"
+		end
 		r.child = true
-		local expr = l:match("^~~?(.*)$")
+		local expr = l:match("^~[~%?]?(.*)$")
 		if expr:match("[^%s]") then
 			r.expression = expr
 		else

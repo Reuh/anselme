@@ -31,7 +31,7 @@ common = {
 		-- operators not included here and why:
 		-- * assignment operators (:=, +=, -=, //=, /=, *=, %=, ^=): handled with its own syntax (function assignment)
 		-- * list operator (,): is used when calling every functions, sounds like more trouble than it's worth
-		-- * |, & and ~ operators: are lazy and don't behave like regular functions
+		-- * |, &, ~? and ~ operators: are lazy and don't behave like regular functions
 		-- * # operator: need to set tag state _before_ evaluating the left arg
 
 		-- prefix unop

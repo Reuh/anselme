@@ -308,24 +308,14 @@ $ random(l...)
 	~ l(rand(1, l!len))!
 
 $ next(l...)
-	:f = l(len(l))
-	$ find first not seen(j)
-		~ l(j).👁️ == 0
-			~ f := l(j)
-		~~ j < len(l)
-			~ find first not seen(j+1)
-	~ find first not seen(1)
-	~ f!
+	:j = 0
+	~? j += 1; j < len(l) & l(j).👁️ != 0
+	~ l(j)!
 
 $ cycle(l...)
 	:f = l(1)
-	$ find first smaller(j)
-		~ l(j).👁️ < f.👁️
-			~ f := l(j)
-		~~ j < len(l)
-			~ find first smaller(j+1)
-	~ len(l) > 1
-		~ find first smaller(2)
+	:j = 1
+	~? j += 1; j <= len(l) & !((f := l(j); 1) ~ l(j).👁️ < f.👁️)
 	~ f!
 ]]
 

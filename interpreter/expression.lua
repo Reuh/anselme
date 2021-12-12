@@ -122,6 +122,23 @@ local function eval(state, exp)
 			type = "nil",
 			value = nil
 		}
+	-- while loop
+	elseif exp.type == "~?" then
+		local right, righte = eval(state, exp.right)
+		if not right then return right, righte end
+		local l = {}
+		while truthy(right) do
+			local left, lefte = eval(state, exp.left)
+			if not left then return left, lefte end
+			table.insert(l, left)
+			-- next iteration
+			right, righte = eval(state, exp.right)
+			if not right then return right, righte end
+		end
+		return {
+			type = "list",
+			value = l
+		}
 	-- tag
 	elseif exp.type == "#" then
 		local right, righte = eval(state, exp.right)

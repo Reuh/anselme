@@ -5,7 +5,7 @@ local binops_prio = {
 	[1] = { ";" },
 	[2] = { ":=", "+=", "-=", "//=", "/=", "*=", "%=", "^=" },
 	[3] = { "," },
-	[4] = { "|", "&", "~", "#" },
+	[4] = { "|", "&", "~?", "~", "#" },
 	[5] = { "!=", "==", ">=", "<=", "<", ">" },
 	[6] = { "+", "-" },
 	[7] = { "*", "//", "/", "%" },
@@ -336,7 +336,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 										left = operating_on,
 										right = right
 									})
-								elseif op == "&" or op == "|" or op == "~" or op == "#" then
+								elseif op == "&" or op == "|" or op == "~?" or op == "~" or op == "#" then
 									return expression(r, state, namespace, current_priority, {
 										type = op,
 										left = operating_on,

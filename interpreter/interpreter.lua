@@ -30,40 +30,56 @@ run_line = function(state, line)
 				if v then return v end
 			end
 		end
+	elseif line.type == "while" then
+		line.parent_block.last_condition_success = nil
+		local v, e = eval(state, line.expression)
+		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		while truthy(v) do
+			line.parent_block.last_condition_success = true
+			v, e = run_block(state, line.child)
+			if e then return v, e end
+			if v then return v end
+			-- next iteration
+			v, e = eval(state, line.expression)
+			if not v then return v, ("%s; at %s"):format(e, line.source) end
+		end
 	elseif line.type == "choice" then
 		local v, e = events:make_space_for(state, "choice")
 		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
 		v, e = eval(state, line.text)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		local l = v.type == "list" and v.value or { v }
 		-- convert text events to choices
-		if v.type == "event buffer" then
-			local current_tags = tags:current(state)
-			local choice_block_state = { tags = current_tags, block = line.child }
-			local final_buffer = {}
-			for _, event in ipairs(v.value) do
-				if event.type == "text" then
-					-- create new choice block if needed
-					local last_choice_block = final_buffer[#final_buffer]
-					if not last_choice_block or last_choice_block.type ~= "choice" then
-						last_choice_block = { type = "choice", value = {} }
-						table.insert(final_buffer, last_choice_block)
+		for _, item in ipairs(l) do
+			if item.type == "event buffer" then
+				local current_tags = tags:current(state)
+				local choice_block_state = { tags = current_tags, block = line.child }
+				local final_buffer = {}
+				for _, event in ipairs(item.value) do
+					if event.type == "text" then
+						-- create new choice block if needed
+						local last_choice_block = final_buffer[#final_buffer]
+						if not last_choice_block or last_choice_block.type ~= "choice" then
+							last_choice_block = { type = "choice", value = {} }
+							table.insert(final_buffer, last_choice_block)
+						end
+						-- create new choice item in choice block if needed
+						local last_choice = last_choice_block.value[#last_choice_block.value]
+						if not last_choice then
+							last_choice = { _state = choice_block_state }
+							table.insert(last_choice_block.value, last_choice)
+						end
+						-- add text to last choice item
+						for _, txt in ipairs(event.value) do
+							table.insert(last_choice, txt)
+						end
+					else
+						table.insert(final_buffer, event)
 					end
-					-- create new choice item in choice block if needed
-					local last_choice = last_choice_block.value[#last_choice_block.value]
-					if not last_choice then
-						last_choice = { _state = choice_block_state }
-						table.insert(last_choice_block.value, last_choice)
-					end
-					-- add text to last choice item
-					for _, txt in ipairs(event.value) do
-						table.insert(last_choice, txt)
-					end
-				else
-					table.insert(final_buffer, event)
 				end
+				local iv, ie = events:write_buffer(state, final_buffer)
+				if not iv then return iv, ("%s; at %s"):format(ie, line.source) end
 			end
-			v, e = events:write_buffer(state, final_buffer)
-			if not v then return v, ("%s; at %s"):format(e, line.source) end
 		end
 	elseif line.type == "tag" then
 		local v, e = eval(state, line.expression)
@@ -82,9 +98,12 @@ run_line = function(state, line)
 		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
 		v, e = eval(state, line.text)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
-		if v.type == "event buffer" then
-			v, e = events:write_buffer(state, v.value)
-			if not v then return v, ("%s; at %s"):format(e, line.source) end
+		local l = v.type == "list" and v.value or { v }
+		for _, item in ipairs(l) do
+			if item.type == "event buffer" then
+				local iv, ie = events:write_buffer(state, item.value)
+				if not iv then return iv, ("%s; at %s"):format(ie, line.source) end
+			end
 		end
 	elseif line.type == "flush_events" then
 		local v, e = events:flush(state)

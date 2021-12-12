@@ -43,8 +43,6 @@ Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&
 
 Broad goals and ideas that may never be implemented. Mostly used as personal post-it notes.
 
-TODO: a way to make loops
-
 TODO: consider something like :identifier to create a string "identifier", might simplify the identifier=value special syntax and free up the = operator
 
 TODO: some sensible way to capture text event in string litterals (string interpolation)? -> meh, this means we can capture choice events, and choice events contain their code block, and we don't want to store code blocks in the save file (as code can be updated/translated/whatever)
@@ -74,7 +72,7 @@ TODO: fn/checkpoint/tag: maybe consider them a regular func call that takes chil
      # color:red
      	a
 
-     translate to
+     translate to something like
 
      ~ tag.push(color:red)
      a
@@ -89,7 +87,7 @@ TODO: make language simple enough to be able to reimplement it in, say, nim. Esp
 
 TODO: test reacheability of script paths
 
-TODO: redisign the checkpoint system to work better when used with parallel scripts (if both change the same variable, will be overwritten)
+TODO: redisign the checkpoint system to work better when used with parallel scripts (if both change the same variable, will be overwritten); not sure how to do that, would need some complicated conflict resolution code or something like CRDT...
 
 TODO: redisign a static type checking system
 If we want to go full gradual typing, it would help to:

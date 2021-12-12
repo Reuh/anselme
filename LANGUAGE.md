@@ -93,6 +93,24 @@ There's different types of lines, depending on their first character(s) (after i
     This is.
 ```
 
+* `~?`: while loop line. Works like `~` condition lines, but if the expression evaluates to true and after it ran its children, will reevaluate the expression again and repeat the previous logic until the expression eventually evaluates to false.
+
+```
+(Count to 10:)
+:i = 1
+~? i < 10
+    {i}
+
+    ~ i += 1
+
+(else-conditions can be used if the expression has never evalated to true in the loop:)
+~ i := 5
+~? i < 2
+    Never happens.
+~~
+    This is run.
+```
+
 * `>`: write a choice into the [event buffer](#event-buffer). Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer. Support [escape codes](#escape-codes). Empty choices are discarded.
 
 ```
@@ -105,7 +123,7 @@ $ f
 > {f}
 ```
 
-If an unescaped `~` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
+If an unescaped `~`, `~?` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
 
 ```
 (Conditionnaly executing a line)
@@ -199,7 +217,7 @@ $ f(x::string)
 ~ f("hello")
 ```
 
-Every operator, except assignement operators, `|`, `&`, `,`, `~` and `#` can also be use as a function name in order to overload the operator:
+Every operator, except assignement operators, `|`, `&`, `,`, `~?`, `~` and `#` can also be use as a function name in order to overload the operator:
 
 ```
 (binary operator names: _op_)
@@ -311,7 +329,7 @@ this is some text.
 And this is more text, in a different event.
 ```
 
-If an unescaped `~` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
+If an unescaped `~`, `~?` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
 
 ```
 (Conditionnaly executing a line)
@@ -795,10 +813,10 @@ Please also be aware that when resuming from a checkpoint, Anselme will try to r
 From lowest to highest priority:
 
 ```
-_;_
+_;_   _;
 _:=_  _+=_  _-=_  _//=_  _/=_  _*=_  _%=_  _^=_
 _,_
-_|_   _&_   _~_   _#_
+_|_   _&_   _~?_  _~_   _#_
 _!=_  _==_  _>=_  _<=_  _<_   _>_
 _+_   _-_
 _*_   _//_  _/_   _%_
@@ -861,6 +879,10 @@ This only works on strings:
 
 `a | b`: or operator, lazy
 
+`a ~ b`: evaluates b, if true evaluates a and returns it, otherwise returns nil (lazy).
+
+`a ~? b`: evaluates b, if true evaluates a then reevaluate b and loop this until b is false; returns a list containing all successive values that a returned.
+
 ##### Functions and function references
 
 `fn(args)`: call the function, checkpoint or function reference with the given arguments.
@@ -886,8 +908,6 @@ This only works on strings:
 `a : b`: evaluate a and b, returns a new pair with a as key and b as value.
 
 `a :: b`: evaluate a and b, returns a new typed value with a as value and b as type.
-
-`a ~ b`: evaluates b, if true evaluates a and returns it, otherwise returns nil (lazy).
 
 `a # b`: evaluates b, then evaluates a whith b added to the active tags. Returns a.
 
