@@ -83,7 +83,7 @@ local function parse_line(line, state, namespace)
 		-- anything else are argument, isolate function it its own namespace
 		-- (to not mix its args and variables with the main variant)
 		if rem:match("[^%s]") then
-			func_namespace = ("%s(%s)."):format(fqm, r)
+			func_namespace = ("%s(%s)."):format(fqm, tostring(r))
 			r.private_namespace = true
 		end
 		-- define function
