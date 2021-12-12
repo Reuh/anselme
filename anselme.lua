@@ -487,11 +487,12 @@ local vm_mt = {
 						return cache[k]
 					end,
 					-- variables that keep current state and should be cleared at each checkpoint
-					copy_cache = {}, -- table of [original table] = copied table
-					modified_tables = {}, -- list of modified tables (copies) that should be merged with global state on next checkpoint
 					cache = {}, -- cache of previously read values (copies), to get repeatable reads & handle mutable types without changing global state
+					modified_tables = {}, -- list of modified tables (copies) that should be merged with global state on next checkpoint
+					copy_cache = {}, -- table of [original table] = copied table. Automatically filled by copy().
 					-- keep track of scoped variables in scoped functions [fn line] = {{scoped variables}, next scope, ...}
 					-- (scoped variables aren't merged on checkpoint, shouldn't be cleared at checkpoints)
+					-- (only stores scoped variables that have been reassigned at some point (i.e. every accessed one since they start as undefined))
 					scoped = {}
 				}),
 				interpreter = {

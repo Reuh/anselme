@@ -77,7 +77,7 @@ lua_functions = {
 			local rval = r.value
 			local name = n.value
 			for _, ffqm in ipairs(rval) do
-				local var, vfqm = find(state.aliases, state.variables, ffqm..".", name)
+				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, ffqm..".", name)
 				if var then
 					return get_variable(state, vfqm)
 				end

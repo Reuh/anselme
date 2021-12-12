@@ -1,0 +1,38 @@
+:post run = "check"
+
+:l = [1]
+
+:n = 0
+
+$ f(t)
+	~ t!insert(len(l)+1)
+
+	f1: {l} {t}
+
+	CHECK
+	§ c
+
+	~ n < 1
+		REC
+
+		~ n += 1
+		~ f(t)
+
+		END REC
+
+	~ t!insert(len(t)+1)
+
+	~ error("t")
+
+	f2: {l}
+
+~ f(l)
+
+FINAL
+
+l: {l}
+
+$ check
+	AFTER ERROR
+
+	l: {l}

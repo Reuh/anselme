@@ -1,3 +1,5 @@
+local common
+
 --- replace values recursively in table t according to to_replace ([old table] = new table)
 -- already_replaced is a temporary table to avoid infinite loop & duplicate processing, no need to give it
 local function replace_in_table(t, to_replace, already_replaced)
@@ -12,7 +14,6 @@ local function replace_in_table(t, to_replace, already_replaced)
 	end
 end
 
-local common
 common = {
 	--- recursively copy a table, handle cyclic references, no metatable, don't copy keys
 	-- cache is table with copied tables [original table] = copied value, will use temporary table is omitted
@@ -59,6 +60,29 @@ common = {
 		end
 		-- replace in t
 		replace_in_table(t, to_replace)
+	end,
+	--- given a table t issued from some copy, the copy cache, and a list of tables from the copied version,
+	-- put the original tables that are not in the list in t in place of their copied values
+	fix_not_modified_references = function(t, cache, copied_to_replace)
+		-- reverse copy cache
+		local ehcac = {}
+		for k, v in pairs(cache) do ehcac[v] = k end
+		-- build table of [original table] = replacement copied table
+		local to_replace = {}
+		for _, v in ipairs(copied_to_replace) do
+			local original = ehcac[v]
+			if original then -- table doesn't have an original value if it's a new table...
+				to_replace[original] = v
+			end
+		end
+		-- fix references to not-modified tables in t
+		local not_modified = {}
+		for original, modified in pairs(cache) do
+			if not to_replace[original] then
+				not_modified[modified] = original
+			end
+		end
+		replace_in_table(t, not_modified)
 	end
 }
 

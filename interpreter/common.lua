@@ -1,6 +1,6 @@
 local atypes, ltypes
 local eval, run_block
-local replace_with_copied_values
+local replace_with_copied_values, fix_not_modified_references
 local common
 local identifier_pattern
 
@@ -44,6 +44,11 @@ end
 common = {
 	--- merge interpreter state with global state
 	merge_state = function(state)
+		local mt = getmetatable(state.variables)
+		-- store current scoped variables before merging them
+		for fn in pairs(mt.scoped) do
+			common.scope:store_last_scope(state, fn)
+		end
 		-- merge alias state
 		local global = state.interpreter.global_state
 		for alias, fqm in pairs(state.aliases) do
@@ -51,15 +56,38 @@ common = {
 			state.aliases[alias] = nil
 		end
 		-- merge modified mutable varables
-		local mt = getmetatable(state.variables)
-		replace_with_copied_values(global.variables, mt.copy_cache, mt.modified_tables)
+		local copy_cache, modified_tables = mt.copy_cache, mt.modified_tables
+		replace_with_copied_values(global.variables, copy_cache, modified_tables)
 		mt.copy_cache = {}
-		mt.modified = {}
+		mt.modified_tables = {}
 		mt.cache = {}
 		-- merge modified re-assigned variables
 		for var, value in pairs(state.variables) do
-			global.variables[var] = value
-			state.variables[var] = nil
+			if var:match("^"..identifier_pattern.."$") then -- skip scoped variables
+				global.variables[var] = value
+				state.variables[var] = nil
+			end
+		end
+		-- scoping: since merging means we will re-copy every variable from global state again, we need to simulate this
+		-- behavious for scoped variables (to have consistent references for mutables values in particular), including
+		-- scopes that aren't currently active
+		fix_not_modified_references(mt.scoped, copy_cache, modified_tables) -- replace not modified values in scope with original before re-copying to keep consistent references
+		for _, scopes in pairs(mt.scoped) do
+			for _, scope in ipairs(scopes) do
+				for var, value in pairs(scope) do
+					-- pretend the value for this scope is the global value so the cache system perform the new copy from it
+					local old_var = global.variables[var]
+					global.variables[var] = value
+					state.variables[var] = nil
+					scope[var] = state.variables[var]
+					mt.cache[var] = nil
+					global.variables[var] = old_var
+				end
+			end
+		end
+		-- restore last scopes
+		for fn in pairs(mt.scoped) do
+			common.scope:set_last_scope(state, fn)
 		end
 	end,
 	--- returns a variable's value, evaluating a pending expression if neccessary
@@ -85,46 +113,66 @@ common = {
 	end,
 	--- handle scoped function
 	scope = {
-		push = function(self, state, fn)
+		init_scope = function(self, state, fn)
 			local scoped = getmetatable(state.variables).scoped
-			if not fn.scoped then error("trying to push a scope for a non-scoped function") end
-			-- add scope
-			if not scoped[fn] then
-				scoped[fn] = {}
-			end
-			local last_scope = scoped[fn][#scoped[fn]]
-			local fn_scope = {}
-			table.insert(scoped[fn], fn_scope)
-			-- add scoped variables to scope
+			if not fn.scoped then error("trying to initialize the scope stack for a non-scoped function") end
+			if not scoped[fn] then scoped[fn] = {} end
+			-- check scoped variables
 			for _, name in ipairs(fn.scoped) do
-				-- preserve current values in last scope
-				if last_scope then
-					last_scope[name] = state.variables[name]
+				-- put fresh variable from global state in scope
+				local val = state.interpreter.global_state.variables[name]
+				if val.type ~= "undefined argument" and val.type ~= "pending definition" then -- only possibilities for scoped variable, and they're immutable
+					error("invalid scoped variable")
 				end
-				-- set last value to nil to force to copy again from global variables in new scope
-				state.variables[name] = nil
-				local value = state.variables[name]
-				fn_scope[name] = value
 			end
 		end,
+		--- push a new scope for this function
+		push = function(self, state, fn)
+			local scoped = getmetatable(state.variables).scoped
+			self:init_scope(state, fn)
+			-- preserve current values in last scope
+			self:store_last_scope(state, fn)
+			-- add scope
+			local fn_scope = {}
+			table.insert(scoped[fn], fn_scope)
+			self:set_last_scope(state, fn)
+		end,
+		--- pop the last scope for this function
 		pop = function(self, state, fn)
 			local scoped = getmetatable(state.variables).scoped
 			if not scoped[fn] then error("trying to pop a scope without any pushed scope") end
 			-- remove current scope
 			table.remove(scoped[fn])
-			-- set scopped variables to previous scope
-			local last_scope = scoped[fn][#scoped[fn]]
+			-- restore last scope
+			self:set_last_scope(state, fn)
+			-- if the stack is empty,
+			-- we could remove mt.scoped[fn] I guess, but I don't think there's going to be a million different functions in a single game so should be ok
+			-- (anselme's performance is already bad enough, let's not create tables at each function call...)
+		end,
+		--- store the current values of the scoped variables in the last scope of this function
+		store_last_scope = function(self, state, fn)
+			local scopes = getmetatable(state.variables).scoped[fn]
+			local last_scope = scopes[#scopes]
 			if last_scope then
-				for _, name in ipairs(fn.scoped) do
-					state.variables[name] = last_scope[name]
+				for _, name in pairs(fn.scoped) do
+					local val = rawget(state.variables, name)
+					if val then
+						last_scope[name] = val
+					end
 				end
-			else -- no previous scope
-				for _, name in ipairs(fn.scoped) do
-					state.variables[name] = nil
+			end
+		end,
+		--- set scopped variables to previous scope
+		set_last_scope = function(self, state, fn)
+			local scopes = getmetatable(state.variables).scoped[fn]
+			for _, name in ipairs(fn.scoped) do
+				state.variables[name] = nil
+			end
+			local last_scope = scopes[#scopes]
+			if last_scope then
+				for name, val in pairs(last_scope) do
+					state.variables[name] = val
 				end
-				-- no need to remove this I think, there's not going to be a million different functions in a single game so we can keep the tables
-				-- (anselme's performance is already bad enough, let's not create tables at each function call...)
-				-- scoped[fn] = nil
 			end
 		end
 	},
@@ -468,7 +516,8 @@ local types = require((...):gsub("interpreter%.common$", "stdlib.types"))
 atypes, ltypes = types.anselme, types.lua
 eval = require((...):gsub("common$", "expression"))
 run_block = require((...):gsub("common$", "interpreter")).run_block
-replace_with_copied_values = require((...):gsub("interpreter%.common$", "common")).replace_with_copied_values
+local acommon = require((...):gsub("interpreter%.common$", "common"))
+replace_with_copied_values, fix_not_modified_references = acommon.replace_with_copied_values, acommon.fix_not_modified_references
 identifier_pattern = require((...):gsub("interpreter%.common$", "parser.common")).identifier_pattern
 
 return common
