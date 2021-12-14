@@ -7,7 +7,7 @@ $ f
 > c
 ~ choose(1)
 
-# "k":"v"
+# "k"="v"
 	~ f
 	> d
 	~ choose(1)

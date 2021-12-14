@@ -1,4 +1,4 @@
-local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable, mark_as_modified
+local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable, mark_as_modified, set_variable
 
 local lua_functions
 lua_functions = {
@@ -54,7 +54,7 @@ lua_functions = {
 		end
 	},
 	-- pair
-	["_:_(a, b)"] = {
+	["_=_(a, b)"] = {
 		mode = "raw",
 		value = function(a, b)
 			return {
@@ -84,6 +84,22 @@ lua_functions = {
 				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, ffqm..".", name)
 				if var then
 					return get_variable(state, vfqm)
+				end
+			end
+			return nil, ("can't find variable %q in function reference (searched in namespaces: %s)"):format(name, table.concat(rval, ", "))
+		end
+	},
+	["_._(r::function reference, name::string) := v"] = {
+		mode = "raw",
+		value = function(r, n, v)
+			local state = anselme.running.state
+			local rval = r.value
+			local name = n.value
+			for _, ffqm in ipairs(rval) do
+				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, ffqm..".", name)
+				if var then
+					set_variable(state, vfqm, v)
+					return v
 				end
 			end
 			return nil, ("can't find variable %q in function reference (searched in namespaces: %s)"):format(name, table.concat(rval, ", "))
@@ -326,7 +342,7 @@ local functions = {
 
 package.loaded[...] = functions
 local icommon = require((...):gsub("stdlib%.functions$", "interpreter.common"))
-truthy, compare, is_of_type, get_variable, mark_as_modified = icommon.truthy, icommon.compare, icommon.is_of_type, icommon.get_variable, icommon.mark_as_modified
+truthy, compare, is_of_type, get_variable, mark_as_modified, set_variable = icommon.truthy, icommon.compare, icommon.is_of_type, icommon.get_variable, icommon.mark_as_modified, icommon.set_variable
 local pcommon = require((...):gsub("stdlib%.functions$", "parser.common"))
 identifier_pattern, format_identifier, find = pcommon.identifier_pattern, pcommon.format_identifier, pcommon.find
 anselme = require((...):gsub("stdlib%.functions$", "anselme"))

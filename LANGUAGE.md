@@ -274,7 +274,7 @@ Checkpoints always have the following variable defined in its namespace by defau
 * `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any `choice` or `text` event sent from its children. Can be nested.
 
 ```
-# "color": "red"
+# color="red"
     Text tagged with a red color
 
     # "blink"
@@ -570,7 +570,7 @@ Default types are:
 
 * `string`: a string. Can be defined between double quotes `"string"`. Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes).
 
-* `pair`: a couple of values. Types can be mixed. Can be defined using colon `"key":5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax.
+* `pair`: a couple of values. Types can be mixed. Can be defined using equal sign `"key"=5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax; `key` will not be interpreted as the variable `key` but the string `"key"` (if `key` is a variable and you want to force the use of its value as a key instead of the string `"key"`, you can wrap it in parentheses).
 
 * `type`: a couple of values. Types can be mixed. Can be defined using colon `expr::type`. The second value is used in type checks, this is intended to be use to give a custom type to a value.
 
@@ -590,7 +590,7 @@ How conversions are handled from Anselme to Lua:
 
 * `string` -> `string`
 
-* `list` -> `table`. Pair elements in the list will be assigned as a key-value pair in the Lua list and its index skipped in the sequential part, e.g. `[1,2,"key":"value",3]` -> `{1,2,3,key="value"}`.
+* `list` -> `table`. Pair elements in the list will be assigned as a key-value pair in the Lua list and its index skipped in the sequential part, e.g. `[1,2,"key"="value",3]` -> `{1,2,3,key="value"}`.
 
 * `pair` -> `table`, with a single key-value pair.
 
@@ -602,7 +602,7 @@ How conservions are handled from Lua to Anselme:
 
 * `string` -> `string`
 
-* `table` -> `list`. First add the sequential part of the table in the list, then add pairs for the remaining elements, e.g. `{1,2,key="value",3}` -> `[1,2,3,"key":"value"]`
+* `table` -> `list`. First add the sequential part of the table in the list, then add pairs for the remaining elements, e.g. `{1,2,key="value",3}` -> `[1,2,3,"key"="value"]`
 
 * `boolean` -> `number`, 0 for false, 1 for true.
 
@@ -820,7 +820,7 @@ _|_   _&_   _~?_  _~_   _#_
 _!=_  _==_  _>=_  _<=_  _<_   _>_
 _+_   _-_
 _*_   _//_  _/_   _%_
-_::_  _:_
+_::_  _=_
 -_  !_
 _^_
 _._   _!_
@@ -905,7 +905,7 @@ This only works on strings:
 
 `a;`: evaluate a, discard its result, returns nil.
 
-`a : b`: evaluate a and b, returns a new pair with a as key and b as value.
+`a = b`: evaluate a and b, returns a new pair with a as key and b as value. If a is an identifier, will interpret it as a string (and not a variable; you can wrap a in parentheses if you want to use the value associated with variable a instead).
 
 `a :: b`: evaluate a and b, returns a new typed value with a as value and b as type.
 

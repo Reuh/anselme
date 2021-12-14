@@ -9,12 +9,13 @@ local binops_prio = {
 	[5] = { "!=", "==", ">=", "<=", "<", ">" },
 	[6] = { "+", "-" },
 	[7] = { "*", "//", "/", "%" },
-	[8] = { "::", ":" },
+	[8] = { "::", "=" },
 	[9] = {}, -- unary operators
 	[10] = { "^" },
 	[11] = { ".", "!" },
 	[12] = {}
 }
+local pair_priority = 8
 -- unop priority
 local prefix_unops_prio = {
 	[1] = {},
@@ -129,9 +130,9 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local name, r = s:match("^("..identifier_pattern..")(.-)$")
 			name = format_identifier(name)
 			-- string:value pair shorthand using =
-			if r:match("^=[^=]") then
+			if r:match("^=[^=]") and pair_priority > current_priority then
 				local val
-				val, r = expression(r:match("^=(.*)$"), state, namespace, 9)
+				val, r = expression(r:match("^=(.*)$"), state, namespace, pair_priority)
 				if not val then return val, r end
 				local args = {
 					type = "list",
@@ -142,7 +143,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					right = val
 				}
 				-- find compatible variant
-				local variant, err = find_function(state, namespace, "_:_", args, true)
+				local variant, err = find_function(state, namespace, "_=_", args, true)
 				if not variant then return variant, err end
 				return expression(r, state, namespace, current_priority, variant)
 			end
