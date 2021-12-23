@@ -255,10 +255,6 @@ local vm_mt = {
 		if self.game.anselme_version and self.game.anselme_version ~= anselme.versions.language then
 			return nil, ("trying to load game made for Anselme language %s, but currently using version %s"):format(self.game.anselme_version, anselme.versions.language)
 		end
-		-- force merging version into state
-		local interpreter, err = self:run("config.game version")
-		if not interpreter then return interpreter, err end
-		interpreter:step()
 		-- load language
 		if self.game.language then
 			local s, e = self:loadlanguage(self.game.language)
