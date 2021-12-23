@@ -8,7 +8,7 @@ The overengineered dialog scripting system in pure Lua.
 Purpose
 -------
 
-Once upon a time, I wanted to do a game with a branching story. I could store the current state in a bunch of variables and just write everything like the rest of my game's code. But no, that would be *too simple*. I briefly looked at [ink](https://github.com/inkle/ink), which looked nice but lacked some features I felt like I needed. Mainly, I wanted something more language independant and less linear. Also, I wasn't a fan of the syntax. And I'm a weirdo who make their game in Lua.
+Once upon a time, I wanted to do a game with a branching story. I could store the current state in a bunch of variables and just write everything like the rest of my game's code. But no, that would be *too simple*. I briefly looked at [ink](https://github.com/inkle/ink), which looked nice but lacked some features I felt like I needed. Mainly, I wanted something more language independant and less linear. Also, I wasn't a fan of the syntax. And I'm a weirdo who make their game in Lua *and* likes making their own scripting languages (by the way, if you like Lua but not my weird idiosyncratic language, there's actually some other options ([Erogodic](https://github.com/oniietzschan/erogodic) looks nice)).
 
 So, here we go. Let's make a new scripting language.
 
