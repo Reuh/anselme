@@ -1,6 +1,8 @@
 local format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature
 
--- try to define an alias using rem, the text that follows the identifier
+local parse_indented
+
+--- try to define an alias using rem, the text that follows the identifier
 -- returns true, new_rem, alias_name in case of success
 -- returns true, rem in case of no alias and no error
 -- returns nil, err in case of alias and error
@@ -22,6 +24,7 @@ local function maybe_alias(rem, fqm, namespace, line, state)
 	return true, rem, alias
 end
 
+--- parse a single line into AST
 -- * ast: if success
 -- * nil, error: in case of error
 local function parse_line(line, state, namespace)
@@ -195,6 +198,17 @@ local function parse_line(line, state, namespace)
 			else
 				table.insert(line.children, 1, { content = ":🔖=()", source = line.source })
 			end
+			-- custom code injection
+			if state.inject.functionstart then
+				for i, ll in ipairs(state.inject.functionstart) do
+					table.insert(line.children, 1+i, ll)
+				end
+			end
+			if state.inject.functionend then
+				for _, ll in ipairs(state.inject.functionend) do
+					table.insert(line.children, ll)
+				end
+			end
 		elseif r.type == "checkpoint" then
 			-- define 🏁 variable
 			local reached_alias = state.global_state.builtin_aliases["🏁"]
@@ -202,6 +216,17 @@ local function parse_line(line, state, namespace)
 				table.insert(line.children, 1, { content = (":🏁:%s=0"):format(reached_alias), source = line.source })
 			else
 				table.insert(line.children, 1, { content = ":🏁=0", source = line.source })
+			end
+			-- custom code injection
+			if state.inject.checkpointstart then
+				for i, ll in ipairs(state.inject.checkpointstart) do
+					table.insert(line.children, 1+i, ll)
+				end
+			end
+			if state.inject.checkpointend then
+				for _, ll in ipairs(state.inject.checkpointend) do
+					table.insert(line.children, ll)
+				end
 			end
 		end
 		-- define args
@@ -286,6 +311,7 @@ local function parse_line(line, state, namespace)
 	return r
 end
 
+--- parse an indented into final AST
 -- * block: in case of success
 -- * nil, err: in case of error
 local function parse_block(indented, state, namespace, parent_function)
@@ -398,28 +424,43 @@ local function parse_lines(s)
 	return lines
 end
 
+--- make indented from intial string
+-- * list: in case of success
+-- * nil, err: in case of error
+parse_indented = function(s, fnname, source)
+	source = source or fnname
+	-- parse lines
+	local lines = parse_lines(s)
+	local indented, e = parse_indent(lines, source)
+	if not indented then return nil, e end
+	-- wrap in named function if neccessary
+	if fnname ~= nil and fnname ~= "" then
+		if not fnname:match("^"..identifier_pattern.."$") then
+			return nil, ("invalid function name %q"):format(fnname)
+		end
+		indented = {
+			{ content = "$ "..fnname, source = ("%s:%s"):format(source, 0), children = indented },
+		}
+	end
+	-- transform ast
+	indented = transform_indented(indented)
+	return indented
+end
+
 --- preparse shit: create AST structure, define variables and functions, but don't parse expression or perform any type checking
 -- (wait for other files to be parsed before doing this with postparse)
 -- * block: in case of success
 -- * nil, err: in case of error
 local function parse(state, s, name, source)
-	-- parse lines
-	local lines = parse_lines(s)
-	local indented, e = parse_indent(lines, source or name)
+	-- get indented
+	local indented, e = parse_indented(s, name, source)
 	if not indented then return nil, e end
-	-- wrap in named function if neccessary
-	if name ~= "" then
-		if not name:match("^"..identifier_pattern.."$") then
-			return nil, ("invalid function name %q"):format(name)
-		end
-		indented = {
-			{ content = "$ "..name, source = ("%s:%s"):format(source or name, 0), children = indented },
-		}
-	end
-	-- transform ast
-	indented = transform_indented(indented)
 	-- build state proxy
 	local state_proxy = {
+		inject = {
+			functionstart = nil, functionend = nil,
+			checkpointstart = nil, checkpointend = nil
+		},
 		aliases = setmetatable({}, { __index = state.aliases }),
 		variables = setmetatable({}, { __index = state.aliases }),
 		functions = setmetatable({}, {
@@ -438,6 +479,14 @@ local function parse(state, s, name, source)
 		queued_lines = {},
 		global_state = state
 	}
+	-- parse injects
+	for _, inject in ipairs{"functionstart", "functionend", "checkpointstart", "checkpointend"} do
+		if state.inject[inject] then
+			local inject_indented, err = parse_indented(state.inject[inject], nil, "injected "..inject)
+			if not inject_indented then return nil, err end
+			state_proxy.inject[inject] = inject_indented
+		end
+	end
 	-- parse
 	local root, err = parse_block(indented, state_proxy, "")
 	if not root then return nil, err end

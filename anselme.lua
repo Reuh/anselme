@@ -351,6 +351,35 @@ local vm_mt = {
 		self.state.builtin_aliases["🏁"] = reached
 		return self
 	end,
+	--- set some code that will be added at the start of every function defined after this is called
+	-- nil to disable
+	-- can typically be used to define variables for every function like 👁️
+	-- return self
+	injectfunctionstart = function(self, code)
+		self.state.inject.functionstart = code
+		return self
+	end,
+	--- same as injectfunctionstart, but inject code at the start of every checkpoint
+	-- nil to disable
+	-- return self
+	injectcheckpointstart = function(self, code)
+		self.state.inject.checkpointstart = code
+		return self
+	end,
+	--- same as injectfunctionstart, but inject code at the end of every function
+	-- nil to disable
+	-- return self
+	injectfunctionend = function(self, code)
+		self.state.inject.functionend = code
+		return self
+	end,
+	--- same as injectfunctionend, but inject code at the end of every checkpoint
+	-- nil to disable
+	-- return self
+	injectcheckpointend = function(self, code)
+		self.state.inject.checkpointend = code
+		return self
+	end,
 
 	--- load & execute a built-in language file
 	-- the language file may optionally contain the special variables:
@@ -473,6 +502,7 @@ local vm_mt = {
 		local interpreter
 		interpreter = {
 			state = {
+				inject = self.state.inject,
 				feature_flags = self.state.feature_flags,
 				builtin_aliases = self.state.builtin_aliases,
 				aliases = setmetatable({}, { __index = self.state.aliases }),
@@ -544,6 +574,10 @@ return setmetatable(anselme, {
 	__call = function()
 		-- global state
 		local state = {
+			inject = {
+				functionstart = nil, functionend = nil,
+				checkpointstart = nil, checkpointend = nil
+			},
 			feature_flags = {
 				["strip trailing spaces"] = true,
 				["strip duplicate spaces"] = true
