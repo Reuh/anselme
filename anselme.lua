@@ -116,7 +116,7 @@ local interpreter_methods = {
 		return self
 	end,
 
-	--- interrupt the vm on the next step, executing an expression is specified
+	--- interrupt the vm on the next step, executing an expression if specified
 	-- returns self
 	interrupt = function(self, expr)
 		self.state.interpreter.interrupt = expr or true
@@ -511,7 +511,9 @@ local vm_mt = {
 					-- interrupt
 					interrupt = nil,
 					-- tag stack
-					tags = tags or {},
+					tags = {},
+					-- default tags for everything in this interpreter (Lua values)
+					base_lua_tags = tags,
 				},
 			},
 			vm = self

@@ -9,9 +9,15 @@ local function post_process_text(state, text)
 	local r = {}
 	-- copy into r & convert tags to lua
 	for _, t in ipairs(text) do
+		local tags = common.to_lua(t.tags)
+		if state.interpreter.base_lua_tags then
+			for k, v in pairs(state.interpreter.base_lua_tags) do
+				if tags[k] == nil then tags[k] = v end
+			end
+		end
 		table.insert(r, {
 			text = t.text,
-			tags = common.to_lua(t.tags)
+			tags = tags
 		})
 	end
 	-- remove trailing spaces
