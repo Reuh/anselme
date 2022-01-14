@@ -8,4 +8,6 @@ return [[
 :pair="pair"
 :function reference="function reference"
 :variable reference="variable reference"
+
+:pi=3.1415926535898
 ]]

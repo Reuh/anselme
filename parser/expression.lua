@@ -16,6 +16,7 @@ local binops_prio = {
 	[12] = {}
 }
 local pair_priority = 8
+local implicit_multiply_priority = 7.5 -- just above / so 1/2x gives 1/(2x)
 -- unop priority
 local prefix_unops_prio = {
 	[1] = {},
@@ -397,6 +398,22 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local variant, err = find_function(state, namespace, "()", args, true)
 			if not variant then return variant, err end
 			return expression(r, state, namespace, current_priority, variant)
+		end
+		-- implicit multiplication
+		if implicit_multiply_priority > current_priority then
+			if s:match("^"..identifier_pattern) then
+				local right, r = expression(s, state, namespace, implicit_multiply_priority)
+				if right then
+					local args = {
+						type = "list",
+						left = operating_on,
+						right = right
+					}
+					local variant, err = find_function(state, namespace, "_*_", args, true)
+					if not variant then return variant, err end
+					return expression(r, state, namespace, current_priority, variant)
+				end
+			end
 		end
 		-- nothing to operate
 		return operating_on, s
