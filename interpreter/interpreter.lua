@@ -116,8 +116,8 @@ run_line = function(state, line)
 			value = reached.value + 1
 		})
 		set_variable(state, line.parent_function.namespace.."🔖", {
-			type = "string",
-			value = line.name
+			type = "function reference",
+			value = { line.name }
 		})
 		merge_state(state)
 	else
@@ -167,11 +167,10 @@ run_block = function(state, block, resume_from_there, i, j)
 		})
 		-- don't update checkpoint if an already more precise checkpoint is set
 		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
-		local current_checkpoint = checkpoint.value
-		if not current_checkpoint:match("^"..escape(parent_line.name)) then
+		if checkpoint.type == "nil" or not checkpoint.value[1]:match("^"..escape(parent_line.name)) then
 			set_variable(state, parent_line.parent_function.namespace.."🔖", {
-				type = "string",
-				value = parent_line.name
+				type = "function reference",
+				value = { parent_line.name }
 			})
 		end
 		merge_state(state)

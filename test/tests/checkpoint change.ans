@@ -29,5 +29,5 @@ From q again:
 ~ f
 
 Go to p again by setting checkpoint manually:
-~ f.checkpoint := "p"
+~ f.checkpoint := &f.p
 ~ f

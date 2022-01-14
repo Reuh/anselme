@@ -191,9 +191,9 @@ local function parse_line(line, state, namespace)
 			-- define 🔖 variable
 			local checkpoint_alias = state.global_state.builtin_aliases["🔖"]
 			if checkpoint_alias then
-				table.insert(line.children, 1, { content = (":🔖:%s=\"\""):format(checkpoint_alias), source = line.source })
+				table.insert(line.children, 1, { content = (":🔖:%s=()"):format(checkpoint_alias), source = line.source })
 			else
-				table.insert(line.children, 1, { content = ":🔖=\"\"", source = line.source })
+				table.insert(line.children, 1, { content = ":🔖=()", source = line.source })
 			end
 		elseif r.type == "checkpoint" then
 			-- define 🏁 variable

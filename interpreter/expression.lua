@@ -437,11 +437,11 @@ local function eval(state, exp)
 				else
 					local e
 					-- eval function from start
-					if paren_call or checkpoint.value == "" then
+					if paren_call or checkpoint.type == "nil" then
 						ret, e = run(state, fn.child)
 					-- resume at last checkpoint
 					else
-						local expr, err = expression(checkpoint.value, state, fn.namespace)
+						local expr, err = expression(checkpoint.value[1], state, fn.namespace)
 						if not expr then return expr, err end
 						ret, e = eval(state, expr)
 					end

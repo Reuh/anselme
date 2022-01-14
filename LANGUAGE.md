@@ -248,7 +248,7 @@ Functions can return a value using a [return line](#lines-that-can-t-have-childr
 Functions always have the following variables defined in its namespace by default:
 
 `👁️`: number, number of times the function was executed before
-`🔖`: string, name of last reached checkpoint
+`🔖`: funcion reference, last reached checkpoint. `nil` if no checkpoint reached.
 
 * `§`: checkpoint. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
 
