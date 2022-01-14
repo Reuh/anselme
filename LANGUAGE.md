@@ -624,6 +624,25 @@ These can be used to represent some caracters in string and other text elements 
 
 Only `0` and `nil` are false. Everything else is considered true.
 
+#### Refering to an identifier
+
+Any defined identifier can be accessed from an expression by using its name; the identifier will be first searched in the current namespace, then go up until it finds it as described in [identifiers](#identifiers).
+
+What will happen then depends on what the identifier refer to: see [function calls](#function-calls) for functions and [checkpoint calls](#checkpoint-calls) for checkpoints.
+
+For variables, the identifier will returns the value of the variable when evaluated.
+
+When the identifier is preceeded by another expression directly (without any operator between the two), Anselme consider this to be an implicit multiplication. This behave in the same way as if there was a `*` operator between the expression and identifier, but has a priority just higher than explicit multiplication.
+
+```
+:x = 3
+
+{2x} = {2*x} = 6
+
+(Priority is made slighly higher to avoid parentheses in this kind of operation:)
+{1/2x} = {1/(2*x)} = 1/6
+```
+
 #### Function calls
 
 The simplest way to call a function is simply to use its name. If the function has no arguments, parantheses are optional, or can be replaced with a `!`:
@@ -958,6 +977,8 @@ This only works on strings:
 #### Built-in variables
 
 Variables for default types (each is associated to a string of the internal variable type name): `nil`, `number`, `string`, `list`, `pair`, `function reference`, `variable reference`.
+
+The π constant is also defined in `pi`.
 
 #### Built-in language scripts
 

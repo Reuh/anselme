@@ -488,7 +488,7 @@ local vm_mt = {
 	-- expr: expression to evaluate (string or parsed expression), or a block to run
 	-- will merge state after successful execution
 	-- namespace(default=""): namespace to evaluate the expression in
-	-- tags(default={}): defaults tag when evaluating the expression
+	-- tags(default={}): defaults tags when evaluating the expression (Lua value)
 	-- return interpreter in case of success
 	-- returns nil, err in case of error
 	run = function(self, expr, namespace, tags)
@@ -555,7 +555,7 @@ local vm_mt = {
 	-- merge state after sucessful execution automatically like :run
 	-- expr: expression to evaluate (string or parsed expression), or a block to evaluate
 	-- namespace(default=""): namespace to evaluate the expression in
-	-- tags(default={}): defaults tag when evaluating the expression
+	-- tags(default={}): defaults tags when evaluating the expression (Lua value)
 	-- return value in case of success (nil if nothing returned)
 	-- returns nil, err in case of error
 	eval = function(self, expr, namespace, tags)
