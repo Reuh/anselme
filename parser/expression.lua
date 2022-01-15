@@ -271,11 +271,23 @@ local function expression(s, state, namespace, current_priority, operating_on)
 							if not args then
 								args = operating_on
 							else
-								args = {
-									type = "list",
-									left = operating_on,
-									right = args
-								}
+								if args.type == "list" then -- insert as first element
+									local first_list = args
+									while first_list.left.type == "list" do
+										first_list = first_list.left
+									end
+									first_list.left = {
+										type = "list",
+										left = operating_on,
+										right = first_list.left
+									}
+								else
+									args = {
+										type = "list",
+										left = operating_on,
+										right = args
+									}
+								end
 							end
 							-- find compatible variant
 							local variant, err = find_function(state, namespace, name, args, paren_call)
