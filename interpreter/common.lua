@@ -302,7 +302,7 @@ common = {
 		return true
 	end,
 	--- check if an anselme value is of a certain type
-	-- specificity(number): if var is of type type
+	-- specificity(number): if var is of type type. lower is more specific
 	-- false: if not
 	is_of_type = function(var, type)
 		local depth = 1

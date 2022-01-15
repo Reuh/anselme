@@ -225,13 +225,14 @@ local vm_mt = {
 	-- requires LÖVE or LuaFileSystem
 	-- will load in path, in order:
 	-- * config.ans, which will be executed in the "config" namespace and may contains various optional configuration options:
-	--   * language: string, built-in language file to load
-	--   * inject directory: string, directory that may contain "function start.ans", "checkpoint end.ans", etc. which content will be used to setup
-	--                       the custom code injection methods like vm:injectfunctionstart
 	--   * anselme version: number, version of the anselme language this game was made for
 	--   * game version: any, version information of the game. Can be used to perform eventual migration of save with an old version in the main file.
 	--                        Always included in saved variables.
-	--   * main file: string, name (without .ans extension) of a file that will be loaded into the root namespace and ran when starting the game
+	--   * language: string, built-in language file to load
+	--   * inject directory: string, directory that may contain "function start.ans", "checkpoint end.ans", etc. which content will be used to setup
+	--                       the custom code injection methods like vm:injectfunctionstart
+	--   * global directory: string, path of global script directory. Every script file and subdirectory in the path will be loaded in the global namespace.
+	--   * start expression: string, expression that will be ran when starting the game
 	-- * main file, if defined in config.ans
 	-- * every other file in the path and subdirectories, using their path as namespace (i.e., contents of path/world1/john.ans will be defined in a function world1.john)
 	-- returns self in case of success
@@ -247,12 +248,12 @@ local vm_mt = {
 		end
 		-- get config
 		self.game = {
-			language = self:eval("config.language"),
-			inject_directory = self:eval("config.inject directory"),
 			anselme_version = self:eval("config.anselme version"),
 			game_version = self:eval("config.game version"),
-			main_file = self:eval("config.main file"),
-			main_block = nil
+			language = self:eval("config.language"),
+			inject_directory = self:eval("config.inject directory"),
+			global_directory = self:eval("config.global directory"),
+			start_expression = self:eval("config.start expression")
 		}
 		-- check language version
 		if self.game.anselme_version and self.game.anselme_version ~= anselme.versions.language then
@@ -265,7 +266,7 @@ local vm_mt = {
 		end
 		-- load injections
 		if self.game.inject_directory then
-			for _, inject in ipairs{"function start", "function end", "checkpoint start", "checkpoint end"} do
+			for _, inject in ipairs{"function start", "function end", "scoped function start", "scoped function end", "checkpoint start", "checkpoint end"} do
 				local f = io.open(path.."/"..self.game.inject_directory.."/"..inject..".ans", "r")
 				if f then
 					self.state.inject[inject:gsub(" ", "_")] = f:read("*a")
@@ -273,17 +274,24 @@ local vm_mt = {
 				end
 			end
 		end
-		-- load main file
-		if self.game.main_file then
-			local s, e = self:loadfile(path.."/"..self.game.main_file..".ans")
-			if not s then return s, e end
-			self.game.main_block = s
+		-- load global scripts
+		for _, item in ipairs(list_directory(path.."/"..self.game.global_directory)) do
+			if item:match("[^%.]") then
+				local p = path.."/"..self.game.global_directory.."/"..item
+				local s, e
+				if is_directory(p) then
+					s, e = self:loaddirectory(p)
+				elseif item:match("%.ans$") then
+					s, e = self:loadfile(p)
+				end
+				if not s then return s, e end
+			end
 		end
 		-- load other files
 		for _, item in ipairs(list_directory(path)) do
 			if item:match("[^%.]") and
 				item ~= "config.ans" and
-				(self.game.main_file == nil or item ~= self.game.main_file..".ans") and
+				item ~= self.game.global_directory and
 				item ~= self.game.inject_directory
 			then
 				local p = path.."/"..item
@@ -303,8 +311,8 @@ local vm_mt = {
 	-- returns nil, err in case of error
 	rungame = function(self)
 		if not self.game then error("no game loaded") end
-		if self.game.main_block then
-			return self:run(self.game.main_block)
+		if self.game.start_expression then
+			return self:run(self.game.start_expression)
 		else
 			return self:run("()")
 		end
