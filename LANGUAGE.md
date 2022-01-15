@@ -835,11 +835,12 @@ From lowest to highest priority:
 _;_   _;
 _:=_  _+=_  _-=_  _//=_  _/=_  _*=_  _%=_  _^=_
 _,_
+_=_
 _|_   _&_   _~?_  _~_   _#_
 _!=_  _==_  _>=_  _<=_  _<_   _>_
 _+_   _-_
 _*_   _//_  _/_   _%_
-_::_  _=_
+_::_ 
 -_  !_
 _^_
 _._   _!_
@@ -882,7 +883,7 @@ These only work on numbers.
 
 `a + b`: evaluate a and b, returns their sum.
 
-`-`, `*`, `/`, `//`, `^`: same for substraction, multiplication, division, integer division, exponentiation
+`-`, `*`, `/`, `//`, `^`, `%`: same for substraction, multiplication, division, integer division, exponentiation, modulo
 
 `-a`: evaluate a, returns its opposite
 
@@ -961,6 +962,10 @@ This only works on strings:
 `next(...)`: same as cycle, but will not cycle; once the end of sequence is reached, will keep executing the last element.
 
 `random(...)`: same arguments as before, but execute a random element at every execution.
+
+##### String methods
+
+`len(string)`: returns length of the string in UTF-8 characters
 
 ##### Various
 

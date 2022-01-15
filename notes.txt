@@ -99,3 +99,5 @@ Advantages:
 Disadvantages:
 * idk if it's worth the trouble
 * could do something like `$ ()(l::list(?), i::number)::?`, but then can't return nil on not found...
+
+TODO: write a translation guide/simplify translation process
