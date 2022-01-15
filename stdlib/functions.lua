@@ -42,6 +42,7 @@ lua_functions = {
 	["_*_(a::number, b::number)"] = function(a, b) return a * b end,
 	["_/_(a::number, b::number)"] = function(a, b) return a / b end,
 	["_//_(a::number, b::number)"] = function(a, b) return math.floor(a / b) end,
+	["_%_(a::number, b::number)"] = function(a, b) return a % b end,
 	["_^_(a::number, b::number)"] = function(a, b) return a ^ b end,
 	-- boolean
 	["!_(a)"] = {
@@ -280,6 +281,10 @@ lua_functions = {
 			return { type = "number", value = 0 }
 		end
 	},
+	-- string
+	["len(s::string)"] = function(s)
+		return require("utf8").len(s)
+	end,
 	-- other methods
 	["error(m::string)"] = function(m) error(m, 0) end,
 	["rand()"] = function() return math.random() end,
@@ -333,6 +338,15 @@ $ cycle(l...)
 	:j = 1
 	~? j += 1; j <= len(l) & !((f := l(j); 1) ~ l(j).👁️ < f.👁️)
 	~ f!
+
+$ concat(l::list, separator=""::string)
+	:r = ""
+	:j = 0
+	~? j += 1; j <= len(l)
+		~ r += "{l(j)}"
+		~ j < len(l)
+			~ r += separator
+	@r
 ]]
 
 local functions = {
