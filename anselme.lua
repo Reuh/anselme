@@ -6,11 +6,11 @@ local anselme = {
 	-- api is incremented a each update which may break Lua API compatibility
 	versions = {
 		save = 1,
-		language = 21,
-		api = 4
+		language = 22,
+		api = 5
 	},
 	--- version is incremented at each update
-	version = 22,
+	version = 23,
 	--- currently running interpreter
 	running = nil
 }
@@ -226,6 +226,8 @@ local vm_mt = {
 	-- will load in path, in order:
 	-- * config.ans, which will be executed in the "config" namespace and may contains various optional configuration options:
 	--   * language: string, built-in language file to load
+	--   * inject directory: string, directory that may contain "function start.ans", "checkpoint end.ans", etc. which content will be used to setup
+	--                       the custom code injection methods like vm:injectfunctionstart
 	--   * anselme version: number, version of the anselme language this game was made for
 	--   * game version: any, version information of the game. Can be used to perform eventual migration of save with an old version in the main file.
 	--                        Always included in saved variables.
@@ -246,6 +248,7 @@ local vm_mt = {
 		-- get config
 		self.game = {
 			language = self:eval("config.language"),
+			inject_directory = self:eval("config.inject directory"),
 			anselme_version = self:eval("config.anselme version"),
 			game_version = self:eval("config.game version"),
 			main_file = self:eval("config.main file"),
@@ -260,6 +263,16 @@ local vm_mt = {
 			local s, e = self:loadlanguage(self.game.language)
 			if not s then return s, e end
 		end
+		-- load injections
+		if self.game.inject_directory then
+			for _, inject in ipairs{"function start", "function end", "checkpoint start", "checkpoint end"} do
+				local f = io.open(path.."/"..self.game.inject_directory.."/"..inject..".ans", "r")
+				if f then
+					self.state.inject[inject:gsub(" ", "_")] = f:read("*a")
+					f:close()
+				end
+			end
+		end
 		-- load main file
 		if self.game.main_file then
 			local s, e = self:loadfile(path.."/"..self.game.main_file..".ans")
@@ -268,7 +281,11 @@ local vm_mt = {
 		end
 		-- load other files
 		for _, item in ipairs(list_directory(path)) do
-			if item:match("[^%.]") and item ~= "config.ans" and item ~= self.game.main_file..".ans" then
+			if item:match("[^%.]") and
+				item ~= "config.ans" and
+				(self.game.main_file == nil or item ~= self.game.main_file..".ans") and
+				item ~= self.game.inject_directory
+			then
 				local p = path.."/"..item
 				local s, e
 				if is_directory(p) then
@@ -356,28 +373,28 @@ local vm_mt = {
 	-- can typically be used to define variables for every function like 👁️
 	-- return self
 	injectfunctionstart = function(self, code)
-		self.state.inject.functionstart = code
+		self.state.inject.function_start = code
 		return self
 	end,
 	--- same as injectfunctionstart, but inject code at the start of every checkpoint
 	-- nil to disable
 	-- return self
 	injectcheckpointstart = function(self, code)
-		self.state.inject.checkpointstart = code
+		self.state.inject.checkpoint_start = code
 		return self
 	end,
 	--- same as injectfunctionstart, but inject code at the end of every function
 	-- nil to disable
 	-- return self
 	injectfunctionend = function(self, code)
-		self.state.inject.functionend = code
+		self.state.inject.function_end = code
 		return self
 	end,
 	--- same as injectfunctionend, but inject code at the end of every checkpoint
 	-- nil to disable
 	-- return self
 	injectcheckpointend = function(self, code)
-		self.state.inject.checkpointend = code
+		self.state.inject.checkpoint_end = code
 		return self
 	end,
 
@@ -575,8 +592,8 @@ return setmetatable(anselme, {
 		-- global state
 		local state = {
 			inject = {
-				functionstart = nil, functionend = nil,
-				checkpointstart = nil, checkpointend = nil
+				function_start = nil, function_end = nil,
+				checkpoint_start = nil, checkpoint_end = nil
 			},
 			feature_flags = {
 				["strip trailing spaces"] = true,

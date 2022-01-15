@@ -199,13 +199,13 @@ local function parse_line(line, state, namespace)
 				table.insert(line.children, 1, { content = ":🔖=()", source = line.source })
 			end
 			-- custom code injection
-			if state.inject.functionstart then
-				for i, ll in ipairs(state.inject.functionstart) do
+			if state.inject.function_start then
+				for i, ll in ipairs(state.inject.function_start) do
 					table.insert(line.children, 1+i, ll)
 				end
 			end
-			if state.inject.functionend then
-				for _, ll in ipairs(state.inject.functionend) do
+			if state.inject.function_end then
+				for _, ll in ipairs(state.inject.function_end) do
 					table.insert(line.children, ll)
 				end
 			end
@@ -218,13 +218,13 @@ local function parse_line(line, state, namespace)
 				table.insert(line.children, 1, { content = ":🏁=0", source = line.source })
 			end
 			-- custom code injection
-			if state.inject.checkpointstart then
-				for i, ll in ipairs(state.inject.checkpointstart) do
+			if state.inject.checkpoint_start then
+				for i, ll in ipairs(state.inject.checkpoint_start) do
 					table.insert(line.children, 1+i, ll)
 				end
 			end
-			if state.inject.checkpointend then
-				for _, ll in ipairs(state.inject.checkpointend) do
+			if state.inject.checkpoint_end then
+				for _, ll in ipairs(state.inject.checkpoint_end) do
 					table.insert(line.children, ll)
 				end
 			end
@@ -458,8 +458,8 @@ local function parse(state, s, name, source)
 	-- build state proxy
 	local state_proxy = {
 		inject = {
-			functionstart = nil, functionend = nil,
-			checkpointstart = nil, checkpointend = nil
+			function_start = nil, function_end = nil,
+			checkpoint_start = nil, checkpoint_end = nil
 		},
 		aliases = setmetatable({}, { __index = state.aliases }),
 		variables = setmetatable({}, { __index = state.aliases }),
@@ -480,9 +480,9 @@ local function parse(state, s, name, source)
 		global_state = state
 	}
 	-- parse injects
-	for _, inject in ipairs{"functionstart", "functionend", "checkpointstart", "checkpointend"} do
+	for _, inject in ipairs{"function_start", "function_end", "checkpoint_start", "checkpoint_end"} do
 		if state.inject[inject] then
-			local inject_indented, err = parse_indented(state.inject[inject], nil, "injected "..inject)
+			local inject_indented, err = parse_indented(state.inject[inject], nil, "injected "..inject:gsub("_", " "))
 			if not inject_indented then return nil, err end
 			state_proxy.inject[inject] = inject_indented
 		end
