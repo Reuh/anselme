@@ -368,12 +368,19 @@ local vm_mt = {
 		self.state.builtin_aliases["🏁"] = reached
 		return self
 	end,
-	--- set some code that will be added at the start of every function defined after this is called
+	--- set some code that will be added at the start of every non-scoped function defined after this is called
 	-- nil to disable
 	-- can typically be used to define variables for every function like 👁️
 	-- return self
 	injectfunctionstart = function(self, code)
 		self.state.inject.function_start = code
+		return self
+	end,
+	--- same as injectfunctionstart, but inject code at the start of every scoped function
+	-- nil to disable
+	-- return self
+	injectscopedfunctionstart = function(self, code)
+		self.state.inject.scoped_function_start = code
 		return self
 	end,
 	--- same as injectfunctionstart, but inject code at the start of every checkpoint
@@ -383,11 +390,18 @@ local vm_mt = {
 		self.state.inject.checkpoint_start = code
 		return self
 	end,
-	--- same as injectfunctionstart, but inject code at the end of every function
+	--- same as injectfunctionstart, but inject code at the end of every non-scoped function
 	-- nil to disable
 	-- return self
 	injectfunctionend = function(self, code)
 		self.state.inject.function_end = code
+		return self
+	end,
+	--- same as injectfunctionstart, but inject code at the end of every scoped function
+	-- nil to disable
+	-- return self
+	injectscopedfunctionend = function(self, code)
+		self.state.inject.scoped_function_end = code
 		return self
 	end,
 	--- same as injectfunctionend, but inject code at the end of every checkpoint
@@ -593,6 +607,7 @@ return setmetatable(anselme, {
 		local state = {
 			inject = {
 				function_start = nil, function_end = nil,
+				scoped_function_start = nil, scoped_function_end = nil,
 				checkpoint_start = nil, checkpoint_end = nil
 			},
 			feature_flags = {

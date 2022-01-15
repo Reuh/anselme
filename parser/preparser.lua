@@ -199,14 +199,27 @@ local function parse_line(line, state, namespace)
 				table.insert(line.children, 1, { content = ":🔖=()", source = line.source })
 			end
 			-- custom code injection
-			if state.inject.function_start then
-				for i, ll in ipairs(state.inject.function_start) do
-					table.insert(line.children, 1+i, ll)
+			if r.scoped then
+				if state.inject.scoped_function_start then
+					for i, ll in ipairs(state.inject.scoped_function_start) do
+						table.insert(line.children, 1+i, ll)
+					end
 				end
-			end
-			if state.inject.function_end then
-				for _, ll in ipairs(state.inject.function_end) do
-					table.insert(line.children, ll)
+				if state.inject.scoped_function_end then
+					for _, ll in ipairs(state.inject.scoped_function_end) do
+						table.insert(line.children, ll)
+					end
+				end
+			else
+				if state.inject.function_start then
+					for i, ll in ipairs(state.inject.function_start) do
+						table.insert(line.children, 1+i, ll)
+					end
+				end
+				if state.inject.function_end then
+					for _, ll in ipairs(state.inject.function_end) do
+						table.insert(line.children, ll)
+					end
 				end
 			end
 		elseif r.type == "checkpoint" then
@@ -459,6 +472,7 @@ local function parse(state, s, name, source)
 	local state_proxy = {
 		inject = {
 			function_start = nil, function_end = nil,
+			scoped_function_start = nil, scoped_function_end = nil,
 			checkpoint_start = nil, checkpoint_end = nil
 		},
 		aliases = setmetatable({}, { __index = state.aliases }),
@@ -480,7 +494,7 @@ local function parse(state, s, name, source)
 		global_state = state
 	}
 	-- parse injects
-	for _, inject in ipairs{"function_start", "function_end", "checkpoint_start", "checkpoint_end"} do
+	for _, inject in ipairs{"function_start", "function_end", "scoped_function_start", "scoped_function_end", "checkpoint_start", "checkpoint_end"} do
 		if state.inject[inject] then
 			local inject_indented, err = parse_indented(state.inject[inject], nil, "injected "..inject:gsub("_", " "))
 			if not inject_indented then return nil, err end
