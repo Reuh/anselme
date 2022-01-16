@@ -288,7 +288,13 @@ local function parse_line(line, state, namespace)
 		if not exp then return nil, ("expected \"= expression\" after %q in definition line; at %s"):format(rem, line.source) end
 		-- define identifier
 		if state.functions[fqm] then return nil, ("trying to define variable %q, but a function with the same name exists; at %s"):format(fqm, line.source) end
-		if state.variables[fqm] then return nil, ("trying to define variable %q but it is already defined; at %s"):format(fqm, line.source) end
+		if state.variables[fqm] then
+			if state.variables[fqm].type == "pending definition" then
+				return nil, ("trying to define variable %q but it is already defined at %s; at %s"):format(fqm, state.variables[fqm].value.source, line.source)
+			else
+				return nil, ("trying to define variable %q but it is already defined; at %s"):format(fqm, line.source)
+			end
+		end
 		r.fqm = fqm
 		r.expression = exp
 		state.variables[fqm] = { type = "pending definition", value = { expression = nil, source = r.source } }
