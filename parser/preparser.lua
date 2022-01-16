@@ -1,4 +1,4 @@
-local format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature, copy
+local format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature, copy, injections
 
 local parse_indented
 
@@ -27,7 +27,7 @@ end
 --- parse a single line into AST
 -- * ast: if success
 -- * nil, error: in case of error
-local function parse_line(line, state, namespace)
+local function parse_line(line, state, namespace, parent_function)
 	local l = line.content
 	local r = {
 		source = line.source
@@ -59,7 +59,7 @@ local function parse_line(line, state, namespace)
 		r.child = true
 		-- store parent function and run checkpoint when line is read
 		if r.type == "checkpoint" then
-			r.parent_function = true
+			r.parent_function = parent_function
 		end
 		-- don't keep function node in block AST
 		if r.type == "function" then
@@ -311,12 +311,28 @@ local function parse_line(line, state, namespace)
 	-- return
 	elseif l:match("^%@") then
 		r.type = "return"
-		r.parent_function = true
+		r.child = true
+		r.parent_function = parent_function
 		local expr = l:match("^%@(.*)$")
 		if expr:match("[^%s]") then
 			r.expression = expr
 		else
 			r.expression = "()"
+		end
+		-- custom code injection
+		if not line.children then line.children = {} end
+		if parent_function.scoped then
+			if state.inject.scoped_function_return then
+				for _, ll in ipairs(state.inject.scoped_function_return) do
+					table.insert(line.children, copy(ll))
+				end
+			end
+		else
+			if state.inject.function_return then
+				for _, ll in ipairs(state.inject.function_return) do
+					table.insert(line.children, copy(ll))
+				end
+			end
 		end
 	-- text
 	elseif l:match("[^%s]") then
@@ -337,10 +353,8 @@ local function parse_block(indented, state, namespace, parent_function)
 	local block = { type = "block" }
 	for _, l in ipairs(indented) do
 		-- parsable line
-		local ast, err = parse_line(l, state, namespace)
+		local ast, err = parse_line(l, state, namespace, parent_function)
 		if err then return nil, err end
-		-- store parent function
-		if ast.parent_function then ast.parent_function = parent_function end
 		-- add to block AST
 		if not ast.remove_from_block_ast then
 			ast.parent_block = block
@@ -476,11 +490,7 @@ local function parse(state, s, name, source)
 	if not indented then return nil, e end
 	-- build state proxy
 	local state_proxy = {
-		inject = {
-			function_start = nil, function_end = nil,
-			scoped_function_start = nil, scoped_function_end = nil,
-			checkpoint_start = nil, checkpoint_end = nil
-		},
+		inject = {},
 		aliases = setmetatable({}, { __index = state.aliases }),
 		variables = setmetatable({}, { __index = state.aliases }),
 		functions = setmetatable({}, {
@@ -500,11 +510,11 @@ local function parse(state, s, name, source)
 		global_state = state
 	}
 	-- parse injects
-	for _, inject in ipairs{"function_start", "function_end", "scoped_function_start", "scoped_function_end", "checkpoint_start", "checkpoint_end"} do
-		if state.inject[inject] then
-			local inject_indented, err = parse_indented(state.inject[inject], nil, "injected "..inject:gsub("_", " "))
+	for inject, ninject in pairs(injections) do
+		if state.inject[ninject] then
+			local inject_indented, err = parse_indented(state.inject[ninject], nil, "injected "..inject)
 			if not inject_indented then return nil, err end
-			state_proxy.inject[inject] = inject_indented
+			state_proxy.inject[ninject] = inject_indented
 		end
 	end
 	-- parse
@@ -535,7 +545,7 @@ end
 
 package.loaded[...] = parse
 local common = require((...):gsub("preparser$", "common"))
-format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature = common.format_identifier, common.identifier_pattern, common.escape, common.special_functions_names, common.pretty_signature, common.signature
+format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature, injections = common.format_identifier, common.identifier_pattern, common.escape, common.special_functions_names, common.pretty_signature, common.signature, common.injections
 copy = require((...):gsub("parser%.preparser$", "common")).copy
 
 return parse

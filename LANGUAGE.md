@@ -281,15 +281,6 @@ Checkpoints always have the following variable defined in its namespace by defau
         Tagged with a red color and blink.
 ```
 
-#### Lines that can't have children:
-
-* `:`: variable declaration. Followed by an [identifier](#identifiers) (with eventually an [alias](#aliases)), a `=` and an [expression](#expressions). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). The expression is not evaluated instantly, but the first time the variable is used.
-
-```
-:foo = 42
-:bar : alias = 12
-```
-
 * `@`: return line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. Exit the current function and returns the expression's value.
 
 ```
@@ -297,6 +288,23 @@ $ hey
     @5
 
 {hey} = 5
+```
+
+If this line has children, they will be ran _after_ evaluating the returned expression but _before_ exiting the current function. If the children return a value, it is used instead.
+
+```
+(Returns 0 and print 5)
+$ fn
+    :i=0
+
+    @i
+        ~ i:=5
+        {i}
+
+(Returns 3)
+$ g
+    @0
+        @3
 ```
 
 Please note that Anselme will discard returns values sent from within a choice block. Returns inside choice block still have the expected behaviour of stopping the execution of the choice block.
@@ -315,7 +323,15 @@ $ f
     Yes.
 
 (Choice block is actually ran right before the "Yes" line, when the choice event is flushed.)
+```
 
+#### Lines that can't have children:
+
+* `:`: variable declaration. Followed by an [identifier](#identifiers) (with eventually an [alias](#aliases)), a `=` and an [expression](#expressions). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). The expression is not evaluated instantly, but the first time the variable is used.
+
+```
+:foo = 42
+:bar : alias = 12
 ```
 
 * empty line: flush the event buffer, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.

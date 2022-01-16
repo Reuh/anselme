@@ -22,6 +22,7 @@ local preparse = require(anselme_root.."parser.preparser")
 local postparse = require(anselme_root.."parser.postparser")
 local expression = require(anselme_root.."parser.expression")
 local eval = require(anselme_root.."interpreter.expression")
+local injections = require(anselme_root.."parser.common").injections
 local run_line = require(anselme_root.."interpreter.interpreter").run_line
 local run = require(anselme_root.."interpreter.interpreter").run
 local to_lua = require(anselme_root.."interpreter.common").to_lua
@@ -230,7 +231,7 @@ local vm_mt = {
 	--                        Always included in saved variables.
 	--   * language: string, built-in language file to load
 	--   * inject directory: string, directory that may contain "function start.ans", "checkpoint end.ans", etc. which content will be used to setup
-	--                       the custom code injection methods like vm:injectfunctionstart
+	--                       the custom code injection methods (see vm:setinjection)
 	--   * global directory: string, path of global script directory. Every script file and subdirectory in the path will be loaded in the global namespace.
 	--   * start expression: string, expression that will be ran when starting the game
 	-- * main file, if defined in config.ans
@@ -266,10 +267,10 @@ local vm_mt = {
 		end
 		-- load injections
 		if self.game.inject_directory then
-			for _, inject in ipairs{"function start", "function end", "scoped function start", "scoped function end", "checkpoint start", "checkpoint end"} do
+			for inject, ninject in pairs(injections) do
 				local f = io.open(path.."/"..self.game.inject_directory.."/"..inject..".ans", "r")
 				if f then
-					self.state.inject[inject:gsub(" ", "_")] = f:read("*a")
+					self.state.inject[ninject] = f:read("*a")
 					f:close()
 				end
 			end
@@ -376,47 +377,22 @@ local vm_mt = {
 		self.state.builtin_aliases["🏁"] = reached
 		return self
 	end,
-	--- set some code that will be added at the start of every non-scoped function defined after this is called
-	-- nil to disable
-	-- can typically be used to define variables for every function like 👁️
+	--- set some code that will be injected at specific places in all code loaded after this is called
+	-- possible inject types:
+	-- * "function start": injected at the start of every non-scoped function
+	-- * "function end": injected at the end of every non-scoped function
+	-- * "function return": injected at the end of each return's children that is contained in a non-scoped function
+	-- * "checkpoint start": injected at the start of every checkpoint
+	-- * "checkpoint end": injected at the end of every checkpoint
+	-- * "scoped function start": injected at the start of every scoped function
+	-- * "scoped function end": injected at the end of every scoped function
+	-- * "scoped function return": injected at the end of each return's children that is contained in a scoped function
+	-- set to nil to disable
+	-- can typically be used to define variables for every function like 👁️, setting some value on every function resume, etc.
 	-- return self
-	injectfunctionstart = function(self, code)
-		self.state.inject.function_start = code
-		return self
-	end,
-	--- same as injectfunctionstart, but inject code at the start of every scoped function
-	-- nil to disable
-	-- return self
-	injectscopedfunctionstart = function(self, code)
-		self.state.inject.scoped_function_start = code
-		return self
-	end,
-	--- same as injectfunctionstart, but inject code at the start of every checkpoint
-	-- nil to disable
-	-- return self
-	injectcheckpointstart = function(self, code)
-		self.state.inject.checkpoint_start = code
-		return self
-	end,
-	--- same as injectfunctionstart, but inject code at the end of every non-scoped function
-	-- nil to disable
-	-- return self
-	injectfunctionend = function(self, code)
-		self.state.inject.function_end = code
-		return self
-	end,
-	--- same as injectfunctionstart, but inject code at the end of every scoped function
-	-- nil to disable
-	-- return self
-	injectscopedfunctionend = function(self, code)
-		self.state.inject.scoped_function_end = code
-		return self
-	end,
-	--- same as injectfunctionend, but inject code at the end of every checkpoint
-	-- nil to disable
-	-- return self
-	injectcheckpointend = function(self, code)
-		self.state.inject.checkpoint_end = code
+	setinjection = function(self, inject, code)
+		assert(injections[inject], ("unknown injection type %q"):format(inject))
+		self.state.inject[injections[inject]] = code
 		return self
 	end,
 
@@ -614,9 +590,7 @@ return setmetatable(anselme, {
 		-- global state
 		local state = {
 			inject = {
-				function_start = nil, function_end = nil,
-				scoped_function_start = nil, scoped_function_end = nil,
-				checkpoint_start = nil, checkpoint_end = nil
+				-- function_start = "code block...", ...
 			},
 			feature_flags = {
 				["strip trailing spaces"] = true,

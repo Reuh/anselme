@@ -92,6 +92,9 @@ run_line = function(state, line)
 	elseif line.type == "return" then
 		local v, e = eval(state, line.expression)
 		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		local cv, ce = run_block(state, line.child)
+		if ce then return cv, ce end
+		if cv then return cv end
 		return v
 	elseif line.type == "text" then
 		local v, e = events:make_space_for(state, "text") -- do this before any evaluation start

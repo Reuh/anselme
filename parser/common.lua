@@ -70,6 +70,12 @@ common = {
 		-- decorators
 		["\\$"] = "$"
 	},
+	-- list of possible injections and their associated name in vm.state.inject
+	injections = {
+		["function start"] = "function_start", ["function end"] = "function_end", ["function return"] = "function_return",
+		["scoped function start"] = "scoped_function_start", ["scoped function end"] = "scoped_function_end", ["scoped function return"] = "scoped_function_return",
+		["checkpoint start"] = "checkpoint_start", ["checkpoint end"] = "checkpoint_end"
+	},
 	--- escape a string to be used as an exact match pattern
 	escape = function(str)
 		if not escapeCache[str] then
