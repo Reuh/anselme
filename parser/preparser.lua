@@ -1,4 +1,4 @@
-local format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature
+local format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature, copy
 
 local parse_indented
 
@@ -202,23 +202,23 @@ local function parse_line(line, state, namespace)
 			if r.scoped then
 				if state.inject.scoped_function_start then
 					for i, ll in ipairs(state.inject.scoped_function_start) do
-						table.insert(line.children, 1+i, ll)
+						table.insert(line.children, 1+i, copy(ll))
 					end
 				end
 				if state.inject.scoped_function_end then
 					for _, ll in ipairs(state.inject.scoped_function_end) do
-						table.insert(line.children, ll)
+						table.insert(line.children, copy(ll))
 					end
 				end
 			else
 				if state.inject.function_start then
 					for i, ll in ipairs(state.inject.function_start) do
-						table.insert(line.children, 1+i, ll)
+						table.insert(line.children, 1+i, copy(ll))
 					end
 				end
 				if state.inject.function_end then
 					for _, ll in ipairs(state.inject.function_end) do
-						table.insert(line.children, ll)
+						table.insert(line.children, copy(ll))
 					end
 				end
 			end
@@ -233,12 +233,12 @@ local function parse_line(line, state, namespace)
 			-- custom code injection
 			if state.inject.checkpoint_start then
 				for i, ll in ipairs(state.inject.checkpoint_start) do
-					table.insert(line.children, 1+i, ll)
+					table.insert(line.children, 1+i, copy(ll))
 				end
 			end
 			if state.inject.checkpoint_end then
 				for _, ll in ipairs(state.inject.checkpoint_end) do
-					table.insert(line.children, ll)
+					table.insert(line.children, copy(ll))
 				end
 			end
 		end
@@ -530,5 +530,6 @@ end
 package.loaded[...] = parse
 local common = require((...):gsub("preparser$", "common"))
 format_identifier, identifier_pattern, escape, special_functions_names, pretty_signature, signature = common.format_identifier, common.identifier_pattern, common.escape, common.special_functions_names, common.pretty_signature, common.signature
+copy = require((...):gsub("parser%.preparser$", "common")).copy
 
 return parse

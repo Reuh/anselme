@@ -116,7 +116,7 @@ local interpreter_methods = {
 		return self
 	end,
 
-	--- interrupt the vm on the next step, executing an expression if specified
+	--- interrupt the vm on the next step, executing an expression (if specified) in the current namespace
 	-- returns self
 	interrupt = function(self, expr)
 		self.state.interpreter.interrupt = expr or true
