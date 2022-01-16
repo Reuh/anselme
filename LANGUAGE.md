@@ -442,9 +442,9 @@ Anselme need to give back control to the game at some point. This is done throug
 Each event is composed of two elements: a type (string; `text`, `choice`, `return` or `error` by default, custom types can also be defined) and associated data; the data associated with each event depends on its type. For the default events this data is:
 
 * `text` (text to display) is a list of text elements, each with a `text` field, containing the text contents, and a `tags` field, containing the tags associated with this text.
-* `choice` (choices to choose from) is a list of tableas, each associated to a choice. Each of these choice is a list of text elements like for the `text` event.
+* `choice` (choices to choose from) is a list of choices. Each of these choice is a list of text elements like for the `text` event.
 * `return` (when the script ends) is the returned value.
-* `error` (when the script error) is the error message.
+* `error` (when there is an error) is the error message.
 
 #### Event buffer
 

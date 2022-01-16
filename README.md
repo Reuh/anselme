@@ -3,7 +3,7 @@ Anselme
 
 The overengineered dialog scripting system in pure Lua.
 
-**Documentation and language are still WIP and will change. I am using this in a project and modify it as my needs change.**
+Whatever is on the master branch should work fine. **Documentation and language are still WIP and will change. I am using this in a project and modify it as my needs change.** Breaking changes are documented in commit messages.
 
 Purpose
 -------
@@ -28,15 +28,16 @@ And most stuff you'd expect from such a language:
 * can save and restore state
 
 And things that are halfway there but *should* be there eventually (i.e., TODO):
-* language independant; scripts should (hopefully) be easily localizable into any language (it's possible, but doesn't provide any batteries for this right now)
-    Defaults variables use emoji and then it's expected to alias them; works but not the most satisfying solution.
-* a good documentation
-    Need to work on consistent naming of Anselme concepts
-    A step by step tutorial
+
+* language independant; scripts should (hopefully) be easily localizable into any language (it's possible, but doesn't provide any batteries for this right now).
+  Defaults variables use emoji and then it's expected to alias them; works but not the most satisfying solution.
+* a good documentation (need to work on consistent naming of Anselme concepts, a step by step tutorial)
 
 Things that Anselme is not:
+
 * a game engine. It's very specific to dialogs and text, so unless you make a text game you will need to do a lot of other stuff.
 * a language based on Lua. It's imperative and arrays start at 1 but there's not much else in common.
+* a high-performance language. No, really, I didn't even try to make anything fast, so don't use Anselme to compute primes.
 
 Example
 -------
@@ -70,4 +71,4 @@ Reference
 
 See [LANGUAGE.md](LANGUAGE.md) for a reference of the language.
 
-See [API.md](API.md) for the Lua API's documentation.
+See [anselme.md](anselme.md) for the Lua API's documentation.

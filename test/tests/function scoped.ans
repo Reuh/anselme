@@ -1,6 +1,3 @@
-(FIXME compare with fe/janet types
-
-
 $ f()
 	:a = 1
 

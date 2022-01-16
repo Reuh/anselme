@@ -1,17 +1,69 @@
--- anselme module
+--- anselme main module
+
+--- Anselme Lua API reference
+--
+-- We actively support LuaJIT and Lua 5.4. Lua 5.1, 5.2 and 5.3 *should* work but I don't always test against them.
+--
+-- This documentation is generated from the main module file `anselme.lua` using `ldoc --ext md anselme.lua`.
+--
+-- Example usage:
+-- ```lua
+-- local anselme = require("anselme") -- load main module
+--
+-- local vm = anselme() -- create new VM
+-- vm:loadgame("game") -- load some scripts, etc.
+-- local interpreter = vm:rungame() -- create a new interpreter using what was loaded with :loadgame
+--
+-- -- simple function to convert text event data into a string
+-- -- in your game you may want to handle tags, here we ignore them for simplicity
+-- local function format_text(text)
+--   local r = ""
+--   for _, l in ipairs(t) do
+--     r = r .. l.text
+--   end
+--   return r
+-- end
+--
+-- -- event loop
+-- repeat
+--   local event, data = interpreter:step() -- progress script until next event
+--   if event == "text" then
+--     print(format_text(d))
+--   elseif event == "choice" then
+--     for j, choice in ipairs(d) do
+--       print(j.."> "..format_text(choice))
+--     end
+--     interpreter:choose(io.read())
+--   elseif event == "error" then
+--     error(data)
+--   end
+-- until t == "return" or t == "error"
+-- ```
+--
+-- Calling the Anselme main module will create a return a new [VM](#vms).
+--
+-- The main module also contain a few fields:
+--
+-- @type anselme
 local anselme = {
-	--- version
-	-- save is incremented a each update which may break save compatibility
-	-- language is incremented a each update which may break script file compatibility
-	-- api is incremented a each update which may break Lua API compatibility
+	--- Anselme version information table.
+	--
+	-- Contains version informations as number (higher means more recent) of Anselme divied in a few categories:
+	--
+	-- * `save`, which is incremented at each update which may break save compatibility
+	-- * `language`, which is incremented at each update which may break script file compatibility
+	-- * `api`, which is incremented at each update which may break Lua API compatibility
 	versions = {
 		save = 1,
 		language = 22,
 		api = 5
 	},
-	--- version is incremented at each update
+	--- General version number.
+	--
+	-- It is incremented at each update.
 	version = 23,
-	--- currently running interpreter
+	--- Currently running [interpreter](#interpreters).
+	-- `nil` if no interpreter running.
 	running = nil
 }
 package.loaded[...] = anselme
@@ -62,19 +114,43 @@ local function is_file(path)
 	end
 end
 
---- interpreter methods
+--- Interpreters
+--
+-- An interpreter is in charge of running Anselme code and is spawned from a [VM](#vms).
+-- Several interpreters from the same VM can run at the same time.
+--
+-- Typically, you would have a interpreter for each script that need at the same time, for example one for every NPC
+-- that is currently talking.
+--
+-- Each interpreter can only run one script at a time, and will run it sequentially.
+-- You can advance in the script by calling the `:step` method, which will run the script until an event is sent (for example some text needs to be displayed),
+-- which will pause the whole interpreter until `:step` is called again.
+--
+-- @type interpreter
 local interpreter_methods = {
 	--- interpreter state
 	-- for internal use, you shouldn't touch this
+	-- @local
 	state = nil,
-	--- VM this interpreter belongs to
+	--- [VM](#vms) this interpreter belongs to.
 	vm = nil,
-	--- event that stopped the interpreter
+	--- String, type of the event that stopped the interpreter (`nil` if interpreter is still running).
 	end_event = nil,
 
-	--- run the VM until the next event
-	-- will merge changed variables on successful script end
-	-- returns event, data; if event is "return" or "error", the interpreter can not be stepped further
+	--- Run the interpreter until the next event.
+	-- Returns event type (string), data (any).
+	--
+	-- Will merge changed variables on successful script end.
+	--
+	-- If event is `"return"` or `"error"`, the interpreter can not be stepped further and should be discarded.
+	--
+	-- Default event types and their associated data:
+	-- * `text`: text to display, data is a list of text elements, each with a `text` field, containing the text contents, and a `tags` field, containing the tags associated with this text
+	-- * `choice`: choices to choose from, data is a list of choices Each of these choice is a list of text elements like for the `text` event
+	-- * `return`: when the script ends, data is the returned value (`nil` if nothing returned)
+	-- * `error`: when there is an error, data is the error message.
+	--
+	-- See [LANGUAGE.md](LANGUAGE.md) for more details on events.
 	step = function(self)
 		-- check status
 		if self.end_event then
@@ -110,21 +186,26 @@ local interpreter_methods = {
 		return event, data
 	end,
 
-	--- select an answer
-	-- returns self
+	--- Select a choice.
+	-- `i` is the index (number) of the choice in the choice list (from the choice event's data).
+	--
+	-- The choice will be selected on the next interpreter step.
+	--
+	-- Returns this interpreter.
 	choose = function(self, i)
 		self.state.interpreter.choice_selected = tonumber(i)
 		return self
 	end,
 
-	--- interrupt the vm on the next step, executing an expression (if specified) in the current namespace
-	-- returns self
+	--- Interrupt (abort the currently running script) the interpreter on the next step, executing an expression (string, if specified) in the current namespace instead.
+	--
+	-- Returns this interpreter.
 	interrupt = function(self, expr)
 		self.state.interpreter.interrupt = expr or true
 		return self
 	end,
 
-	--- search closest namespace from last run line
+	--- Returns the namespace (string) the last ran line belongs to.
 	current_namespace = function(self)
 		local line = self.state.interpreter.running_line
 		local namespace = ""
@@ -141,9 +222,12 @@ local interpreter_methods = {
 		return namespace
 	end,
 
-	--- run an expression or block: may trigger events and must be called from within the interpreter coroutine
-	-- no automatic merge if this change the interpreter state, merge is done once we reach end of script in a call to :step as usual
-	-- return lua value (nil if nothing returned)
+	--- Run an expression (string) or block, optionally in a specific namespace (string, will use root namespace if not specified).
+	-- This may trigger events and must be called from within the interpreter coroutine (i.e. from a function called from a running script).
+	--
+	-- No automatic merge if this change the interpreter state, merge is done once we reach end of script in a call to `:step` as usual.
+	--
+	-- Returns the returned value (nil if nothing returned).
 	run = function(self, expr, namespace)
 		-- check status
 		if coroutine.status(self.state.interpreter.coroutine) ~= "running" then
@@ -168,12 +252,15 @@ local interpreter_methods = {
 		end
 		return to_lua(r)
 	end,
-	--- evaluate an expression or block
-	-- can be called from outside the coroutine. Will create a new coroutine that operate on this interpreter state.
-	-- no automatic merge if this change the interpreter state, merge is done once we reach end of script in a call to :step as usual
-	-- the expression can't yield events
-	-- return value in case of success (nil if nothing returned)
-	-- return nil, err in case of error
+	--- Evaluate an expression (string) or block, optionally in a specific namespace (string, will use root namespace if not specified).
+	-- The expression can't yield events.
+	-- Can be called from outside the interpreter coroutine. Will create a new coroutine that operate on this interpreter state.
+	--
+	-- No automatic merge if this change the interpreter state, merge is done once we reach end of script in a call to `:step` as usual.
+	--
+	-- Returns the returned value in case of success (nil if nothing returned).
+	--
+	-- Returns nil, error message in case of error.
 	eval = function(self, expr, namespace)
 		if self.end_event then
 			return "error", ("interpreter can't be restarted after receiving a %s event"):format(self.end_event)
@@ -211,33 +298,43 @@ local interpreter_methods = {
 }
 interpreter_methods.__index = interpreter_methods
 
---- vm methods
+--- VMs
+--
+-- A VM stores the state required to run Anselme scripts. Each VM is completely independant from each other.
+--
+-- @type vm
 local vm_mt = {
 	--- anselme state
 	-- for internal use, you shouldn't touch this
+	-- @local
 	state = nil,
 
 	--- loaded game state
 	-- for internal use, you shouldn't touch this
+	-- @local
 	game = nil,
 
-	--- wrapper for loading a whole set of scripts
-	-- should be preferred to other loading functions if possible
-	-- requires LÖVE or LuaFileSystem
-	-- will load in path, in order:
-	-- * config.ans, which will be executed in the "config" namespace and may contains various optional configuration options:
-	--   * anselme version: number, version of the anselme language this game was made for
-	--   * game version: any, version information of the game. Can be used to perform eventual migration of save with an old version in the main file.
+	--- Wrapper for loading a whole set of scripts (a "game").
+	-- Should be preferred to other loading functions if possible as this sets all the common options on its own.
+	--
+	-- Requires LÖVE or LuaFileSystem.
+	--
+	-- Will load from the directory given by `path` (string), in order:
+	-- * `config.ans`, which will be executed in the "config" namespace and may contains various optional configuration options:
+	--   * `anselme version`: number, version of the anselme language this game was made for
+	--   * `game version`: any, version information of the game. Can be used to perform eventual migration of save with an old version in the main file.
 	--                        Always included in saved variables.
-	--   * language: string, built-in language file to load
-	--   * inject directory: string, directory that may contain "function start.ans", "checkpoint end.ans", etc. which content will be used to setup
+	--   * `language`: string, built-in language file to load
+	--   * `inject directory`: string, directory that may contain "function start.ans", "checkpoint end.ans", etc. which content will be used to setup
 	--                       the custom code injection methods (see vm:setinjection)
-	--   * global directory: string, path of global script directory. Every script file and subdirectory in the path will be loaded in the global namespace.
-	--   * start expression: string, expression that will be ran when starting the game
-	-- * main file, if defined in config.ans
+	--   * `global directory`: string, path of global script directory. Every script file and subdirectory in the path will be loaded in the global namespace.
+	--   * `start expression`: string, expression that will be ran when starting the game
+	-- * files in the global directory, if defined in config.ans
 	-- * every other file in the path and subdirectories, using their path as namespace (i.e., contents of path/world1/john.ans will be defined in a function world1.john)
-	-- returns self in case of success
-	-- returns nil, err in case of error
+	--
+	-- Returns this VM in case of success.
+	--
+	-- Returns nil, error message in case of error.
 	loadgame = function(self, path)
 		if self.game then error("game already loaded") end
 		-- load config
@@ -307,9 +404,11 @@ local vm_mt = {
 		end
 		return self
 	end,
-	--- return a interpreter which runs the game main file
-	-- return interpreter in case of success
-	-- returns nil, err in case of error
+	--- Return a interpreter which runs the game start expression (if given).
+	--
+	-- Returns interpreter in case of success.
+	--
+	-- Returns nil, error message in case of error.
 	rungame = function(self)
 		if not self.game then error("no game loaded") end
 		if self.game.start_expression then
@@ -319,16 +418,21 @@ local vm_mt = {
 		end
 	end,
 
-	--- load code
-	-- similar to Lua's code loading functions.
-	-- name(default=""): namespace to load the code in. Will define a new function is specified; otherwise, code will be parsed but not executable from an expression.
-	-- return parsed block in case of success
-	-- returns nil, err in case of error
+	--- Load code from a string.
+	-- Similar to Lua's code loading functions.
+	--
+	-- Compared to their Lua equivalents, these also take an optional `name` argument (default="") that set the namespace to load the code in. Will define a new function is specified; otherwise, code will be parsed but not executable from an expression (as it is not named).
+	--
+	-- Returns parsed block in case of success.
+	--
+	-- Returns nil, error message in case of error.
 	loadstring = function(self, str, name, source)
 		local s, e = preparse(self.state, str, name or "", source)
 		if not s then return s, e end
 		return s
 	end,
+	--- Load code from a file.
+	-- See `vm:loadstring`.
 	loadfile = function(self, path, name)
 		local content
 		if love then
@@ -345,10 +449,13 @@ local vm_mt = {
 		if not s then return s, err end
 		return s
 	end,
-	-- load every file in a directory, using filename (without .ans extension) as its namespace
-	-- requires LÖVE or LuaFileSystem
-	-- return self in case of success
-	-- returns nil, err in case of error
+	-- Load every file in a directory, using filename (without .ans extension) as its namespace.
+	--
+	-- Requires LÖVE or LuaFileSystem.
+	--
+	-- Returns this VM in case of success.
+	--
+	-- Returns nil, error message in case of error.
 	loaddirectory = function(self, path, name)
 		if not name then name = "" end
 		name = name == "" and "" or name.."."
@@ -367,42 +474,49 @@ local vm_mt = {
 		return self
 	end,
 
-	--- set aliases for built-in variables 👁️, 🔖 and 🏁 that will be defined on every new checkpoint and function
-	-- this does not affect variables that were defined before this function was called
-	-- nil for no alias
-	-- return self
+	--- Set aliases for built-in variables 👁️, 🔖 and 🏁 that will be defined on every new checkpoint and function.
+	-- This does not affect variables that were defined before this function was called.
+	-- Set to nil for no alias.
+	--
+	-- Returns this VM.
 	setaliases = function(self, seen, checkpoint, reached)
 		self.state.builtin_aliases["👁️"] = seen
 		self.state.builtin_aliases["🔖"] = checkpoint
 		self.state.builtin_aliases["🏁"] = reached
 		return self
 	end,
-	--- set some code that will be injected at specific places in all code loaded after this is called
-	-- possible inject types:
-	-- * "function start": injected at the start of every non-scoped function
-	-- * "function end": injected at the end of every non-scoped function
-	-- * "function return": injected at the end of each return's children that is contained in a non-scoped function
-	-- * "checkpoint start": injected at the start of every checkpoint
-	-- * "checkpoint end": injected at the end of every checkpoint
-	-- * "scoped function start": injected at the start of every scoped function
-	-- * "scoped function end": injected at the end of every scoped function
-	-- * "scoped function return": injected at the end of each return's children that is contained in a scoped function
-	-- set to nil to disable
-	-- can typically be used to define variables for every function like 👁️, setting some value on every function resume, etc.
-	-- return self
+	--- Set some code that will be injected at specific places in all code loaded after this is called.
+	-- Can typically be used to define variables for every function like 👁️, setting some value on every function resume, etc.
+	--
+	-- Possible inject types:
+	-- * `"function start"`: injected at the start of every non-scoped function
+	-- * `"function end"`: injected at the end of every non-scoped function
+	-- * `"function return"`: injected at the end of each return's children that is contained in a non-scoped function
+	-- * `"checkpoint start"`: injected at the start of every checkpoint
+	-- * `"checkpoint end"`: injected at the end of every checkpoint
+	-- * `"scoped function start"`: injected at the start of every scoped function
+	-- * `"scoped function end"`: injected at the end of every scoped function
+	-- * `"scoped function return"`: injected at the end of each return's children that is contained in a scoped function
+	--
+	-- Set `code` to nil to disable the inject.
+	--
+	-- Returns this VM.
 	setinjection = function(self, inject, code)
 		assert(injections[inject], ("unknown injection type %q"):format(inject))
 		self.state.inject[injections[inject]] = code
 		return self
 	end,
 
-	--- load & execute a built-in language file
-	-- the language file may optionally contain the special variables:
+	--- Load and execute a built-in language file.
+	--
+	-- The language file may optionally contain the special variables:
 	--   * alias 👁️: string, default alias for 👁️
 	--   * alias 🏁: string, default alias for 🏁
 	--   * alias 🔖: string, default alias for 🔖
-	-- return self in case of success
-	-- returns nil, err in case of error
+	--
+	-- Returns this VM in case of success.
+	--
+	-- Returns nil, error message in case of error.
 	loadlanguage = function(self, lang)
 		local namespace = "anselme.languages."..lang
 		-- execute language file
@@ -419,10 +533,12 @@ local vm_mt = {
 		return self
 	end,
 
-	--- define functions from Lua
-	-- signature: full signature of the function
-	-- fn: function (Lua function or table, see examples in stdlib/functions.lua)
-	-- return self
+	--- Define functions from Lua.
+	--
+	-- * `signature`: string, full signature of the function
+	-- * `fn`: function (Lua function or table, see examples in `stdlib/functions.lua`)
+	--
+	-- Returns this VM.
 	loadfunction = function(self, signature, fn)
 		if type(signature) == "table" then
 			for k, v in pairs(signature) do
@@ -440,10 +556,13 @@ local vm_mt = {
 		return self
 	end,
 
-	--- save/load script state
-	-- only saves variables full names and values, so make sure to not change important variables, checkpoints and functions names between a save and a load
-	-- only save variables with usable identifiers, so will skip functions with arguments, operators, etc.
-	-- loading should be after loading scripts (otherwise you will "variable already defined" errors)
+	--- Save/load script state
+	--
+	-- Only saves variables full names and values, so make sure to not change important variables, checkpoints and functions names between a save and a load.
+	-- Also only save variables with usable identifiers, so will skip functions with arguments, operators, etc. (i.e. every scoped functions).
+	-- Loading should be done after loading all the game scripts (otherwise you will "variable already defined" errors).
+	--
+	-- Returns this VM.
 	load = function(self, data)
 		assert(anselme.versions.save == data.anselme.versions.save, ("trying to load data from an incompatible version of Anselme; save was done using save version %s but current version is %s"):format(data.anselme.versions.save, anselme.versions.save))
 		for k, v in pairs(data.variables) do
@@ -451,6 +570,10 @@ local vm_mt = {
 		end
 		return self
 	end,
+	--- Save script state.
+	-- See `vm:load`.
+	--
+	-- Returns save data.
 	save = function(self)
 		local vars = {}
 		for k, v in pairs(self.state.variables) do
@@ -467,10 +590,12 @@ local vm_mt = {
 		}
 	end,
 
-	--- perform parsing that needs to be done after loading code
-	-- automatically ran before starting an interpreter, but you may want to execute it before if you want to check for parsing error manually
-	-- returns self in case of success
-	-- returns nil, err in case of error
+	--- Perform parsing that needs to be done after loading code.
+	-- This is automatically ran before starting an interpreter, but you may want to execute it before if you want to check for parsing error manually.
+	--
+	-- Returns self in case of success.
+	--
+	-- Returns nil, error message in case of error
 	postload = function(self)
 		if #self.state.queued_lines > 0 then
 			local r, e = postparse(self.state)
@@ -479,19 +604,20 @@ local vm_mt = {
 		return self
 	end,
 
-	--- enable feature flags
-	-- available flags:
-	-- * "strip trailing spaces": remove trailing spaces from choice and text events (enabled by default)
-	-- * "strip duplicate spaces": remove duplicated spaces between text elements from choice and text events (enabled by default)
-	-- returns self
+	--- Enable feature flags.
+	-- Available flags:
+	-- * `"strip trailing spaces"`: remove trailing spaces from choice and text events (enabled by default)
+	-- * `"strip duplicate spaces"`: remove duplicated spaces between text elements from choice and text events (enabled by default)
+	--
+	-- Returns this VM.
 	enable = function(self, ...)
 		for _, flag in ipairs{...} do
 			self.state.feature_flags[flag] = true
 		end
 		return self
 	end,
-	--- disable features flags
-	-- returns self
+	--- Disable features flags.
+	-- Returns this VM.
 	disable = function(self, ...)
 		for _, flag in ipairs{...} do
 			self.state.feature_flags[flag] = nil
@@ -499,13 +625,16 @@ local vm_mt = {
 		return self
 	end,
 
-	--- run code
-	-- expr: expression to evaluate (string or parsed expression), or a block to run
-	-- will merge state after successful execution
-	-- namespace(default=""): namespace to evaluate the expression in
-	-- tags(default={}): defaults tags when evaluating the expression (Lua value)
-	-- return interpreter in case of success
-	-- returns nil, err in case of error
+	--- Run code.
+	-- Will merge state after successful execution
+	--
+	-- * `expr`: expression to evaluate (string or parsed expression), or a block to run
+	-- * `namespace`(default=""): namespace to evaluate the expression in
+	-- * `tags`(default={}): defaults tags when evaluating the expression (Lua value)
+	--
+	-- Return interpreter in case of success.
+	--
+	-- Returns nil, error message in case of error.
 	run = function(self, expr, namespace, tags)
 		local s, e = self:postload()
 		if not s then return s, e end
@@ -565,14 +694,17 @@ local vm_mt = {
 		}
 		return setmetatable(interpreter, interpreter_methods)
 	end,
-	--- eval code
-	-- behave like :run, except the expression can not emit events and will return the result of the expression directly.
-	-- merge state after sucessful execution automatically like :run
-	-- expr: expression to evaluate (string or parsed expression), or a block to evaluate
-	-- namespace(default=""): namespace to evaluate the expression in
-	-- tags(default={}): defaults tags when evaluating the expression (Lua value)
-	-- return value in case of success (nil if nothing returned)
-	-- returns nil, err in case of error
+	--- Evaluate code.
+	-- Behave like `:run`, except the expression can not emit events and will return the result of the expression directly.
+	-- Merge state after sucessful execution automatically like `:run`.
+	--
+	-- * `expr`: expression to evaluate (string or parsed expression), or a block to evaluate
+	-- * `namespace`(default=""): namespace to evaluate the expression in
+	-- * `tags`(default={}): defaults tags when evaluating the expression (Lua value)
+	--
+	-- Return value in case of success (nil if nothing returned).
+	--
+	-- Returns nil, error message in case of error.
 	eval = function(self, expr, namespace, tags)
 		local interpreter, err = self:run("()", namespace, tags)
 		if not interpreter then return interpreter, err end
@@ -584,7 +716,7 @@ local vm_mt = {
 }
 vm_mt.__index = vm_mt
 
---- anselme module
+-- return anselme module
 return setmetatable(anselme, {
 	__call = function()
 		-- global state
