@@ -252,7 +252,7 @@ Functions always have the following variables defined in its namespace by defaul
 
 * `§`: checkpoint. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
 
-The function body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#checkpoint-calls) to see the different ways of calling a checkpoint manually.
+Checkpoints share most of their behavior with functions, with several exceptions. Like functions, the body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#checkpoint-calls) to see the different ways of calling a checkpoint manually.
 
 The local interpreter state will be merged with the global state when the line is reached. See [checkpoints](#checkpoints).
 
@@ -270,6 +270,38 @@ Checkpoints always have the following variable defined in its namespace by defau
 
 `👁️`: number, number of times the checkpoint was executed before
 `🏁`: number, number of times the checkpoint was reached before (includes times where it was resumed from and executed)
+
+* `%`: class. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a class. Also define a new namespace for its children.
+
+Classes share most of their behavior with functions, with a few exceptions. Classes can not take arguments or be scoped; and when called, if the function does not return a value or returns `()` (nil), it will returns a new object instead based on this class. The object can be used to access variables ("attributes") defined in the class, but if one of these attributes is modified on the object it will not change the value in the base class but only in the object.
+
+Objects can therefore be used to create independant data structures that can contain any variable defined in the base class, inspired by object-oriented programming.
+
+```
+% class
+    :a = 1
+
+:object = class
+
+~ object.a := 3
+
+Is 3: {object.a}
+Is 1: {class.a}
+```
+
+Note that the new object returned by the class is also automatically given a type that is a reference to the class. This can be used to define methods/function that operate only on objects based on this specific class.
+
+```
+% class
+    :a = 1
+
+$ show(object::&class)
+    a = {object.a}
+
+:object = class
+
+~ object!show
+```
 
 * `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any `choice` or `text` event sent from its children. Can be nested.
 
@@ -596,7 +628,9 @@ Default types are:
 
 * `list`: a list of values. Mutable. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
 
-Every type is immutable, except `list`.
+* `object`: an object/record. Mutable. Can be created by calling a class function.
+
+Every type is immutable, except `list` and `object`.
 
 How conversions are handled from Anselme to Lua:
 
@@ -878,6 +912,8 @@ Built-in operators:
 
 `a(index) := b`: evaluate b, assign its value to element of specific index in list `a`. Element is searched using the same method as list index operator `a(b)`; if indexing using a string and an associated pair doesn't exist, add a new one at the end of the list. Returns the new value.
 
+`a.b := v`: if a is a function reference or an object, modify the b variable in the reference function or object.
+
 `a += b`: evaluate b, assign its the current value of a `+` the value of b to a. Returns the new value.
 
 `-=`, `*=`, `/=`, `//=`, `%=`, `^=`: same with other arithmetic operators.
@@ -949,6 +985,8 @@ This only works on strings:
 `a # b`: evaluates b, then evaluates a whith b added to the active tags. Returns a.
 
 `a.b`: if a is a function reference, returns the first found variable (or reference to a subfunction) named `b` in the referenced function namespace. When overloading this operator, if `b` is an identifier, the operator will interpret it as a string (instead of returning the evaluated value of the variable eventually associated to the identifier).
+
+`object.b`: if object is an object, returns the first found variable (or reference to a subfunction) named `b` in the object, or, if the object does not contain it, its base class.
 
 `a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name. Operator is named `()`.
 
