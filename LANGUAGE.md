@@ -948,7 +948,7 @@ This only works on strings:
 
 `a # b`: evaluates b, then evaluates a whith b added to the active tags. Returns a.
 
-`a.b`: if a is a function reference, returns the variable named `b` in the referenced function namespace. When overloading this operator, if `b` is an identifier, the operator will interpret it as a string (and not returns the evaluated value of the variable eventually associated to the identifier).
+`a.b`: if a is a function reference, returns the first found variable (or reference to a subfunction) named `b` in the referenced function namespace. When overloading this operator, if `b` is an identifier, the operator will interpret it as a string (instead of returning the evaluated value of the variable eventually associated to the identifier).
 
 `a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name. Operator is named `()`.
 

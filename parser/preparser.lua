@@ -54,24 +54,41 @@ local function parse_line(line, state, namespace, parent_function)
 		r.child = true
 		r.text = l:match("^>%s*(.-)$")
 	-- function & checkpoint
-	elseif l:match("^%$") or l:match("^§") then -- § is a 2-bytes caracter, DO NOT USE LUA PATTERN OPERATORS as they operate on single bytes
-		r.type = l:match("^%$") and "function" or "checkpoint"
+	elseif l:match("^%$") or l:match("^§") or l:match("^%%") then -- § is a 2-bytes caracter, DO NOT USE LUA PATTERN OPERATORS as they operate on single bytes
+		r.type = "function"
 		r.child = true
-		-- store parent function and run checkpoint when line is read
-		if r.type == "checkpoint" then
-			r.parent_function = parent_function
+		-- subtype options
+		local allow_params = true
+		local allow_assign = true
+		local keep_in_ast = false
+		if l:match("^%$") then
+			r.subtype = "function"
+			r.resume_boundary = true
+		elseif l:match("^%%") then
+			r.subtype = "class"
+			r.resume_boundary = true
+			allow_params = false
+			allow_assign = false
+		elseif l:match("^§") then
+			r.subtype = "checkpoint"
+			allow_params = false
+			allow_assign = false
+			keep_in_ast = true
+			r.parent_function = parent_function -- store parent function and run checkpoint when line is read
+		else
+			error("unknown function line type")
 		end
 		-- don't keep function node in block AST
-		if r.type == "function" then
+		if not keep_in_ast then
 			r.remove_from_block_ast = true
-			-- lua function
-			if state.global_state.link_next_function_definition_to_lua_function then
-				r.lua_function = state.global_state.link_next_function_definition_to_lua_function
-				state.global_state.link_next_function_definition_to_lua_function = nil
-			end
+		end
+		-- lua function
+		if r.subtype == "function" and state.global_state.link_next_function_definition_to_lua_function then
+			r.lua_function = state.global_state.link_next_function_definition_to_lua_function
+			state.global_state.link_next_function_definition_to_lua_function = nil
 		end
 		-- get identifier
-		local lc = l:match("^%$(.-)$") or l:match("^§(.-)$")
+		local lc = l:match("^[%$%%](.-)$") or l:match("^§(.-)$")
 		local identifier, rem = lc:match("^("..identifier_pattern..")(.-)$")
 		if not identifier then
 			for _, name in ipairs(special_functions_names) do
@@ -80,7 +97,7 @@ local function parse_line(line, state, namespace, parent_function)
 			end
 		end
 		if not identifier then
-			return nil, ("no valid identifier in checkpoint/function definition line %q; at %s"):format(lc, line.source)
+			return nil, ("no valid identifier in function definition line %q; at %s"):format(lc, line.source)
 		end
 		-- format identifier
 		local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
@@ -101,7 +118,7 @@ local function parse_line(line, state, namespace, parent_function)
 		r.name = fqm
 		-- get params
 		r.params = {}
-		if r.type == "function" and rem:match("^%b()") then
+		if allow_params and rem:match("^%b()") then
 			r.scoped = true
 			local content
 			content, rem = rem:match("^(%b())%s*(.*)$")
@@ -131,7 +148,7 @@ local function parse_line(line, state, namespace, parent_function)
 			end
 		end
 		-- get assignment param
-		if r.type == "function" and rem:match("^%:%=") then
+		if allow_assign and rem:match("^%:%=") then
 			local param = rem:match("^%:%=(.*)$")
 			-- get identifier
 			local param_identifier, param_rem = param:match("^("..identifier_pattern..")(.-)$")
@@ -153,7 +170,7 @@ local function parse_line(line, state, namespace, parent_function)
 			-- add parameter
 			r.assignment = { name = param_identifier, alias = param_alias, full_name = param_fqm, type_annotation = type_annotation, default = nil, vararg = nil }
 		elseif rem:match("[^%s]") then
-			return nil, ("expected end-of-line at end of checkpoint/function definition line, but got %q; at %s"):format(rem, line.source)
+			return nil, ("expected end-of-line at end of function definition line, but got %q; at %s"):format(rem, line.source)
 		end
 		-- calculate arity
 		local minarity, maxarity = #r.params, #r.params
@@ -190,7 +207,7 @@ local function parse_line(line, state, namespace, parent_function)
 		else
 			table.insert(line.children, 1, { content = ":👁️=0", source = line.source })
 		end
-		if r.type == "function" then
+		if r.subtype ~= "checkpoint" then
 			-- define 🔖 variable
 			local checkpoint_alias = state.global_state.builtin_aliases["🔖"]
 			if checkpoint_alias then
@@ -222,7 +239,7 @@ local function parse_line(line, state, namespace, parent_function)
 					end
 				end
 			end
-		elseif r.type == "checkpoint" then
+		elseif r.subtype == "checkpoint" then
 			-- define 🏁 variable
 			local reached_alias = state.global_state.builtin_aliases["🏁"]
 			if reached_alias then
@@ -372,7 +389,7 @@ local function parse_block(indented, state, namespace, parent_function)
 			if not ast.child then
 				return nil, ("line %s (%s) can't have children"):format(ast.source, ast.type)
 			else
-				local r, e = parse_block(l.children, state, ast.namespace or namespace, ast.type == "function" and ast or parent_function)
+				local r, e = parse_block(l.children, state, ast.namespace or namespace, (ast.type == "function" and ast.subtype ~= "checkpoint") and ast or parent_function)
 				if not r then return r, e end
 				r.parent_line = ast
 				ast.child = r

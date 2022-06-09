@@ -189,9 +189,8 @@ common = {
 	end,
 	--- returns true if a variable should be persisted on save
 	-- will exclude: undefined variables, variables in scoped functions, internal anselme variables
-	should_keep_variable = function(state, name)
-		local v = state.variables[name]
-		return v.type ~= "undefined argument" and v.type ~= "pending definition" and name:match("^"..identifier_pattern.."$") and not name:match("^anselme%.")
+	should_keep_variable = function(state, name, value)
+		return value.type ~= "undefined argument" and value.type ~= "pending definition" and name:match("^"..identifier_pattern.."$") and not name:match("^anselme%.")
 	end,
 	--- check truthyness of an anselme value
 	truthy = function(val)

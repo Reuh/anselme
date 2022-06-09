@@ -43,6 +43,8 @@ Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&
 
 Broad goals and ideas that may never be implemented. Mostly used as personal post-it notes.
 
+TODO: type system is not super nice to use
+
 TODO: distinguish between list and argument list to confuse less pairs with named arguments
 
 TODO: some sensible way to capture text event in string litterals (string interpolation)? -> meh, this means we can capture choice events, and choice events contain their code block, and we don't want to store code blocks in the save file (as code can be updated/translated/whatever)
@@ -83,7 +85,7 @@ TODO: perform seen/reached/etc default variable not in interpreter but using par
 TODO: no function call without () (reference to fn instead?). Fn could be stored in save but replaced with new versions on code reload... -> how to track these references?
                       if we make fn first class this means anonymous fn, is it ok?
 
-TODO: make language simple enough to be able to reimplement it in, say, nim. Especially the interpreter (we could precompile a lot of stuff...)
+TODO: make language simple enough to be able to reimplement it in, say, nim. Especially the AST interpreter (we could precompile a lot of stuff...)
 
 TODO: test reacheability of script paths
 

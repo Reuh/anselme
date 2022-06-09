@@ -1,0 +1,26 @@
+% class
+	:a:b = "foo"
+	:c = "bar"
+
+:o = class
+:p = class
+
+{o}, {p}
+
+{o.a} == {class.a}
+{o.b} == {class.b}
+
+{p.a} == {class.a}
+{p.b} == {class.b}
+
+~ o.b := "haha"
+
+{o.a} != {class.a}
+{o.b} != {class.b}
+
+{p.a} == {class.a}
+{p.b} == {class.b}
+
+{o.c} == {class.c}
+
+{p.c} == {class.c}

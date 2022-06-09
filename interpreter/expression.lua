@@ -208,16 +208,10 @@ local function eval(state, exp)
 		local tried_function_error_messages = {}
 		local selected_variant = { depths = { assignment = nil }, variant = nil, args_to_set = nil }
 		for _, fn in ipairs(variants) do
-			-- checkpoint: no args, nothing to select on
-			if fn.type == "checkpoint" then
-				if not selected_variant.variant then
-					selected_variant.depths = {}
-					selected_variant.variant = fn
-				else
-					return nil, ("checkpoint call %q is ambigous; may be at least either:\n\t%s\n\t%s"):format(exp.called_name, fn.pretty_signature, selected_variant.variant.pretty_signature)
-				end
-			-- function
-			elseif fn.type == "function" then
+			if fn.type ~= "function" then
+				return nil, ("unknown function type %q"):format(fn.type)
+			-- functions
+			else
 				if not fn.assignment or exp.assignment then
 					local ok = true
 					-- get and set args
@@ -342,18 +336,20 @@ local function eval(state, exp)
 						end
 					end
 				end
-			else
-				return nil, ("unknown function type %q"):format(fn.type)
 			end
 		end
 		-- function successfully selected: run
 		if selected_variant.variant then
 			local fn = selected_variant.variant
-			if fn.type == "checkpoint" then
+			if fn.type ~= "function" then
+				return nil, ("unknown function type %q"):format(fn.type)
+			-- checkpoint: no args and resume execution
+			elseif fn.subtype == "checkpoint" then
 				local r, e = run(state, fn.child, not paren_call)
 				if not r then return r, e end
 				return r
-			elseif fn.type == "function" then
+			-- other functions
+			else
 				local ret
 				-- push scope
 				-- NOTE: if error happens between here and scope:pop, will leave the stack a mess
@@ -452,6 +448,28 @@ local function eval(state, exp)
 					type = "number",
 					value = seen.value + 1
 				})
+				-- for classes: build resulting object
+				if fn.subtype == "class" then
+					local object = {
+						type = "type",
+						value = {
+							{
+								type = "object",
+								value = {
+									class = fn.name,
+									attributes = {}
+								}
+							},
+							{
+								type = "function reference",
+								value = { fn.name }
+							}
+						}
+					}
+					if ret and ret.type == "nil" then
+						ret = object
+					end
+				end
 				-- pop scope
 				if fn.scoped then
 					scope:pop(state, fn)

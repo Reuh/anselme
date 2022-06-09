@@ -111,7 +111,7 @@ run_line = function(state, line)
 	elseif line.type == "flush_events" then
 		local v, e = events:flush(state)
 		if not v then return v, ("%s; in event flush at %s"):format(e, line.source) end
-	elseif line.type == "checkpoint" then
+	elseif line.type == "function" and line.subtype == "checkpoint" then
 		local reached, reachede = get_variable(state, line.namespace.."🏁")
 		if not reached then return nil, reachede end
 		set_variable(state, line.namespace.."🏁", {
@@ -150,9 +150,9 @@ run_block = function(state, block, resume_from_there, i, j)
 		i = i + 1
 	end
 	-- if we are exiting a checkpoint block, mark it as ran and update checkpoint
-	-- (when resuming from a checkpoint, execution is resumed from inside the checkpoint, the line.type=="checkpoint" check in run_line is never called)
+	-- (when resuming from a checkpoint, execution is resumed from inside the checkpoint, the line.subtype=="checkpoint" check in run_line is never called)
 	-- (and we want this to be done after executing the checkpoint block anyway)
-	if block.parent_line and block.parent_line.type == "checkpoint" then
+	if block.parent_line and block.parent_line.type == "function" and block.parent_line.subtype == "checkpoint" then
 		local parent_line = block.parent_line
 		local reached, reachede = get_variable(state, parent_line.namespace.."🏁")
 		if not reached then return nil, reachede end
@@ -183,7 +183,7 @@ run_block = function(state, block, resume_from_there, i, j)
 	-- if parent is a choice, will ignore choices that belong to the same block (like the whole block was executed naturally from a higher parent)
 	-- if parent if a condition, will mark it as a success (skipping following else-conditions) (for the same reasons as for choices)
 	-- if parent pushed a tag, will pop it (tags from parents are added to the stack in run())
-	if resume_from_there and block.parent_line and block.parent_line.type ~= "function" then
+	if resume_from_there and block.parent_line and not block.parent_line.resume_boundary then
 		local parent_line = block.parent_line
 		if parent_line.type == "choice" then
 			state.interpreter.skip_choices_until_flush = true
@@ -209,7 +209,7 @@ local function run(state, block, resume_from_there, i, j)
 		local tags_to_add = {}
 		-- go up in hierarchy in ascending order until function boundary
 		local parent_line = block.parent_line
-		while parent_line and parent_line.type ~= "function" do
+		while parent_line and not parent_line.resume_boundary do
 			if parent_line.type == "tag" then
 				local v, e = eval(state, parent_line.expression)
 				if not v then return v, ("%s; at %s"):format(e, parent_line.source) end

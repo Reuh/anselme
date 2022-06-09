@@ -166,6 +166,12 @@ types.anselme = {
 		end,
 		to_lua = nil
 	},
+	object = {
+		format = function(val)
+			return ("%%%s"):format(val.class)
+		end,
+		to_lua = nil
+	},
 	-- internal types
 	["event buffer"] = {
 		format = function(val) -- triggered from subtexts

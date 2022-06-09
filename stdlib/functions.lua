@@ -76,34 +76,89 @@ lua_functions = {
 	},
 	-- namespace
 	["_._(r::function reference, name::string)"] = {
-		mode = "raw",
+		mode = "untyped raw",
 		value = function(r, n)
 			local state = anselme.running.state
 			local rval = r.value
 			local name = n.value
 			for _, ffqm in ipairs(rval) do
-				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, ffqm..".", name)
+				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, "", ffqm.."."..name)
 				if var then
 					return get_variable(state, vfqm)
+				end
+			end
+			for _, ffqm in ipairs(rval) do
+				local fn, fnfqm = find(state.aliases, state.functions, "", ffqm.."."..name)
+				if fn then
+					return {
+						type = "function reference",
+						value = { fnfqm }
+					}
 				end
 			end
 			return nil, ("can't find variable %q in function reference (searched in namespaces: %s)"):format(name, table.concat(rval, ", "))
 		end
 	},
 	["_._(r::function reference, name::string) := v"] = {
-		mode = "raw",
+		mode = "untyped raw",
 		value = function(r, n, v)
 			local state = anselme.running.state
 			local rval = r.value
 			local name = n.value
 			for _, ffqm in ipairs(rval) do
-				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, ffqm..".", name)
+				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, "", ffqm.."."..name)
 				if var then
 					set_variable(state, vfqm, v)
 					return v
 				end
 			end
 			return nil, ("can't find variable %q in function reference (searched in namespaces: %s)"):format(name, table.concat(rval, ", "))
+		end
+	},
+	["_._(r::object, name::string)"] = {
+		mode = "untyped raw",
+		value = function(r, n)
+			local state = anselme.running.state
+			local obj = r.value
+			local name = n.value
+			-- attribute already present in object
+			local var = find(state.aliases, obj.attributes, "", obj.class.."."..name)
+			if var then return var end
+			-- search for attribute in base class
+			local cvar, cvfqm = find(state.aliases, state.interpreter.global_state.variables, "", obj.class.."."..name)
+			if cvar then return get_variable(state, cvfqm) end
+			-- search for method in base class
+			local fn, fnfqm = find(state.aliases, state.functions, "", obj.class.."."..name)
+			if fn then
+				return {
+					type = "function reference",
+					value = { fnfqm }
+				}
+			end
+			return nil, ("can't find attribute %q in object"):format(name)
+		end
+	},
+	["_._(r::object, name::string) := v"] = {
+		mode = "untyped raw",
+		value = function(r, n, v)
+			local state = anselme.running.state
+			local obj = r.value
+			local name = n.value
+			-- attribute already present in object
+			local var, vfqm = find(state.aliases, obj.attributes, "", obj.class.."."..name)
+			if var then
+				obj.attributes[vfqm] = v
+				mark_as_modified(anselme.running.state, obj.attributes)
+				return v
+			end
+			-- search for attribute in base class
+			local cvar, cvfqm = find(state.aliases, state.interpreter.global_state.variables, "", obj.class.."."..name)
+			if cvar then
+				obj.attributes[cvfqm] = v
+				mark_as_modified(anselme.running.state, obj.attributes)
+				return v
+			end
+			return nil, ("can't find attribute %q in object"):format(name)
 		end
 	},
 	-- index

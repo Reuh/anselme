@@ -577,8 +577,24 @@ local vm_mt = {
 	save = function(self)
 		local vars = {}
 		for k, v in pairs(self.state.variables) do
-			if should_keep_variable(self.state, k) then
-				vars[k] = v
+			if should_keep_variable(self.state, k, v) then
+				if v.type == "object" then -- filter object attributes
+					local attributes = {}
+					for kk, vv in pairs(v.value.attributes) do
+						if should_keep_variable(self.state, kk, vv) then
+							attributes[kk] = vv
+						end
+					end
+					vars[k] = {
+						type = "object",
+						value = {
+							class = v.value.class,
+							attributes = attributes
+						}
+					}
+				else
+					vars[k] = v
+				end
 			end
 		end
 		return {
