@@ -6,7 +6,7 @@ local run
 local unpack = table.unpack or unpack
 
 --- evaluate an expression
--- returns evaluated value if success
+-- returns evaluated value (table) if success
 -- returns nil, error if error
 local function eval(state, exp)
 	-- nil
@@ -24,7 +24,7 @@ local function eval(state, exp)
 	-- string
 	elseif exp.type == "string" then
 		local t, e = eval_text(state, exp.text)
-		if not t then return t, e end
+		if not t then return nil, e end
 		return {
 			type = "string",
 			value = t
@@ -36,7 +36,7 @@ local function eval(state, exp)
 	elseif exp.type == "list_brackets" then
 		if exp.expression then
 			local v, e = eval(state, exp.expression)
-			if not v then return v, e end
+			if not v then return nil, e end
 			if exp.expression.type == "list" then
 				return v
 			-- contained a single element, wrap in list manually
@@ -58,7 +58,7 @@ local function eval(state, exp)
 		local l = {}
 		for _, ast in ipairs(flat) do
 			local v, e = eval(state, ast)
-			if not v then return v, e end
+			if not v then return nil, e end
 			table.insert(l, v)
 		end
 		return {
@@ -70,7 +70,7 @@ local function eval(state, exp)
 		if exp.left.type == "variable" then
 			local name = exp.left.name
 			local val, vale = eval(state, exp.right)
-			if not val then return val, vale end
+			if not val then return nil, vale end
 			set_variable(state, name, val)
 			return val
 		else
@@ -79,10 +79,10 @@ local function eval(state, exp)
 	-- lazy boolean operators
 	elseif exp.type == "&" then
 		local left, lefte = eval(state, exp.left)
-		if not left then return left, lefte end
+		if not left then return nil, lefte end
 		if truthy(left) then
 			local right, righte = eval(state, exp.right)
-			if not right then return right, righte end
+			if not right then return nil, righte end
 			if truthy(right) then
 				return {
 					type = "number",
@@ -96,7 +96,7 @@ local function eval(state, exp)
 		}
 	elseif exp.type == "|" then
 		local left, lefte = eval(state, exp.left)
-		if not left then return left, lefte end
+		if not left then return nil, lefte end
 		if truthy(left) then
 			return {
 				type = "number",
@@ -104,7 +104,7 @@ local function eval(state, exp)
 			}
 		end
 		local right, righte = eval(state, exp.right)
-		if not right then return right, righte end
+		if not right then return nil, righte end
 		return {
 			type = "number",
 			value = truthy(right) and 1 or 0
@@ -112,10 +112,10 @@ local function eval(state, exp)
 	-- conditional
 	elseif exp.type == "~" then
 		local right, righte = eval(state, exp.right)
-		if not right then return right, righte end
+		if not right then return nil, righte end
 		if truthy(right) then
 			local left, lefte = eval(state, exp.left)
-			if not left then return left, lefte end
+			if not left then return nil, lefte end
 			return left
 		end
 		return {
@@ -125,15 +125,15 @@ local function eval(state, exp)
 	-- while loop
 	elseif exp.type == "~?" then
 		local right, righte = eval(state, exp.right)
-		if not right then return right, righte end
+		if not right then return nil, righte end
 		local l = {}
 		while truthy(right) do
 			local left, lefte = eval(state, exp.left)
-			if not left then return left, lefte end
+			if not left then return nil, lefte end
 			table.insert(l, left)
 			-- next iteration
 			right, righte = eval(state, exp.right)
-			if not right then return right, righte end
+			if not right then return nil, righte end
 		end
 		return {
 			type = "list",
@@ -142,11 +142,11 @@ local function eval(state, exp)
 	-- tag
 	elseif exp.type == "#" then
 		local right, righte = eval(state, exp.right)
-		if not right then return right, righte end
+		if not right then return nil, righte end
 		tags:push(state, right)
 		local left, lefte = eval(state, exp.left)
 		tags:pop(state)
-		if not left then return left, lefte end
+		if not left then return nil, lefte end
 		return left
 	-- variable
 	elseif exp.type == "variable" then
@@ -168,7 +168,7 @@ local function eval(state, exp)
 		local args = {}
 		if exp.argument then
 			local arg, arge = eval(state, exp.argument)
-			if not arg then return arg, arge end
+			if not arg then return nil, arge end
 			args = arg.value
 		end
 		-- function reference: call the referenced function
@@ -202,7 +202,7 @@ local function eval(state, exp)
 		if exp.assignment then
 			local arge
 			assignment, arge = eval(state, exp.assignment)
-			if not assignment then return assignment, arge end
+			if not assignment then return nil, arge end
 		end
 		-- try to select a function
 		local tried_function_error_messages = {}
@@ -243,7 +243,7 @@ local function eval(state, exp)
 							-- check type annotation
 							if param.type_annotation then
 								local v, e = eval(state, param.type_annotation)
-								if not v then return v, e end
+								if not v then return nil, e end
 								local depth = is_of_type(val, v)
 								if not depth then
 									ok = false
@@ -286,7 +286,7 @@ local function eval(state, exp)
 						local param = fn.assignment
 						if param.type_annotation then
 							local v, e = eval(state, param.type_annotation)
-							if not v then return v, e end
+							if not v then return nil, e end
 							local depth = is_of_type(assignment, v)
 							if not depth then
 								ok = false
@@ -346,7 +346,7 @@ local function eval(state, exp)
 			-- checkpoint: no args and resume execution
 			elseif fn.subtype == "checkpoint" then
 				local r, e = run(state, fn.child, not paren_call)
-				if not r then return r, e end
+				if not r then return nil, e end
 				return r
 			-- other functions
 			else
@@ -376,12 +376,12 @@ local function eval(state, exp)
 					local final_args = {}
 					for j, param in ipairs(fn.params) do
 						local v, e = get_variable(state, param.full_name)
-						if not v then return v, e end
+						if not v then return nil, e end
 						final_args[j] = v
 					end
 					if fn.assignment then
 						local v, e = get_variable(state, fn.assignment.full_name)
-						if not v then return v, e end
+						if not v then return nil, e end
 						final_args[#final_args+1] = v
 					end
 					-- execute function
@@ -438,10 +438,10 @@ local function eval(state, exp)
 					-- resume at last checkpoint
 					else
 						local expr, err = expression(checkpoint.value[1], state, fn.namespace)
-						if not expr then return expr, err end
+						if not expr then return nil, err end
 						ret, e = eval(state, expr)
 					end
-					if not ret then return ret, e end
+					if not ret then return nil, e end
 				end
 				-- update function vars
 				set_variable(state, fn.namespace.."👁️", {
@@ -504,7 +504,7 @@ local function eval(state, exp)
 			events:append(state, "text", { text = text, tags = current_tags })
 		end)
 		events:pop_buffer(state)
-		if not v then return v, e end
+		if not v then return nil, e end
 		return {
 			type = "event buffer",
 			value = l
