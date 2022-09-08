@@ -3,6 +3,7 @@ local eval, run_block
 local replace_with_copied_values, fix_not_modified_references
 local common
 local identifier_pattern
+local copy
 
 --- copy some text & process it to be suited to be sent to Lua in an event
 local function post_process_text(state, text)
@@ -117,6 +118,31 @@ common = {
 		end
 		return math.huge
 	end,
+	--- checks if the variable is mutable
+	-- returns true
+	-- returns nil, mutation illegal message
+	check_mutable = function(state, fqm)
+		if state.variable_constants[fqm] then
+			return nil, ("can't change the value of a constant %q"):format(fqm)
+		end
+		return true
+	end,
+	--- mark a value as constant, recursively affecting all the potentially mutable subvalues
+	mark_constant = function(v)
+		if v.type == "list" then
+			v.constant = true
+			for _, item in ipairs(v.value) do
+				common.mark_constant(item)
+			end
+		elseif v.type == "object" then
+			v.constant = true
+		elseif v.type == "pair" or v.type == "annotated" then
+			common.mark_constant(v.value[1])
+			common.mark_constant(v.value[2])
+		elseif v.type ~= "nil" and v.type ~= "number" and v.type ~= "string" and v.type ~= "function reference" and v.type ~= "variable reference" then
+			error("unknown type")
+		end
+	end,
 	--- returns a variable's value, evaluating a pending expression if neccessary
 	-- if you're sure the variable has already been evaluated, use state.variables[fqm] directly
 	-- return var
@@ -128,7 +154,7 @@ common = {
 			if not v then
 				return nil, ("%s; while evaluating default value for variable %q defined at %s"):format(e, fqm, var.value.source)
 			end
-			local s, err = common.set_variable(state, fqm, v)
+			local s, err = common.set_variable(state, fqm, v, state.variable_constants[fqm])
 			if not s then return nil, err end
 			return v
 		else
@@ -138,8 +164,19 @@ common = {
 	--- set the value of a variable
 	-- returns true
 	-- returns nil, err
-	set_variable = function(state, name, val)
+	set_variable = function(state, name, val, defining_a_constant)
 		if val.type ~= "pending definition" then
+			-- check constant
+			if defining_a_constant then
+				val = copy(val)
+				common.mark_constant(val)
+			else
+				local s, e = common.check_mutable(state, name)
+				if not s then
+					return nil, ("%s; while assigning value to variable %q"):format(e, name)
+				end
+			end
+			-- check constraint
 			local s, e = common.check_constraint(state, name, val)
 			if not s then
 				return nil, ("%s; while assigning value to variable %q"):format(e, name)
@@ -219,9 +256,9 @@ common = {
 		table.insert(modified, v)
 	end,
 	--- returns true if a variable should be persisted on save
-	-- will exclude: undefined variables, variables in scoped functions, internal anselme variables
+	-- will exclude: undefined variables, variables in scoped functions, constants, internal anselme variables
 	should_keep_variable = function(state, name, value)
-		return value.type ~= "undefined argument" and value.type ~= "pending definition" and name:match("^"..identifier_pattern.."$") and not name:match("^anselme%.")
+		return value.type ~= "undefined argument" and value.type ~= "pending definition" and name:match("^"..identifier_pattern.."$") and not name:match("^anselme%.") and not state.variable_constants[name]
 	end,
 	--- check truthyness of an anselme value
 	truthy = function(val)
@@ -560,5 +597,6 @@ run_block = require((...):gsub("common$", "interpreter")).run_block
 local acommon = require((...):gsub("interpreter%.common$", "common"))
 replace_with_copied_values, fix_not_modified_references = acommon.replace_with_copied_values, acommon.fix_not_modified_references
 identifier_pattern = require((...):gsub("interpreter%.common$", "parser.common")).identifier_pattern
+copy = require((...):gsub("interpreter%.common$", "common")).copy
 
 return common

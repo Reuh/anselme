@@ -366,6 +366,14 @@ $ f
 :bar : alias = 12
 ```
 
+You can also use two colons instead of one to define a constant:
+
+```
+::foo = 42
+```
+
+After their declaration and first evaluation, constants cannot be reassigned and their value is marked as constant (i.e. can not be modified even it is of a mutable type). Constants are not stored in save files and should therefore always contain the result of the expression written in the script file, even if the script has been updated.
+
 * empty line: flush the event buffer, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.
 
 * regular text: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes).
@@ -1039,6 +1047,8 @@ This only works on strings:
 `type(v)`: return v's type
 
 `is a(v, type or annotation)`: check if v is of a certain type or annotation
+
+`constant(v)`: create a constant copy of v and returns it. The resulting value is immutable, even if it contains mutable types (will raise an error if you try to change it).
 
 #### Built-in variables
 

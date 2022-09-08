@@ -668,6 +668,7 @@ local vm_mt = {
 				aliases = setmetatable({}, { __index = self.state.aliases }),
 				functions = self.state.functions, -- no need for a cache as we can't define or modify any function from the interpreter for now
 				variable_constraints = self.state.variable_constraints, -- no cache as constraints are expected to be constant
+				variable_constants = self.state.variable_constants,
 				variables = setmetatable({}, {
 					__index = function(variables, k)
 						local cache = getmetatable(variables).cache
@@ -762,6 +763,9 @@ return setmetatable(anselme, {
 			},
 			variable_constraints = {
 				-- foo = { constraint }, ...
+			},
+			variable_constants = {
+				-- foo = true, ...
 			},
 			variables = {
 				-- foo = {

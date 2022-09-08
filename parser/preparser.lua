@@ -291,8 +291,15 @@ local function parse_line(line, state, namespace, parent_function)
 	elseif l:match("^:") then
 		r.type = "definition"
 		r.remove_from_block_ast = true
+		local rem = l:match("^:(.*)$")
+		-- check if constant
+		if rem:match("^:") then
+			rem = rem:match("^:(.*)$")
+			r.constant = true
+		end
 		-- get identifier
-		local identifier, rem = l:match("^:("..identifier_pattern..")(.-)$")
+		local identifier
+		identifier, rem = rem:match("^("..identifier_pattern..")(.-)$")
 		if not identifier then return nil, ("no valid identifier at start of definition line %q; at %s"):format(l, line.source) end
 		-- format identifier
 		local fqm = ("%s%s"):format(namespace, format_identifier(identifier))
@@ -319,6 +326,7 @@ local function parse_line(line, state, namespace, parent_function)
 		r.fqm = fqm
 		r.expression = exp
 		state.variables[fqm] = { type = "pending definition", value = { expression = nil, source = r.source } }
+		if r.constant then state.variable_constants[fqm] = true end
 	-- tag
 	elseif l:match("^%#") then
 		r.type = "tag"
@@ -514,6 +522,7 @@ local function parse(state, s, name, source)
 		inject = {},
 		aliases = setmetatable({}, { __index = state.aliases }),
 		variable_constraints = setmetatable({}, { __index = state.variable_constraints }),
+		variable_constants = setmetatable({}, { __index = state.variable_constants }),
 		variables = setmetatable({}, { __index = state.aliases }),
 		functions = setmetatable({}, {
 			__index = function(self, key)
@@ -548,6 +557,9 @@ local function parse(state, s, name, source)
 	end
 	for k,v in pairs(state_proxy.variable_constraints) do
 		state.variable_constraints[k] = v
+	end
+	for k,v in pairs(state_proxy.variable_constants) do
+		state.variable_constants[k] = v
 	end
 	for k,v in pairs(state_proxy.variables) do
 		state.variables[k] = v
