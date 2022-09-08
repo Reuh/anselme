@@ -307,8 +307,8 @@ common = {
 			if p.alias then
 				sig = sig .. ":" .. p.alias
 			end
-			if p.type_annotation then
-				sig = sig .. "::" .. p.type_annotation
+			if p.type_constraint then
+				sig = sig .. "::" .. p.type_constraint
 			end
 			if p.default then
 				sig = sig .. "=" .. p.default

@@ -8,17 +8,17 @@ local function parse(state)
 	for i=#state.queued_lines, 1, -1 do
 		local l = state.queued_lines[i]
 		local line, namespace = l.line, l.namespace
-		-- default arguments and type annotation
+		-- default arguments and type constraints
 		if line.type == "function" then
 			for _, param in ipairs(line.params) do
-				-- get type annotation
-				if param.type_annotation then
-					local type_exp, rem = expression(param.type_annotation, state, namespace)
-					if not type_exp then return nil, ("in type annotation, %s; at %s"):format(rem, line.source) end
+				-- get type constraints
+				if param.type_constraint then
+					local type_exp, rem = expression(param.type_constraint, state, namespace)
+					if not type_exp then return nil, ("in type constraint, %s; at %s"):format(rem, line.source) end
 					if rem:match("[^%s]") then
 						return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param.full_name, rem, line.source)
 					end
-					param.type_annotation = type_exp
+					state.variable_constraints[param.full_name] = { pending = type_exp }
 				end
 				-- get default value
 				if param.default then
@@ -28,20 +28,20 @@ local function parse(state)
 						return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param.full_name, rem, line.source)
 					end
 					param.default = default_exp
-					-- extract type annotation from default value
+					-- extract type constraint from default value
 					if default_exp.type == "function call" and default_exp.called_name == "_::_" then
-						param.type_annotation = default_exp.argument.expression.right
+						state.variable_constraints[param.full_name] = { pending = default_exp.argument.expression.right }
 					end
 				end
 			end
 			-- assignment argument
-			if line.assignment and line.assignment.type_annotation then
-				local type_exp, rem = expression(line.assignment.type_annotation, state, namespace)
-				if not type_exp then return nil, ("in type annotation, %s; at %s"):format(rem, line.source) end
+			if line.assignment and line.assignment.type_constraint then
+				local type_exp, rem = expression(line.assignment.type_constraint, state, namespace)
+				if not type_exp then return nil, ("in type constraint, %s; at %s"):format(rem, line.source) end
 				if rem:match("[^%s]") then
 					return nil, ("unexpected characters after parameter %q: %q; at %s"):format(line.assignment.full_name, rem, line.source)
 				end
-				line.assignment.type_annotation = type_exp
+				state.variable_constraints[line.assignment.full_name] = { pending = type_exp }
 			end
 			-- get list of scoped variables
 			-- (note includes every variables in the namespace of subnamespace, so subfunctions are scoped alongside this function)
@@ -63,6 +63,15 @@ local function parse(state)
 			-- variable pending definition: expression will be evaluated when variable is needed
 			if line.type == "definition" then
 				state.variables[line.fqm].value.expression = line.expression
+				-- parse constraints
+				if line.constraint then
+					local type_exp, rem2 = expression(line.constraint, state, namespace)
+					if not type_exp then return nil, ("in type constraint, %s; at %s"):format(rem2, line.source) end
+					if rem2:match("[^%s]") then
+						return nil, ("unexpected characters after variable %q: %q; at %s"):format(line.fqm, rem2, line.source)
+					end
+					state.variable_constraints[line.fqm] = { pending = type_exp }
+				end
 			end
 		end
 		-- text (text & choice lines)

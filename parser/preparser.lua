@@ -134,17 +134,17 @@ local function parse_line(line, state, namespace, parent_function)
 				local ok_param_alias, param_alias
 				ok_param_alias, param_rem, param_alias = maybe_alias(param_rem, param_fqm, func_namespace, line, state)
 				if not ok_param_alias then return ok_param_alias, param_rem end
-				-- get potential type annotation and default value
-				local type_annotation, default
+				-- get potential type constraints and default value
+				local type_constraint, default
 				if param_rem:match("^::") then
-					type_annotation = param_rem:match("^::(.*)$")
+					type_constraint = param_rem:match("^::(.*)$")
 				elseif param_rem:match("^=") then
 					default = param_rem:match("^=(.*)$")
 				elseif param_rem:match("[^%s]") then
 					return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param_fqm, param_rem, line.source)
 				end
 				-- add parameter
-				table.insert(r.params, { name = param_identifier, alias = param_alias, full_name = param_fqm, type_annotation = type_annotation, default = default, vararg = nil })
+				table.insert(r.params, { name = param_identifier, alias = param_alias, full_name = param_fqm, type_constraint = type_constraint, default = default, vararg = nil })
 			end
 		end
 		-- get assignment param
@@ -160,15 +160,15 @@ local function parse_line(line, state, namespace, parent_function)
 			local ok_param_alias, param_alias
 			ok_param_alias, param_rem, param_alias = maybe_alias(param_rem, param_fqm, func_namespace, line, state)
 			if not ok_param_alias then return ok_param_alias, param_rem end
-			-- get potential type annotation
-			local type_annotation
+			-- get potential type constraint
+			local type_constraint
 			if param_rem:match("^::") then
-				type_annotation = param_rem:match("^::(.*)$")
+				type_constraint = param_rem:match("^::(.*)$")
 			elseif param_rem:match("[^%s]") then
 				return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param_fqm, param_rem, line.source)
 			end
 			-- add parameter
-			r.assignment = { name = param_identifier, alias = param_alias, full_name = param_fqm, type_annotation = type_annotation, default = nil, vararg = nil }
+			r.assignment = { name = param_identifier, alias = param_alias, full_name = param_fqm, type_constraint = type_constraint, default = nil, vararg = nil }
 		elseif rem:match("[^%s]") then
 			return nil, ("expected end-of-line at end of function definition line, but got %q; at %s"):format(rem, line.source)
 		end
@@ -300,6 +300,10 @@ local function parse_line(line, state, namespace, parent_function)
 		local ok_alias
 		ok_alias, rem = maybe_alias(rem, fqm, namespace, line, state)
 		if not ok_alias then return ok_alias, rem end
+		-- type constraint
+		if rem:match("^::(.-)=") then
+			r.constraint, rem = rem:match("^::%s*(.-)%s*(=.*)$")
+		end
 		-- get expression
 		local exp = rem:match("^=(.*)$")
 		if not exp then return nil, ("expected \"= expression\" after %q in definition line; at %s"):format(rem, line.source) end
@@ -509,6 +513,7 @@ local function parse(state, s, name, source)
 	local state_proxy = {
 		inject = {},
 		aliases = setmetatable({}, { __index = state.aliases }),
+		variable_constraints = setmetatable({}, { __index = state.variable_constraints }),
 		variables = setmetatable({}, { __index = state.aliases }),
 		functions = setmetatable({}, {
 			__index = function(self, key)
@@ -540,6 +545,9 @@ local function parse(state, s, name, source)
 	-- merge back state proxy into global state
 	for k,v in pairs(state_proxy.aliases) do
 		state.aliases[k] = v
+	end
+	for k,v in pairs(state_proxy.variable_constraints) do
+		state.variable_constraints[k] = v
 	end
 	for k,v in pairs(state_proxy.variables) do
 		state.variables[k] = v

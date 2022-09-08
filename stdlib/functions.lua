@@ -64,19 +64,19 @@ lua_functions = {
 			}
 		end
 	},
-	-- type
+	-- annotate
 	["_::_(a, b)"] = {
 		mode = "raw",
 		value = function(a, b)
 			return {
-				type = "type",
+				type = "annotated",
 				value = { a, b }
 			}
 		end
 	},
 	-- namespace
 	["_._(r::function reference, name::string)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(r, n)
 			local state = anselme.running.state
 			local rval = r.value
@@ -100,7 +100,7 @@ lua_functions = {
 		end
 	},
 	["_._(r::function reference, name::string) := v"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(r, n, v)
 			local state = anselme.running.state
 			local rval = r.value
@@ -108,7 +108,8 @@ lua_functions = {
 			for _, ffqm in ipairs(rval) do
 				local var, vfqm = find(state.aliases, state.interpreter.global_state.variables, "", ffqm.."."..name)
 				if var then
-					set_variable(state, vfqm, v)
+					local s, e = set_variable(state, vfqm, v)
+					if not s then return nil, e end
 					return v
 				end
 			end
@@ -116,7 +117,7 @@ lua_functions = {
 		end
 	},
 	["_._(r::object, name::string)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(r, n)
 			local state = anselme.running.state
 			local obj = r.value
@@ -139,7 +140,7 @@ lua_functions = {
 		end
 	},
 	["_._(r::object, name::string) := v"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(r, n, v)
 			local state = anselme.running.state
 			local obj = r.value
@@ -163,13 +164,13 @@ lua_functions = {
 	},
 	-- index
 	["()(l::list, i::number)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(l, i)
 			return l.value[i.value] or { type = "nil", value = nil }
 		end
 	},
 	["()(l::list, i::string)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(l, i)
 			for _, v in ipairs(l.value) do
 				if v.type == "pair" and compare(v.value[1], i) then
@@ -183,8 +184,8 @@ lua_functions = {
 	["()(l::list, i::number) := v"] = {
 		mode = "raw",
 		value = function(l, i, v)
-			local lv = l.type == "type" and l.value[1] or l
-			local iv = i.type == "type" and i.value[1] or i
+			local lv = l.type == "annotated" and l.value[1] or l
+			local iv = i.type == "annotated" and i.value[1] or i
 			lv.value[iv.value] = v
 			mark_as_modified(anselme.running.state, lv.value)
 			return v
@@ -193,8 +194,8 @@ lua_functions = {
 	["()(l::list, k::string) := v"] = {
 		mode = "raw",
 		value = function(l, k, v)
-			local lv = l.type == "type" and l.value[1] or l
-			local kv = k.type == "type" and k.value[1] or k
+			local lv = l.type == "annotated" and l.value[1] or l
+			local kv = k.type == "annotated" and k.value[1] or k
 			-- update index
 			for _, x in ipairs(lv.value) do
 				if x.type == "pair" and compare(x.value[1], kv) then
@@ -219,7 +220,7 @@ lua_functions = {
 		-- bypassed, this case is manually handled in the expression interpreter
 	},
 	["_!(fn::variable reference)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(v)
 			return get_variable(anselme.running.state, v.value)
 		end
@@ -233,7 +234,7 @@ lua_functions = {
 	},
 	-- alias
 	["alias(ref::function reference, alias::string)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(ref, alias)
 			-- check identifiers
 			alias = alias.value
@@ -252,7 +253,7 @@ lua_functions = {
 		end
 	},
 	["alias(ref::variable reference, alias::string)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(ref, alias)
 			-- check identifiers
 			alias = alias.value
@@ -270,20 +271,20 @@ lua_functions = {
 	},
 	-- pair methods
 	["name(p::pair)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(a)
 			return a.value[1]
 		end
 	},
 	["value(p::pair)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(a)
 			return a.value[2]
 		end
 	},
 	-- list methods
 	["len(l::list)"] = {
-		mode = "untyped raw", -- raw to count pairs in the list
+		mode = "unannotated raw", -- raw to count pairs in the list
 		value = function(a)
 			return {
 				type = "number",
@@ -294,7 +295,7 @@ lua_functions = {
 	["insert(l::list, v)"] = {
 		mode = "raw",
 		value = function(l, v)
-			local lv = l.type == "type" and l.value[1] or l
+			local lv = l.type == "annotated" and l.value[1] or l
 			table.insert(lv.value, v)
 			mark_as_modified(anselme.running.state, lv.value)
 			return l
@@ -303,22 +304,22 @@ lua_functions = {
 	["insert(l::list, i::number, v)"] = {
 		mode = "raw",
 		value = function(l, i, v)
-			local lv = l.type == "type" and l.value[1] or l
-			local iv = i.type == "type" and i.value[1] or i
+			local lv = l.type == "annotated" and l.value[1] or l
+			local iv = i.type == "annotated" and i.value[1] or i
 			table.insert(lv.value, iv.value, v)
 			mark_as_modified(anselme.running.state, lv.value)
 			return l
 		end
 	},
 	["remove(l::list)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(l)
 			mark_as_modified(anselme.running.state, l.value)
 			return table.remove(l.value)
 		end
 	},
 	["remove(l::list, i::number)"] = {
-		mode = "untyped raw",
+		mode = "unannotated raw",
 		value = function(l, i)
 			mark_as_modified(anselme.running.state, l.value)
 			return table.remove(l.value, i.value)
@@ -327,7 +328,7 @@ lua_functions = {
 	["find(l::list, v)"] = {
 		mode = "raw",
 		value = function(l, v)
-			local lv = l.type == "type" and l.value[1] or l
+			local lv = l.type == "annotated" and l.value[1] or l
 			for i, x in ipairs(lv.value) do
 				if compare(x, v) then
 					return i
@@ -345,10 +346,10 @@ lua_functions = {
 	["rand()"] = function() return math.random() end,
 	["rand(a::number)"] = function(a) return math.random(a) end,
 	["rand(a::number, b::number)"] = function(a, b) return math.random(a, b) end,
-	["raw(v)"] = {
+	["unannotated(v)"] = {
 		mode = "raw",
 		value = function(v)
-			if v.type == "type" then
+			if v.type == "annotated" then
 				return v.value[1]
 			else
 				return v
@@ -356,19 +357,21 @@ lua_functions = {
 		end
 	},
 	["type(v)"] = {
-		mode = "raw",
+		mode = "unannotated raw",
 		value = function(v)
-			if v.type == "type" then
-				return v.value[2]
-			else
-				return {
-					type = "string",
-					value = v.type
-				}
-			end
+			return {
+				type = "string",
+				value = v.type
+			}
 		end
 	},
-	["is of type(v, t)"] = {
+	["annotation(v::annotated)"] = {
+		mode = "raw",
+		value = function(v)
+			return v.value[2]
+		end
+	},
+	["is a(v, t)"] = {
 		mode = "raw",
 		value = function(v, t)
 			return {

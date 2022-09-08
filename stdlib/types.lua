@@ -136,7 +136,7 @@ types.anselme = {
 			return { [k] = v }
 		end
 	},
-	type = {
+	annotated = {
 		format = function(val)
 			local k, ke = format(val[1])
 			if not k then return k, ke end

@@ -139,7 +139,7 @@ $ fn
 
 The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
-A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias (after a `:`) and a default value (after a `=`), and then a type annotation (after a `::`). It is enclosed with paranthesis and contain a comma-separated list of identifiers:
+A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias (after a `:`) and a default value (after a `=`), and then a type constraint (after a `::`). It is enclosed with paranthesis and contain a comma-separated list of identifiers:
 
 ```
 $ f(a, b: alias for b, c="default for c", d: alias for d = "default for d")
@@ -195,7 +195,7 @@ $ g()
 
 This is basically the behaviour you'd expect from functions in most other programming languages, and what you would use in Anselme any time you don't care about storing the function variables or want the exact same initial function variables each time you call the function (e.g. recursion). Scoped variables are not kept in save files, and are not affected by checkpointing.
 
-Functions with the same name can be defined, as long as they have a different arguments. Functions will be selected based on the number of arguments given, their name and their type annotation:
+Functions with the same name can be defined, as long as they have a different arguments. Functions will be selected based on the number of arguments given, their name and their type constraint:
 
 ```
 $ f(a, b)
@@ -289,7 +289,7 @@ Is 3: {object.a}
 Is 1: {class.a}
 ```
 
-Note that the new object returned by the class is also automatically given a type that is a reference to the class. This can be used to define methods/function that operate only on objects based on this specific class.
+Note that the new object returned by the class is also automatically given an annotation that is a reference to the class. This can be used to define methods/function that operate only on objects based on this specific class.
 
 ```
 % class
@@ -620,7 +620,7 @@ Default types are:
 
 * `pair`: a couple of values. Types can be mixed. Can be defined using equal sign `"key"=5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax; `key` will not be interpreted as the variable `key` but the string `"key"` (if `key` is a variable and you want to force the use of its value as a key instead of the string `"key"`, you can wrap it in parentheses).
 
-* `type`: a couple of values. Types can be mixed. Can be defined using colon `expr::type`. The second value is used in type checks, this is intended to be use to give a custom type to a value.
+* `annotated`: a couple of values. Types can be mixed. Can be defined using colon `expr::type`. The second value is used in type constraints, this is intended to be use to give a custom type to a value.
 
 * `function reference`: reference to one or more function(s) with a given name. Can be defined using `&function name`, which will create a reference to every function with this name accessible from the current namespace. Can be called as if it was the original function using `func ref!` and `func ref(args)`.
 
@@ -797,7 +797,7 @@ $ f(a, b...)
     [2,3,4,5]
 ```
 
-Anselme use dynamic dispatch, meaning the correct function is selected at runtime. The correct function is selected based on number of arguments, argument names, and argument type annotations. The function with the most specific arguments will be selected. If several functions match, an error is thrown.
+Anselme use dynamic dispatch, meaning the correct function is selected at runtime. The correct function is selected based on number of arguments, argument names, and argument type constraint. The function with the most specific arguments will be selected. If several functions match, an error is thrown.
 
 ```
 $ fn(x::number, y)
@@ -826,6 +826,8 @@ $ g(x, a="t")
 
 error, can't select unique function: {g(5)}
 ```
+
+Note that types constraints are expected to be constant and are evaluated only once. Default values, however, are evaluated each time the function is called (and the user didn't explicitely give an argument that would replace this default).
 
 #### Checkpoint calls
 
@@ -980,7 +982,7 @@ This only works on strings:
 
 `a = b`: evaluate a and b, returns a new pair with a as key and b as value. If a is an identifier, will interpret it as a string (and not a variable; you can wrap a in parentheses if you want to use the value associated with variable a instead).
 
-`a :: b`: evaluate a and b, returns a new typed value with a as value and b as type.
+`a :: b`: evaluate a and b, returns a new annotated value with a as value and b as the annotation. This annotation will be checked in type constraints.
 
 `a # b`: evaluates b, then evaluates a whith b added to the active tags. Returns a.
 
@@ -1030,9 +1032,13 @@ This only works on strings:
 
 `error(str)`: throw an error with the specified message
 
-`raw(v)`: return v, stripped of its custom types
+`annotation(v::annotated)`: returns v's annotation
+
+`unannotated(v)`: return v, eventual annotations removed
 
 `type(v)`: return v's type
+
+`is a(v, type or annotation)`: check if v is of a certain type or annotation
 
 #### Built-in variables
 

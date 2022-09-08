@@ -1,0 +1,11 @@
+:weigh::"kg" = 5::"kg"
+
+{weigh}
+
+~ weigh := 12::"kg"
+
+{weigh}
+
+~ weigh := 32
+
+{weigh}

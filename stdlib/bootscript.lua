@@ -9,6 +9,7 @@ return [[
 :function reference="function reference"
 :variable reference="variable reference"
 :object="object"
+:annotated="annotated"
 
 :pi=3.1415926535898
 ]]

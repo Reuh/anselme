@@ -1,0 +1,7 @@
+:weigh::"kg" = 5::"kg"
+
+{weigh}
+
+:not weigh::"kg" = 12
+
+{not weigh}

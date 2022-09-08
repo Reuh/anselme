@@ -96,6 +96,27 @@ common = {
 			common.scope:set_last_scope(state, fn)
 		end
 	end,
+	--- checks if the value is compatible with the variable's (eventual) constraint
+	-- returns depth, or math.huge if no constraint
+	-- returns nil, err
+	check_constraint = function(state, fqm, val)
+		local constraint = state.variable_constraints[fqm]
+		if constraint then
+			if not constraint.value then
+				local v, e = eval(state, constraint.pending)
+				if not v then
+					return nil, ("%s; while evaluating constraint for variable %q"):format(e, fqm)
+				end
+				constraint.value = v
+			end
+			local depth = common.is_of_type(val, constraint.value)
+			if not depth then
+				return nil, ("constraint check failed")
+			end
+			return depth
+		end
+		return math.huge
+	end,
 	--- returns a variable's value, evaluating a pending expression if neccessary
 	-- if you're sure the variable has already been evaluated, use state.variables[fqm] directly
 	-- return var
@@ -107,15 +128,25 @@ common = {
 			if not v then
 				return nil, ("%s; while evaluating default value for variable %q defined at %s"):format(e, fqm, var.value.source)
 			end
-			state.variables[fqm] = v
+			local s, err = common.set_variable(state, fqm, v)
+			if not s then return nil, err end
 			return v
 		else
 			return var
 		end
 	end,
 	--- set the value of a variable
+	-- returns true
+	-- returns nil, err
 	set_variable = function(state, name, val)
+		if val.type ~= "pending definition" then
+			local s, e = common.check_constraint(state, name, val)
+			if not s then
+				return nil, ("%s; while assigning value to variable %q"):format(e, name)
+			end
+		end
 		state.variables[name] = val
+		return true
 	end,
 	--- handle scoped function
 	scope = {
@@ -207,7 +238,7 @@ common = {
 		if a.type ~= b.type then
 			return false
 		end
-		if a.type == "pair" or a.type == "type" then
+		if a.type == "pair" or a.type == "annotated" then
 			return common.compare(a.value[1], b.value[1]) and common.compare(a.value[2], b.value[2])
 		elseif a.type == "list" then
 			if #a.value ~= #b.value then
@@ -300,18 +331,23 @@ common = {
 		end
 		return true
 	end,
-	--- check if an anselme value is of a certain type
+	--- check if an anselme value is of a certain type or annotation
 	-- specificity(number): if var is of type type. lower is more specific
 	-- false: if not
 	is_of_type = function(var, type)
 		local depth = 1
-		-- var has a custom type
-		if var.type == "type" then
+		-- var has a custom annotation
+		if var.type == "annotated" then
+			-- special case: if we just want to see if a value is annotated
+			if type.type == "string" and type.value == "annotated" then
+				return depth
+			end
+			-- check annotation
 			local var_type = var.value[2]
 			while true do
 				if common.compare(var_type, type) then -- same type
 					return depth
-				elseif var_type.type == "type" then -- compare parent type
+				elseif var_type.type == "annotated" then -- compare parent type
 					depth = depth + 1
 					var_type = var_type.value[2]
 				else -- no parent, fall back on base type
@@ -326,7 +362,7 @@ common = {
 	end,
 	-- return a pretty printable type value for var
 	pretty_type = function(var)
-		if var.type == "type" then
+		if var.type == "annotated" then
 			return common.format(var.value[2])
 		else
 			return var.type

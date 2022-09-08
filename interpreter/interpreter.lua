@@ -114,14 +114,16 @@ run_line = function(state, line)
 	elseif line.type == "function" and line.subtype == "checkpoint" then
 		local reached, reachede = get_variable(state, line.namespace.."🏁")
 		if not reached then return nil, reachede end
-		set_variable(state, line.namespace.."🏁", {
+		local s, e = set_variable(state, line.namespace.."🏁", {
 			type = "number",
 			value = reached.value + 1
 		})
-		set_variable(state, line.parent_function.namespace.."🔖", {
+		if not s then return nil, e end
+		s, e = set_variable(state, line.parent_function.namespace.."🔖", {
 			type = "function reference",
 			value = { line.name }
 		})
+		if not s then return nil, e end
 		merge_state(state)
 	else
 		return nil, ("unknown line type %q; at %s"):format(line.type, line.source)
@@ -160,21 +162,24 @@ run_block = function(state, block, resume_from_there, i, j)
 		if not seen then return nil, seene end
 		local checkpoint, checkpointe = get_variable(state, parent_line.parent_function.namespace.."🔖")
 		if not checkpoint then return nil, checkpointe end
-		set_variable(state, parent_line.namespace.."👁️", {
+		local s, e = set_variable(state, parent_line.namespace.."👁️", {
 			type = "number",
 			value = seen.value + 1
 		})
-		set_variable(state, parent_line.namespace.."🏁", {
+		if not s then return nil, e end
+		s, e = set_variable(state, parent_line.namespace.."🏁", {
 			type = "number",
 			value = reached.value + 1
 		})
+		if not s then return nil, e end
 		-- don't update checkpoint if an already more precise checkpoint is set
 		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
 		if checkpoint.type == "nil" or not checkpoint.value[1]:match("^"..escape(parent_line.name)) then
-			set_variable(state, parent_line.parent_function.namespace.."🔖", {
+			s, e = set_variable(state, parent_line.parent_function.namespace.."🔖", {
 				type = "function reference",
 				value = { parent_line.name }
 			})
+			if not s then return nil, e end
 		end
 		merge_state(state)
 	end

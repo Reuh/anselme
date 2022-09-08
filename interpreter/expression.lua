@@ -1,5 +1,5 @@
 local expression
-local to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list, set_variable, scope
+local to_lua, from_lua, eval_text, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list, set_variable, scope, check_constraint
 
 local run
 
@@ -71,7 +71,8 @@ local function eval(state, exp)
 			local name = exp.left.name
 			local val, vale = eval(state, exp.right)
 			if not val then return nil, vale end
-			set_variable(state, name, val)
+			local s, e = set_variable(state, name, val)
+			if not s then return nil, e end
 			return val
 		else
 			return nil, ("don't know how to perform assignment on %s expression"):format(exp.left.type)
@@ -240,24 +241,19 @@ local function eval(state, exp)
 							used_args[j] = true
 						end
 						if val then
-							-- check type annotation
-							if param.type_annotation then
-								local v, e = eval(state, param.type_annotation)
-								if not v then return nil, e end
-								local depth = is_of_type(val, v)
-								if not depth then
-									ok = false
-									table.insert(tried_function_error_messages, ("%s: argument %s is not of expected type %s"):format(fn.pretty_signature, param.name, format(v) or v))
-									break
-								end
-								depths[j] = depth
-							else
-								depths[j] = math.huge
+							-- check type constraint
+							local depth, err = check_constraint(state, param.full_name, val)
+							if not depth then
+								ok = false
+								local v = state.variable_constraints[param.full_name].value
+								table.insert(tried_function_error_messages, ("%s: argument %s is not of expected type %s"):format(fn.pretty_signature, param.name, format(v) or v))
+								break
 							end
+							depths[j] = depth
 							-- set
 							variant_args[param.full_name] = val
 						-- default: evaluate once function is selected
-						-- there's no need to type check because the type annotation is already the default value's type, because of syntax
+						-- there's no need to type check because the type constraint is already the default value's type, because of syntax
 						elseif param.default then
 							variant_args[param.full_name] = { type = "pending definition", value = { expression = param.default, source = fn.source } }
 						else
@@ -282,21 +278,15 @@ local function eval(state, exp)
 					end
 					-- assignment arg
 					if ok and exp.assignment then
-						-- check type annotation
+						-- check type constraint
 						local param = fn.assignment
-						if param.type_annotation then
-							local v, e = eval(state, param.type_annotation)
-							if not v then return nil, e end
-							local depth = is_of_type(assignment, v)
-							if not depth then
-								ok = false
-								table.insert(tried_function_error_messages, ("%s: argument %s is not of expected type %s"):format(fn.pretty_signature, param.name, format(v) or v))
-							else
-								depths.assignment = depth
-							end
-						else
-							depths.assignment = math.huge
+						local depth, err = check_constraint(state, param.full_name, assignment)
+						if not depth then
+							ok = false
+							local v = state.variable_constraints[param.full_name].value
+							table.insert(tried_function_error_messages, ("%s: argument %s is not of expected type %s"):format(fn.pretty_signature, param.name, format(v) or v))
 						end
+						depths.assignment = depth
 						-- set
 						variant_args[param.full_name] = assignment
 					end
@@ -360,7 +350,8 @@ local function eval(state, exp)
 				end
 				-- set arguments
 				for name, val in pairs(selected_variant.args_to_set) do
-					set_variable(state, name, val)
+					local s, e = set_variable(state, name, val)
+					if not s then return nil, e end
 				end
 				-- get function vars
 				local checkpoint, checkpointe = get_variable(state, fn.namespace.."🔖")
@@ -393,11 +384,11 @@ local function eval(state, exp)
 						else
 							return nil, ("%s; in Lua function %q"):format(e or "raw function returned nil and no error message", exp.called_name)
 						end
-					-- untyped raw mode: same as raw, but strips custom types from the arguments
-					elseif lua_fn.mode == "untyped raw" then
+					-- unannotated raw mode: same as raw, but strips custom annotations from the arguments
+					elseif lua_fn.mode == "unannotated raw" then
 						-- extract value from custom types
 						for i, arg in ipairs(final_args) do
-							if arg.type == "type" then
+							if arg.type == "annotated" then
 								final_args[i] = arg.value[1]
 							end
 						end
@@ -405,7 +396,7 @@ local function eval(state, exp)
 						if r then
 							ret = r
 						else
-							return nil, ("%s; in Lua function %q"):format(e or "untyped raw function returned nil and no error message", exp.called_name)
+							return nil, ("%s; in Lua function %q"):format(e or "unannotated raw function returned nil and no error message", exp.called_name)
 						end
 					-- normal mode: convert args to Lua and convert back Lua value to Anselme
 					elseif lua_fn.mode == nil then
@@ -444,14 +435,15 @@ local function eval(state, exp)
 					if not ret then return nil, e end
 				end
 				-- update function vars
-				set_variable(state, fn.namespace.."👁️", {
+				local s, e = set_variable(state, fn.namespace.."👁️", {
 					type = "number",
 					value = seen.value + 1
 				})
+				if not s then return nil, e end
 				-- for classes: build resulting object
 				if fn.subtype == "class" then
 					local object = {
-						type = "type",
+						type = "annotated",
 						value = {
 							{
 								type = "object",
@@ -519,6 +511,6 @@ run = require((...):gsub("expression$", "interpreter")).run
 expression = require((...):gsub("interpreter%.expression$", "parser.expression"))
 flatten_list = require((...):gsub("interpreter%.expression$", "parser.common")).flatten_list
 local common = require((...):gsub("expression$", "common"))
-to_lua, from_lua, eval_text, is_of_type, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, set_variable, scope = common.to_lua, common.from_lua, common.eval_text, common.is_of_type, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events, common.set_variable, common.scope
+to_lua, from_lua, eval_text, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, set_variable, scope, check_constraint = common.to_lua, common.from_lua, common.eval_text, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events, common.set_variable, common.scope, common.check_constraint
 
 return eval

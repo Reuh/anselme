@@ -7,6 +7,7 @@ return [[
 ~ &pair!alias("paire")
 ~ &function reference!alias("réference de fonction")
 ~ &variable reference!alias("réference de variable")
+~ &annotated!alias("annoté")
 
 (Built-in functions)
 (~ &alias!alias("alias")
@@ -19,8 +20,8 @@ return [[
 ~ &error!alias("erreur")
 ~ &rand!alias("aléa")
 ~ &raw!alias("brut")
-(~ &type!alias("type")
-~ &is of type!alias("est de type")
+~ &is a!alias("est un")
+~ &unannotated!alias("non annoté")
 ~ &cycle!alias("cycler")
 ~ &random!alias("aléatoire")
 ~ &next!alias("séquence")
