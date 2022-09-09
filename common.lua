@@ -15,8 +15,8 @@ local function replace_in_table(t, to_replace, already_replaced)
 end
 
 common = {
-	--- recursively copy a table, handle cyclic references, no metatable, don't copy keys
-	-- cache is table with copied tables [original table] = copied value, will use temporary table is omitted
+	--- recursively copy a table (key & values), handle cyclic references, no metatable
+	-- cache is table with copied tables [original table] = copied value, will create temporary table if argument is omitted
 	copy = function(t, cache)
 		if type(t) == "table" then
 			cache = cache or {}
@@ -26,7 +26,7 @@ common = {
 				local c = {}
 				cache[t] = c
 				for k, v in pairs(t) do
-					c[k] = common.copy(v, cache)
+					c[common.copy(k, cache)] = common.copy(v, cache)
 				end
 				return c
 			end
