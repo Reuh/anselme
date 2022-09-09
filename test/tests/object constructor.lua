@@ -14,7 +14,7 @@ _[12]={tags=_[21],text="hoho"}
 _[11]={tags=_[20],text="bar"}
 _[10]={tags=_[19],text=" == "}
 _[9]={tags=_[18],text="bar"}
-_[8]={tags=_[17],text="%object constructor.class::&object constructor.class"}
+_[8]={tags=_[17],text="%object constructor.class(c=hoho)::&object constructor.class"}
 _[7]={tags=_[16],text=", "}
 _[6]={tags=_[15],text="%object constructor.class::&object constructor.class"}
 _[5]={_[9],_[10],_[11],_[12],_[13],_[14]}
@@ -32,7 +32,7 @@ return {_[1],_[2],_[3]}
       text = ", "
     }, {
       tags = {},
-      text = "%object constructor.class::&object constructor.class"
+      text = "%object constructor.class(c=hoho)::&object constructor.class"
     } } }
 { "text", { {
       tags = {},

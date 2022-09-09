@@ -1,4 +1,4 @@
-local format, to_lua, from_lua, events, anselme
+local format, to_lua, from_lua, events, anselme, escape
 
 local types = {}
 types.lua = {
@@ -99,8 +99,7 @@ types.anselme = {
 		end,
 		to_lua = function(val)
 			local l = {}
-			-- handle non-pair before pairs as LuaJIT's table.insert
-			-- will always insert after the last element even if there are some nil before unlike PUC
+			-- handle non-pair before pairs as LuaJIT's table.insert will always insert after the last element even if there are some nil before unlike PUC
 			for _, v in ipairs(val) do
 				if v.type ~= "pair" then
 					local s, e = to_lua(v)
@@ -168,7 +167,15 @@ types.anselme = {
 	},
 	object = {
 		format = function(val)
-			return ("%%%s"):format(val.class)
+			local attributes = {}
+			for name, v in pairs(val.attributes) do
+				table.insert(attributes, ("%s=%s"):format(name:gsub("^"..escape(val.class)..".", ""), format(v)))
+			end
+			if #attributes > 0 then
+				return ("%%%s(%s)"):format(val.class, table.concat(attributes, ", "))
+			else
+				return ("%%%s"):format(val.class)
+			end
 		end,
 		to_lua = nil
 	},
@@ -186,5 +193,6 @@ package.loaded[...] = types
 local common = require((...):gsub("stdlib%.types$", "interpreter.common"))
 format, to_lua, from_lua, events = common.format, common.to_lua, common.from_lua, common.events
 anselme = require((...):gsub("stdlib%.types$", "anselme"))
+escape = require((...):gsub("stdlib%.types$", "parser.common")).escape
 
 return types

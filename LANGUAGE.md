@@ -682,6 +682,39 @@ These can be used to represent some caracters in string and other text elements 
 
 Only `0` and `nil` are false. Everything else is considered true.
 
+#### Equality
+
+Anselme consider two objects to be equal if they can *always* be used interchangeably.
+
+In practice, this results in two main cases for equality tests:
+
+* immutable values (strings, numbers, constants, ...). They are compared by recursively making sure all of their values and structure are equal.
+
+```
+(All of the following if true)
+~ 5 == 5
+~ "foo" == "foo"
+~ constant([1,2,3]) == constant([1,2,3])
+```
+
+* mutable values (list, map, objects that are not constant). They are compared by reference, i.e. they are only considered equal if they are not distinct objects, even if they contain the same values and structure.
+
+```
+:a = [1,2,3]
+:b = a
+:c = [1,2,3]
+
+(True:)
+~ a == b
+
+(False:)
+~ a == c
+
+(a and c are not interchangeable as they are two distinct lists; if we do:)
+~ a(1) = 42
+(This will change the first value of both a and b, but not c.)
+```
+
 #### Refering to an identifier
 
 Any defined identifier can be accessed from an expression by using its name; the identifier will be first searched in the current namespace, then go up until it finds it as described in [identifiers](#identifiers).
@@ -930,9 +963,9 @@ Built-in operators:
 
 ##### Comparaison
 
-`a == b`: returns `1` if a and b have the same value (will recursively compare list and pairs), `0` otherwise
+`a == b`: returns `1` if a and b are considered equal, `0` otherwise
 
-`a != b`: returns `1` if a and b do not have the same value, `0` otherwise
+`a != b`: returns `1` if a and b are not equal, `0` otherwise
 
 These only work on numbers:
 

@@ -150,10 +150,17 @@ common = {
 	get_variable = function(state, fqm)
 		local var = state.variables[fqm]
 		if var.type == "pending definition" then
+			-- evaluate
 			local v, e = eval(state, var.value.expression)
 			if not v then
 				return nil, ("%s; while evaluating default value for variable %q defined at %s"):format(e, fqm, var.value.source)
 			end
+			-- make constant if variable is constant
+			if state.variable_constants[fqm] then
+				v = copy(v)
+				common.mark_constant(v)
+			end
+			-- set variable
 			local s, err = common.set_variable(state, fqm, v, state.variable_constants[fqm])
 			if not s then return nil, err end
 			return v
@@ -164,13 +171,10 @@ common = {
 	--- set the value of a variable
 	-- returns true
 	-- returns nil, err
-	set_variable = function(state, name, val, defining_a_constant)
+	set_variable = function(state, name, val, bypass_constant_check)
 		if val.type ~= "pending definition" then
 			-- check constant
-			if defining_a_constant then
-				val = copy(val)
-				common.mark_constant(val)
-			else
+			if not bypass_constant_check then
 				local s, e = common.check_mutable(state, name)
 				if not s then
 					return nil, ("%s; while assigning value to variable %q"):format(e, name)
@@ -270,23 +274,15 @@ common = {
 			return true
 		end
 	end,
-	--- compare two anselme value for equality
+	--- compare two anselme values for equality.
+	-- for immutable values or constants: compare by value
+	-- for mutable values: compare by reference
 	compare = function(a, b)
-		if a.type ~= b.type then
+		if a.type ~= b.type or a.constant ~= b.constant then
 			return false
 		end
 		if a.type == "pair" or a.type == "annotated" then
 			return common.compare(a.value[1], b.value[1]) and common.compare(a.value[2], b.value[2])
-		elseif a.type == "list" then
-			if #a.value ~= #b.value then
-				return false
-			end
-			for i, v in ipairs(a.value) do
-				if not common.compare(v, b.value[i]) then
-					return false
-				end
-			end
-			return true
 		elseif a.type == "function reference" then
 			if #a.value ~= #b.value then
 				return false
@@ -304,6 +300,39 @@ common = {
 				end
 			end
 			return true
+		-- mutable types: need to be constant
+		elseif a.constant and a.type == "list" then
+			if #a.value ~= #b.value then
+				return false
+			end
+			for i, v in ipairs(a.value) do
+				if not common.compare(v, b.value[i]) then
+					return false
+				end
+			end
+			return true
+		elseif a.constant and a.type == "object" then
+			if a.value.class ~= b.value.class then
+				return false
+			end
+			-- check every attribute redefined in a and b
+			-- NOTE: comparaison will fail if an attribute has been redefined in only one of the object, even if it was set to the same value as the original class attribute
+			local compared = {}
+			for name, v in pairs(a.value.attributes) do
+				compared[name] = true
+				if not b.value.attributes[name] or not common.compare(v, b.value.attributes[name]) then
+					return false
+				end
+			end
+			for name, v in pairs(b.value.attributes) do
+				if not compared[name] then
+					if not a.value.attributes[name] or not common.compare(v, a.value.attributes[name]) then
+						return false
+					end
+				end
+			end
+			return true
+		-- the rest
 		else
 			return a.value == b.value
 		end
