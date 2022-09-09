@@ -5,6 +5,7 @@ return [[
 :number="number"
 :string="string"
 :list="list"
+:map="map"
 :pair="pair"
 :function reference="function reference"
 :variable reference="variable reference"

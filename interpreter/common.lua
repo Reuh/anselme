@@ -48,6 +48,14 @@ local function post_process_text(state, text)
 	return r
 end
 
+local function random_identifier()
+	local r = ""
+	for _=1, 16 do -- that's live 10^31 possibilities, ought to be enough for anyone
+		r = r .. string.char(math.random(32, 126))
+	end
+	return r
+end
+
 common = {
 	--- merge interpreter state with global state
 	merge_state = function(state)
@@ -129,18 +137,11 @@ common = {
 	end,
 	--- mark a value as constant, recursively affecting all the potentially mutable subvalues
 	mark_constant = function(v)
-		if v.type == "list" then
-			v.constant = true
-			for _, item in ipairs(v.value) do
-				common.mark_constant(item)
-			end
-		elseif v.type == "object" then
-			v.constant = true
-		elseif v.type == "pair" or v.type == "annotated" then
-			common.mark_constant(v.value[1])
-			common.mark_constant(v.value[2])
-		elseif v.type ~= "nil" and v.type ~= "number" and v.type ~= "string" and v.type ~= "function reference" and v.type ~= "variable reference" then
-			error("unknown type")
+		if atypes[v.type] and atypes[v.type].mark_constant then
+			atypes[v.type].mark_constant(v)
+			if v.hash_id then v.hash_id = nil end -- no longer need to compare by id
+		else
+			error(("don't know how to mark type %s as constant"):format(v.type))
 		end
 	end,
 	--- returns a variable's value, evaluating a pending expression if neccessary
@@ -311,6 +312,8 @@ common = {
 				end
 			end
 			return true
+		elseif a.constant and a.type == "map" then
+			return common.hash(a) == common.hash(b)
 		elseif a.constant and a.type == "object" then
 			if a.value.class ~= b.value.class then
 				return false
@@ -348,6 +351,35 @@ common = {
 			return nil, ("no formatter for type %q"):format(val.type)
 		end
 	end,
+	--- compute a hash for a value.
+	-- A hash is a Lua string such as, given two values, they are considered equal by Anselme if and only if their hash are considered equal by Lua.
+	-- Will generate random identifiers for mutable values (equality test by reference) in order for the identifier to stay the same accross checkpoints and
+	-- other potential variable copies.
+	-- str: if success
+	-- nil, err: if error
+	hash = function(val)
+		if atypes[val.type] and atypes[val.type].hash then
+			if atypes[val.type].mutable and not val.constant then
+				if not val.hash_id then val.hash_id = random_identifier() end
+				return ("mut(%s)"):format(val.hash_id)
+			else
+				return atypes[val.type].hash(val.value)
+			end
+		else
+			return nil, ("no hasher for type %q"):format(val.type)
+		end
+	end,
+	--- recompute all the hases in a map.
+	-- str: if success
+	-- nil, err: if error
+	update_hashes = function(map)
+		for k, v in pairs(map.value) do
+			local hash, e = common.hash(v[1])
+			if not hash then return nil, e end
+			map[k] = nil
+			map[hash] = v
+		end
+	end,
 	--- convert anselme value to lua
 	-- lua value: if success (may be nil!)
 	-- nil, err: if error
@@ -373,7 +405,8 @@ common = {
 	-- nil, err: if error
 	eval_text = function(state, text)
 		local l = {}
-		common.eval_text_callback(state, text, function(str) table.insert(l, str) end)
+		local s, e = common.eval_text_callback(state, text, function(str) table.insert(l, str) end)
+		if not s then return nil, e end
 		return table.concat(l)
 	end,
 	--- same as eval_text, but instead of building a Lua string, call callback for every evaluated part of the text
@@ -436,15 +469,14 @@ common = {
 	end,
 	--- tag management
 	tags = {
-		--- push new tags on top of the stack, from Anselme values
+		--- push new tags on top of the stack, from Anselme values. val is expected to be a map.
 		push = function(self, state, val)
-			local new = { type = "list", value = {} }
+			local new = { type = "map", value = {} }
 			-- copy
 			local last = self:current(state)
-			for _, v in ipairs(last.value) do table.insert(new.value, v) end
+			for k, v in pairs(last.value) do new.value[k] = v end
 			-- append new values
-			if val.type ~= "list" then val = { type = "list", value = { val } } end
-			for _, v in ipairs(val.value) do table.insert(new.value, v) end
+			for k, v in pairs(val.value) do new.value[k] = v end
 			-- add
 			table.insert(state.interpreter.tags, new)
 		end,
@@ -458,7 +490,7 @@ common = {
 		end,
 		--- return current lua tags table
 		current = function(self, state)
-			return state.interpreter.tags[#state.interpreter.tags] or { type = "list", value = {} }
+			return state.interpreter.tags[#state.interpreter.tags] or { type = "map", value = {} }
 		end,
 		--- returns length of tags stack
 		len = function(self, state)

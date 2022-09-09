@@ -303,7 +303,7 @@ $ show(object::&class)
 ~ object!show
 ```
 
-* `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be added to the tags send along with any `choice` or `text` event sent from its children. Can be nested.
+* `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be wrapped in a map and added to the tags send along with any `choice` or `text` event sent from its children. Can be nested.
 
 ```
 # color="red"
@@ -636,9 +636,11 @@ Default types are:
 
 * `list`: a list of values. Mutable. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
 
+* `map`: a map of keys-values. Mutable. Types can be mixed. Can be defined between curly braces and use comma as a separator, using pairs to define the key-values pairs (otherwise the numeric position of the element is used as a key). '{1=1,2=2,3,4="heh",foo="bar"}'.
+
 * `object`: an object/record. Mutable. Can be created by calling a class function.
 
-Every type is immutable, except `list` and `object`.
+Every type is immutable, except `list`, `map` and `object`.
 
 How conversions are handled from Anselme to Lua:
 
@@ -648,7 +650,9 @@ How conversions are handled from Anselme to Lua:
 
 * `string` -> `string`
 
-* `list` -> `table`. Pair elements in the list will be assigned as a key-value pair in the Lua list and its index skipped in the sequential part, e.g. `[1,2,"key"="value",3]` -> `{1,2,3,key="value"}`.
+* `list` -> `table` (purely sequential table).
+
+* `map` -> `table` (will map each key to a key in the Lua table).
 
 * `pair` -> `table`, with a single key-value pair.
 
@@ -660,7 +664,7 @@ How conservions are handled from Lua to Anselme:
 
 * `string` -> `string`
 
-* `table` -> `list`. First add the sequential part of the table in the list, then add pairs for the remaining elements, e.g. `{1,2,key="value",3}` -> `[1,2,3,"key"="value"]`
+* `table` -> `list` or `map`. Converted to a list if the table is purely sequential, otherwise returns a map; e.g. `{1,2,key="value",3}` -> `{1=1,2=2,3=3,key="value"}` and `{1,2,3}` -> [1,2,3]
 
 * `boolean` -> `number`, 0 for false, 1 for true.
 
@@ -819,7 +823,7 @@ $ f(a, b, c)
 {f(1,2,3)} = {f(c=3,b=2,a=1)} = {f(1,2,c=3)}
 ```
 
-Anselme actually treat argument list are regular lists; named arguments are actually pairs. Arguments are evaluated left-to-right.
+Anselme actually treat argument maps are regular maps; named arguments are actually pairs and positional arguments are implicitely converted to pairs with their position as a key. Arguments are evaluated left-to-right. The call will error if one of the keys in the map is not a string or number.
 
 This means that pairs can't be passed directly as arguments to a function (as they will be considered named arguments). If you want to use pairs, always wrap them in a list.
 
@@ -953,7 +957,7 @@ Built-in operators:
 
 `a := b`: evaluate b, assign its value to identifier `a`. Returns the new value.
 
-`a(index) := b`: evaluate b, assign its value to element of specific index in list `a`. Element is searched using the same method as list index operator `a(b)`; if indexing using a string and an associated pair doesn't exist, add a new one at the end of the list. Returns the new value.
+`a(index) := b`: evaluate b, assign its value to element of specific index in list/map `a`. Element is searched using the same method as list/map index operator `a(b)`; in the case of list, also allows to add a new element to the list by giving `len(a)+1` as the index. In the case of a map, if b is nil `()`, deletes the key-value pair from the map. Returns the new value.
 
 `a.b := v`: if a is a function reference or an object, modify the b variable in the reference function or object.
 
@@ -1025,13 +1029,15 @@ This only works on strings:
 
 `a :: b`: evaluate a and b, returns a new annotated value with a as value and b as the annotation. This annotation will be checked in type constraints.
 
-`a # b`: evaluates b, then evaluates a whith b added to the active tags. Returns a.
+`a # b`: evaluates b, then evaluates a with b added to the active tags (wrap b in a map and merges it with the current tag map). Returns a.
 
 `a.b`: if a is a function reference, returns the first found variable (or reference to a subfunction) named `b` in the referenced function namespace. When overloading this operator, if `b` is an identifier, the operator will interpret it as a string (instead of returning the evaluated value of the variable eventually associated to the identifier).
 
 `object.b`: if object is an object, returns the first found variable (or reference to a subfunction) named `b` in the object, or, if the object does not contain it, its base class.
 
-`a(b)`: evaluate b (number), returns the value with this index in a (list). Use 1-based indexing. If b is a string, will search the first pair in the list with this string as its name. Operator is named `()`.
+`list(b)`: evaluate b (number), returns the value with this index in the list. Use 1-based indexing. If a negative value is given, will look from the end of the list (`-1` is the last element, `-2` the one before, etc.). Error on invalid index. Operator is named `()`.
+
+`map(b)`: evaluate b, returns the value with this key in the map. If the key is not present in the map, returns `nil`.
 
 `{}(v)`: function called when formatting a value in a text interpolation for printing.
 

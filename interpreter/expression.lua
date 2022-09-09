@@ -1,5 +1,5 @@
 local expression
-local to_lua, from_lua, eval_text, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list, set_variable, scope, check_constraint
+local to_lua, from_lua, eval_text, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, flatten_list, set_variable, scope, check_constraint, hash
 
 local run
 
@@ -52,6 +52,30 @@ local function eval(state, exp)
 				value = {}
 			}
 		end
+	-- map defined in brackets
+	elseif exp.type == "map_brackets" then
+		-- get constructing list
+		local list, e = eval(state, { type = "list_brackets", expression = exp.expression })
+		if not list then return nil, e end
+		-- make map
+		local map = {}
+		for i, v in ipairs(list.value) do
+			local key, value
+			if v.type == "pair" then
+				key = v.value[1]
+				value = v.value[2]
+			else
+				key = { type = "number", value = i }
+				value = v
+			end
+			local h, err = hash(key)
+			if not h then return nil, err end
+			map[h] = { key, value }
+		end
+		return {
+			type = "map",
+			value = map
+		}
 	-- list defined using , operator
 	elseif exp.type == "list" then
 		local flat = flatten_list(exp)
@@ -142,7 +166,7 @@ local function eval(state, exp)
 		}
 	-- tag
 	elseif exp.type == "#" then
-		local right, righte = eval(state, exp.right)
+		local right, righte = eval(state, { type = "map_brackets", expression = exp.right })
 		if not right then return nil, righte end
 		tags:push(state, right)
 		local left, lefte = eval(state, exp.left)
@@ -165,12 +189,24 @@ local function eval(state, exp)
 		}
 	-- function
 	elseif exp.type == "function call" then
-		-- eval args: list_brackets
+		-- eval args: map_brackets
 		local args = {}
+		local last_contiguous_positional = 0
 		if exp.argument then
 			local arg, arge = eval(state, exp.argument)
 			if not arg then return nil, arge end
-			args = arg.value
+			-- map into args table
+			for _, v in pairs(arg.value) do
+				if v[1].type == "string" or v[1].type == "number" then
+					args[v[1].value] = v[2]
+				else
+					return nil, ("unexpected key of type %s in argument map; keys must be string or number"):format(v[1].type)
+				end
+			end
+			-- get length of contiguous positional arguments (#args may not be always be equal depending on implementation...)
+			for i, _ in ipairs(args) do
+				last_contiguous_positional = i
+			end
 		end
 		-- function reference: call the referenced function
 		local variants = exp.variants
@@ -189,13 +225,6 @@ local function eval(state, exp)
 				for _, variant in ipairs(state.functions[ffqm]) do
 					table.insert(variants, variant)
 				end
-			end
-		end
-		-- map named arguments
-		local named_args = {}
-		for i, arg in ipairs(args) do
-			if arg.type == "pair" and arg.value[1].type == "string" then
-				named_args[arg.value[1].value] = { i, arg.value[2] }
 			end
 		end
 		-- eval assignment arg
@@ -222,21 +251,21 @@ local function eval(state, exp)
 					for j, param in ipairs(fn.params) do
 						local val
 						-- named
-						if param.alias and named_args[param.alias] then
-							val = named_args[param.alias][2]
-							used_args[named_args[param.alias][1]] = true
-						elseif named_args[param.name] then
-							val = named_args[param.name][2]
-							used_args[named_args[param.name][1]] = true
+						if param.alias and args[param.alias] then
+							val = args[param.alias]
+							used_args[param.alias] = true
+						elseif args[param.name] then
+							val = args[param.name]
+							used_args[param.name] = true
 						-- vararg
 						elseif param.vararg then
 							val = { type = "list", value = {} }
-							for k=j, #args do
+							for k=j, last_contiguous_positional do
 								table.insert(val.value, args[k])
 								used_args[k] = true
 							end
 						-- positional
-						elseif args[j] and args[j].type ~= "pair" then
+						elseif args[j] then
 							val = args[j]
 							used_args[j] = true
 						end
@@ -264,8 +293,8 @@ local function eval(state, exp)
 					end
 					-- check for unused arguments
 					if ok then
-						for i, arg in ipairs(args) do
-							if not used_args[i] then
+						for key, arg in pairs(args) do
+							if not used_args[key] then
 								ok = false
 								if arg.type == "pair" and arg.value[1].type == "string" then
 									table.insert(tried_function_error_messages, ("%s: unexpected %s argument"):format(fn.pretty_signature, arg.value[1].value))
@@ -473,11 +502,10 @@ local function eval(state, exp)
 		end
 		-- no matching function found
 		local args_txt = {}
-		for _, arg in ipairs(args) do
+		for key, arg in pairs(args) do
 			local s = ""
-			if arg.type == "pair" and arg.value[1].type == "string" then
-				s = s .. ("%s="):format(arg.value[1].value)
-				arg = arg.value[2]
+			if type(key) == "string" or (type(key) == "number" and key > last_contiguous_positional) then
+				s = s .. ("%s="):format(key)
 			end
 			s = s .. pretty_type(arg)
 			table.insert(args_txt, s)
@@ -511,6 +539,6 @@ run = require((...):gsub("expression$", "interpreter")).run
 expression = require((...):gsub("interpreter%.expression$", "parser.expression"))
 flatten_list = require((...):gsub("interpreter%.expression$", "parser.common")).flatten_list
 local common = require((...):gsub("expression$", "common"))
-to_lua, from_lua, eval_text, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, set_variable, scope, check_constraint = common.to_lua, common.from_lua, common.eval_text, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events, common.set_variable, common.scope, common.check_constraint
+to_lua, from_lua, eval_text, truthy, format, pretty_type, get_variable, tags, eval_text_callback, events, set_variable, scope, check_constraint, hash = common.to_lua, common.from_lua, common.eval_text, common.truthy, common.format, common.pretty_type, common.get_variable, common.tags, common.eval_text_callback, common.events, common.set_variable, common.scope, common.check_constraint, common.hash
 
 return eval

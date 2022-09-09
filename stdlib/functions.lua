@@ -1,4 +1,4 @@
-local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable, mark_as_modified, set_variable, check_mutable, copy, mark_constant
+local truthy, anselme, compare, is_of_type, identifier_pattern, format_identifier, find, get_variable, mark_as_modified, set_variable, check_mutable, copy, mark_constant, hash
 
 local lua_functions
 lua_functions = {
@@ -173,18 +173,24 @@ lua_functions = {
 	["()(l::list, i::number)"] = {
 		mode = "unannotated raw",
 		value = function(l, i)
-			return l.value[i.value] or { type = "nil", value = nil }
+			local index = i.value
+			if index < 0 then index = #l.value + 1 + index end
+			if index > #l.value or index == 0 then return nil, "list index out of bounds" end
+			return l.value[index] or { type = "nil", value = nil }
 		end
 	},
-	["()(l::list, i::string)"] = {
-		mode = "unannotated raw",
+	["()(l::map, k)"] = {
+		mode = "raw",
 		value = function(l, i)
-			for _, v in ipairs(l.value) do
-				if v.type == "pair" and compare(v.value[1], i) then
-					return v.value[2]
-				end
+			local lv = l.type == "annotated" and l.value[1] or l
+			local h, err = hash(i)
+			if not h then return nil, err end
+			local v = lv.value[h]
+			if v then
+				return v[2]
+			else
+				return { type = "nil", value = nil }
 			end
-			return { type = "nil", value = nil }
 		end
 	},
 	-- index assignment
@@ -194,30 +200,34 @@ lua_functions = {
 			local lv = l.type == "annotated" and l.value[1] or l
 			local iv = i.type == "annotated" and i.value[1] or i
 			if lv.constant then return nil, "can't change the contents of a constant list" end
-			lv.value[iv.value] = v
+			local index = iv.value
+			if index < 0 then index = #lv.value + 1 + index end
+			if index > #lv.value + 1 or index == 0 then return nil, "list assignment index out of bounds" end
+			lv.value[index] = v
 			mark_as_modified(anselme.running.state, lv.value)
 			return v
 		end
 	},
-	["()(l::list, k::string) := v"] = {
+	["()(l::map, k) := v::nil"] = {
 		mode = "raw",
 		value = function(l, k, v)
 			local lv = l.type == "annotated" and l.value[1] or l
-			local kv = k.type == "annotated" and k.value[1] or k
-			if lv.constant then return nil, "can't change the contents of a constant list" end
-			-- update index
-			for _, x in ipairs(lv.value) do
-				if x.type == "pair" and compare(x.value[1], kv) then
-					x.value[2] = v
-					mark_as_modified(anselme.running.state, x.value) -- FIXME i thought pairs were immutable...
-					return v
-				end
-			end
-			-- new index
-			table.insert(lv.value, {
-				type = "pair",
-				value = { kv, v }
-			})
+			if lv.constant then return nil, "can't change the contents of a constant map" end
+			local h, err = hash(k)
+			if not h then return nil, err end
+			lv.value[h] = nil
+			mark_as_modified(anselme.running.state, lv.value)
+			return v
+		end
+	},
+	["()(l::map, k) := v"] = {
+		mode = "raw",
+		value = function(l, k, v)
+			local lv = l.type == "annotated" and l.value[1] or l
+			if lv.constant then return nil, "can't change the contents of a constant map" end
+			local h, err = hash(k)
+			if not h then return nil, err end
+			lv.value[h] = { k, v }
 			mark_as_modified(anselme.running.state, lv.value)
 			return v
 		end
@@ -435,7 +445,7 @@ local functions = {
 
 package.loaded[...] = functions
 local icommon = require((...):gsub("stdlib%.functions$", "interpreter.common"))
-truthy, compare, is_of_type, get_variable, mark_as_modified, set_variable, check_mutable, mark_constant = icommon.truthy, icommon.compare, icommon.is_of_type, icommon.get_variable, icommon.mark_as_modified, icommon.set_variable, icommon.check_mutable, icommon.mark_constant
+truthy, compare, is_of_type, get_variable, mark_as_modified, set_variable, check_mutable, mark_constant, hash = icommon.truthy, icommon.compare, icommon.is_of_type, icommon.get_variable, icommon.mark_as_modified, icommon.set_variable, icommon.check_mutable, icommon.mark_constant, icommon.hash
 local pcommon = require((...):gsub("stdlib%.functions$", "parser.common"))
 identifier_pattern, format_identifier, find = pcommon.identifier_pattern, pcommon.format_identifier, pcommon.find
 anselme = require((...):gsub("stdlib%.functions$", "anselme"))

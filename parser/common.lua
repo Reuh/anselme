@@ -287,7 +287,7 @@ common = {
 				implicit_call = implicit_call, -- was call implicitely (no ! or parentheses)?
 				variants = variants, -- list of potential variants
 				argument = { -- wrap everything in a list literal to simplify later things (otherwise may be nil, single value, list constructor)
-					type = "list_brackets",
+					type = "map_brackets",
 					expression = arg
 				}
 			}

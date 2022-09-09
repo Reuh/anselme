@@ -132,6 +132,21 @@ local function expression(s, state, namespace, current_priority, operating_on)
 				type = "list_brackets",
 				expression = exp
 			})
+		-- map parenthesis
+		elseif s:match("^%b{}") then
+			local content, r = s:match("^(%b{})(.*)$")
+			content = content:gsub("^%{", ""):gsub("%}$", "")
+			local exp
+			if content:match("[^%s]") then
+				local r_paren
+				exp, r_paren = expression(content, state, namespace)
+				if not exp then return nil, "invalid expression inside map parentheses: "..r_paren end
+				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of map parenthesis expression"):format(r_paren) end
+			end
+			return expression(r, state, namespace, current_priority, {
+				type = "map_brackets",
+				expression = exp
+			})
 		-- identifier
 		elseif s:match("^"..identifier_pattern) then
 			local name, r = s:match("^("..identifier_pattern..")(.-)$")
@@ -182,7 +197,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					local err
 					args, err = expression(content, state, namespace)
 					if not args then return args, err end
-					if err:match("[^%s]") then return nil, ("unexpected %q at end of argument list"):format(err) end
+					if err:match("[^%s]") then return nil, ("unexpected %q at end of argument map"):format(err) end
 				end
 			else -- implicit call; will be changed if there happens to be a ! after in the suffix operator code
 				implicit_call = true
@@ -267,7 +282,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 									local err
 									args, err = expression(content, state, namespace)
 									if not args then return args, err end
-									if err:match("[^%s]") then return nil, ("unexpected %q at end of argument list"):format(err) end
+									if err:match("[^%s]") then return nil, ("unexpected %q at end of argument map"):format(err) end
 								end
 							end
 							-- add first argument

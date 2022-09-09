@@ -332,11 +332,7 @@ local function parse_line(line, state, namespace, parent_function)
 		r.type = "tag"
 		r.child = true
 		local expr = l:match("^%#(.*)$")
-		if expr:match("[^%s]") then
-			r.expression = expr
-		else
-			r.expression = "()"
-		end
+		r.expression = ("{%s}"):format(expr)
 	-- return
 	elseif l:match("^%@") then
 		r.type = "return"
