@@ -54,14 +54,14 @@ local anselme = {
 	-- * `language`, which is incremented at each update which may break script file compatibility
 	-- * `api`, which is incremented at each update which may break Lua API compatibility
 	versions = {
-		save = 1,
-		language = 22,
+		save = 2,
+		language = 23,
 		api = 5
 	},
 	--- General version number.
 	--
 	-- It is incremented at each update.
-	version = 23,
+	version = 24,
 	--- Currently running [interpreter](#interpreters).
 	-- `nil` if no interpreter running.
 	running = nil

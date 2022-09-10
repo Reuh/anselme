@@ -268,6 +268,6 @@ else
 	if args["write-all"] then
 		print("Wrote test results.")
 	else
-		print(("%s/%s tests success."):format(success, total))
+		print(("%s/%s tests passed."):format(success, total))
 	end
 end

@@ -248,7 +248,7 @@ Functions can return a value using a [return line](#lines-that-can-t-have-childr
 Functions always have the following variables defined in its namespace by default:
 
 `👁️`: number, number of times the function was executed before
-`🔖`: funcion reference, last reached checkpoint. `nil` if no checkpoint reached.
+`🔖`: function reference, last reached checkpoint. `nil` if no checkpoint reached.
 
 * `§`: checkpoint. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
 
@@ -630,9 +630,9 @@ Default types are:
 
 * `annotated`: a couple of values. Types can be mixed. Can be defined using colon `expr::type`. The second value is used in type constraints, this is intended to be use to give a custom type to a value.
 
-* `function reference`: reference to one or more function(s) with a given name. Can be defined using `&function name`, which will create a reference to every function with this name accessible from the current namespace. Can be called as if it was the original function using `func ref!` and `func ref(args)`.
+* `function reference`: reference to one or more function(s) with a given name. Can be defined using `&function name`, which will create a reference to every function with this name accessible from the current namespace. Will behave as if it was the original function (can be called using `func ref`, `func ref!` or `func ref(args)`).
 
-* `variable reference`: reference to a single variable with a given name. Can be defined using `&variable name`, which will create a reference to the closest variable with this name accessible from the current namespace. Can get the referenced variable value using `var ref!`.
+* `variable reference`: reference to a single variable with a given name. Can be defined using `&variable name`, which will create a reference to the closest variable with this name accessible from the current namespace. Will behave as if it was the original variable, returning the value when called (value can be retrieved using `var ref!` or simply `var ref`).
 
 * `list`: a list of values. Mutable. Types can be mixed. Can be defined between square brackets and use comma as a separator '[1,2,3,4]'.
 
@@ -676,11 +676,17 @@ These can be used to represent some caracters in string and other text elements 
 * `\"` for `"`
 * `\n` for a newline
 * `\t` for a tabulation
-* `\{` for `{`
-* `\[` for `[`
+* `\{` and `\}` for `{` and `}`
+* `\[` and `\]` for `[` and `]`
 * `\~` for `~`
 * `\#` for `#`
 * `\$` for `$`
+* `\(` for `(`
+* `\>` for `>`
+* `\%` for `%`
+* `\§` for `§`
+* `\@` for `@`
+* `\:` for `:`
 
 #### Truethness
 
@@ -941,8 +947,9 @@ _*_   _//_  _/_   _%_
 _::_ 
 -_  !_
 _^_
-_._   _!_
+_!_
 &_
+_._
 ```
 
 A series of operators with the same priority are evaluated left-to-right.
@@ -1009,15 +1016,19 @@ This only works on strings:
 
 `fn!`: call the function, checkpoint or function reference without arguments. Can leads to different behaviour that the syntax with parantheses; see [function calls](#function-calls).
 
-`&fn`: returns a function reference to the given function.
+`fn`: call the function, checkpoint or function reference without arguments. Can leads to different behaviour that the other syntaxes; see [function calls](#function-calls).
+
+`&fn`: returns a function reference to the given function. If it is already a reference, returns the same reference.
 
 `a!fn(args)`: call the function or function reference with the variable as first argument. Parantheses are optional.
 
 ##### Variable references
 
-`&var`: returns a variable reference to the given variable.
+`&var`: returns a variable reference to the given variable. If it is already a reference, returns the same reference.
 
-`a!`: returns the value associated with the reference variable.
+`a!`: returns the value associated with the referenced variable.
+
+`a`: returns the value associated with the referenced variable.
 
 ##### Various
 
@@ -1031,9 +1042,9 @@ This only works on strings:
 
 `a # b`: evaluates b, then evaluates a with b added to the active tags (wrap b in a map and merges it with the current tag map). Returns a.
 
-`a.b`: if a is a function reference, returns the first found variable (or reference to a subfunction) named `b` in the referenced function namespace. When overloading this operator, if `b` is an identifier, the operator will interpret it as a string (instead of returning the evaluated value of the variable eventually associated to the identifier).
+`a.b`: if a is a function reference, returns the first found variable named `b` in the referenced function namespace; or if `b` is a subfunction in the referenced function, will call it (you can use the usual ways to call functions and gives arguments as well: `a.b!` or `a.b(x, y, ...)`). When overloading this operator, if `b` is an identifier, the operator will interpret it as a string (instead of returning the evaluated value of the variable eventually associated to the identifier).
 
-`object.b`: if object is an object, returns the first found variable (or reference to a subfunction) named `b` in the object, or, if the object does not contain it, its base class.
+`object.b`: if object is an object, returns the first found variable named `b` in the object, or, if the object does not contain it, found in its base class. If `b` is a subfunction in the base class, will call it (arguments can also be given using the usual syntax).
 
 `list(b)`: evaluate b (number), returns the value with this index in the list. Use 1-based indexing. If a negative value is given, will look from the end of the list (`-1` is the last element, `-2` the one before, etc.). Error on invalid index. Operator is named `()`.
 
@@ -1091,7 +1102,7 @@ This only works on strings:
 
 #### Built-in variables
 
-Variables for default types (each is associated to a string of the internal variable type name): `nil`, `number`, `string`, `list`, `pair`, `function reference`, `variable reference`.
+Variables for default types (each is associated to a string of the internal variable type name): `nil`, `number`, `string`, `list`, `map`, `pair`, `function reference`, `variable reference`.
 
 The π constant is also defined in `pi`.
 

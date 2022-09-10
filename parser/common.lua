@@ -62,13 +62,22 @@ common = {
 		["\\t"] = "\t",
 		-- string interpolation
 		["\\{"] = "{",
+		["\\}"] = "}",
 		-- subtext
 		["\\["] = "[",
+		["\\]"] = "]",
 		-- end of text line expressions
 		["\\~"] = "~",
 		["\\#"] = "#",
 		-- decorators
-		["\\$"] = "$"
+		["\\$"] = "$",
+		-- line types
+		["\\("] = "(",
+		["\\>"] = ">",
+		["\\%"] = "%",
+		["\\§"] = "§",
+		["\\@"] = "@",
+		["\\:"] = ":",
 	},
 	-- list of possible injections and their associated name in vm.state.inject
 	injections = {

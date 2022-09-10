@@ -66,6 +66,8 @@ Othertimes we don't:
 
 TODO: stupidly complex script
 
+See [TUTORIAL.md](TUTORIAL.md) for a short introduction (not yet done).
+
 Reference
 ------------------
 
