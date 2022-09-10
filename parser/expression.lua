@@ -1,4 +1,4 @@
-local identifier_pattern, format_identifier, find, escape, find_function, parse_text, find_all, split
+local identifier_pattern, format_identifier, find, escape, find_function, parse_text, find_all, split, find_function_from_list
 
 --- binop priority
 local binops_prio = {
@@ -14,9 +14,12 @@ local binops_prio = {
 	[10] = { "::" },
 	[11] = {}, -- unary operators
 	[12] = { "^" },
-	[13] = { ".", "!" },
-	[14] = {}
+	[13] = { "!" },
+	[14] = {},
+	[15] = { "." }
 }
+local call_priority = 13 -- note: higher priority operators will have to deal with potential functions expressions
+local implicit_call_priority = 12.5 -- just below call priority so explicit calls automatically take precedence
 local pair_priority = 5
 local implicit_multiply_priority = 9.5 -- just above / so 1/2x gives 1/(2x)
 -- unop priority
@@ -34,7 +37,8 @@ local prefix_unops_prio = {
 	[11] = { "-", "!" },
 	[12] = {},
 	[13] = {},
-	[14] = { "&" }
+	[14] = { "&" },
+	[15] = {}
 }
 local suffix_unops_prio = {
 	[1] = { ";" },
@@ -50,7 +54,8 @@ local suffix_unops_prio = {
 	[11] = {},
 	[12] = {},
 	[13] = { "!" },
-	[14] = {}
+	[14] = {},
+	[15] = {}
 }
 
 local function get_text_in_litteral(s, start_pos)
@@ -185,27 +190,22 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					})
 				end
 			end
-			-- function call
-			local args, paren_call, implicit_call
-			if r:match("^%b()") then
-				paren_call = true
-				local content, rem = r:match("^(%b())(.*)$")
-				content = content:gsub("^%(", ""):gsub("%)$", "")
-				r = rem
-				-- get arguments
-				if content:match("[^%s]") then
-					local err
-					args, err = expression(content, state, namespace)
-					if not args then return args, err end
-					if err:match("[^%s]") then return nil, ("unexpected %q at end of argument map"):format(err) end
+			-- functions. This is a temporary expression that will either be transformed into a reference by the &_ operator, or an (implicit) function call otherwise.
+			for i=#nl, 1, -1 do
+				local name_prefix = table.concat(nl, ".", 1, i)
+				local lfnqm = find_all(state.aliases, state.functions, namespace, name_prefix)
+				if #lfnqm > 0 then
+					if i < #nl then
+						r = "."..table.concat(nl, ".", i+1, #nl)..r
+					end
+					return expression(r, state, namespace, current_priority, {
+						type = "potential function",
+						called_name = name,
+						names = lfnqm
+					})
 				end
-			else -- implicit call; will be changed if there happens to be a ! after in the suffix operator code
-				implicit_call = true
 			end
-			-- find compatible variant
-			local variant, err = find_function(state, namespace, name, args, paren_call, implicit_call)
-			if not variant then return variant, err end
-			return expression(r, state, namespace, current_priority, variant)
+			return nil, ("can't find function or variable named %q"):format(name)
 		end
 		-- prefix unops
 		for prio, oplist in ipairs(prefix_unops_prio) do
@@ -214,38 +214,26 @@ local function expression(s, state, namespace, current_priority, operating_on)
 				if s:match("^"..escaped) then
 					local sright = s:match("^"..escaped.."(.*)$")
 					-- function and variable reference
-					if op == "&" and sright:match("^"..identifier_pattern) then
-						local name, r = sright:match("^("..identifier_pattern..")(.-)$")
-						name = format_identifier(name)
-						-- get all functions this name can reference
-						-- try prefixes until we find a valid function or variable name
-						local nl = split(name)
-						for i=#nl, 1, -1 do
-							local name_prefix = table.concat(nl, ".", 1, i)
-							-- variable ref
-							local var, vfqm = find(state.aliases, state.variables, namespace, name_prefix)
-							if var then
-								if i < #nl then
-									r = "."..table.concat(nl, ".", i+1, #nl)..r
-								end
-								return expression(r, state, namespace, current_priority, {
-									type = "variable reference",
-									name = vfqm
-								})
-							end
-							-- function ref
-							local lfnqm = find_all(state.aliases, state.functions, namespace, name_prefix)
-							if #lfnqm > 0 then
-								if i < #nl then
-									r = "."..table.concat(nl, ".", i+1, #nl)..r
-								end
-								return expression(r, state, namespace, current_priority, {
-									type = "function reference",
-									names = lfnqm
-								})
-							end
+					if op == "&" then
+						local right, r = expression(sright, state, namespace, prio)
+						if not right then return nil, ("invalid expression after unop %q: %s"):format(op, r) end
+						if right.type == "potential function" then
+							return expression(r, state, namespace, current_priority, {
+								type = "function reference",
+								names = right.names
+							})
+						elseif right.type == "variable" then
+							return expression(r, state, namespace, current_priority, {
+								type = "variable reference",
+								name = right.name,
+								expression = right
+							})
+						else
+							-- find variant
+							local variant, err = find_function(state, namespace, op.."_", right, true)
+							if not variant then return variant, err end
+							return expression(r, state, namespace, current_priority, variant)
 						end
-						return nil, ("can't find function %q to reference"):format(name)
 					-- normal prefix unop
 					else
 						local right, r = expression(sright, state, namespace, prio)
@@ -260,9 +248,55 @@ local function expression(s, state, namespace, current_priority, operating_on)
 		end
 		return nil, ("no valid expression before %q"):format(s)
 	else
+		-- transform potential function/variable calls into actual calls automatically
+		-- need to do this before every other operator, since once the code finds the next operator it won't go back to check if this applied and assume it
+		-- didn't skip anything since it didn't see any other operator before, even if it's actually higher priority...
+		-- the problems of an implicit operator I guess
+		if implicit_call_priority > current_priority then
+			-- implicit call of a function. Unlike for variables, can't be cancelled since there's not any other value this could return, we don't
+			-- have first class functions here...
+			if operating_on.type == "potential function" then
+				local args, paren_call, implicit_call
+				local r = s
+				if r:match("^%b()") then
+					paren_call = true
+					local content, rem = r:match("^(%b())(.*)$")
+					content = content:gsub("^%(", ""):gsub("%)$", "")
+					r = rem
+					-- get arguments
+					if content:match("[^%s]") then
+						local err
+						args, err = expression(content, state, namespace)
+						if not args then return args, err end
+						if err:match("[^%s]") then return nil, ("unexpected %q at end of argument list"):format(err) end
+					end
+				else -- implicit call; will be changed if there happens to be a ! after in the suffix operator code
+					implicit_call = true
+				end
+				-- find compatible variant
+				local variant, err = find_function_from_list(state, namespace, operating_on.called_name, operating_on.names, args, paren_call, implicit_call)
+				if not variant then return variant, err end
+				return expression(r, state, namespace, current_priority, variant)
+			-- implicit call on variable reference. Might be canceled afterwards due to finding a higher priority operator.
+			elseif operating_on.type == "variable" or (operating_on.type == "function call" and operating_on.called_name == "_._") then
+				local implicit_call_variant, err = find_function(state, namespace, "_!", { type = "value passthrough" }, false, true)
+				if not implicit_call_variant then return implicit_call_variant, err end
+				return expression(s, state, namespace, current_priority, {
+					type = "implicit call if reference",
+					variant = implicit_call_variant,
+					expression = operating_on
+				})
+			end
+		end
 		-- binop
 		for prio, oplist in ipairs(binops_prio) do
 			if prio > current_priority then
+				-- cancel implicit call operator if we are handling a binop of higher priority
+				-- see comment a bit above on why the priority handling is stupid for implicit operators
+				local operating_on = operating_on
+				if prio > implicit_call_priority and operating_on.type == "implicit call if reference" then
+					operating_on = operating_on.expression
+				end
 				for _, op in ipairs(oplist) do
 					local escaped = escape(op)
 					if s:match("^"..escaped) then
@@ -337,6 +371,10 @@ local function expression(s, state, namespace, current_priority, operating_on)
 									})
 								-- special binops
 								elseif op == ":=" or op == "+=" or op == "-=" or op == "//=" or op == "/=" or op == "*=" or op == "%=" or op == "^=" then
+									-- cancel implicit call on right variable
+									if operating_on.type == "implicit call if reference" then
+										operating_on = operating_on.expression
+									end
 									-- rewrite assignment + arithmetic operators into a normal assignment
 									if op ~= ":=" then
 										local args = {
@@ -398,6 +436,12 @@ local function expression(s, state, namespace, current_priority, operating_on)
 		-- suffix unop
 		for prio, oplist in ipairs(suffix_unops_prio) do
 			if prio > current_priority then
+				-- cancel implit call operator if we are handling an operator of higher priority
+				-- see comment a bit above on why the priority handling is stupid for implicit operators
+				local operating_on = operating_on
+				if prio > implicit_call_priority and operating_on.type == "implicit call if reference" then
+					operating_on = operating_on.expression
+				end
 				for _, op in ipairs(oplist) do
 					local escaped = escape(op)
 					if s:match("^"..escaped) then
@@ -417,7 +461,10 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			end
 		end
 		-- index / call
-		if s:match("^%b()") then
+		if call_priority > current_priority and s:match("^%b()") then
+			if operating_on.type == "implicit call if reference" then
+				operating_on = operating_on.expression -- replaced with current call
+			end
 			local args = operating_on
 			local content, r = s:match("^(%b())(.*)$")
 			content = content:gsub("^%(", ""):gsub("%)$", "")
@@ -455,6 +502,6 @@ end
 
 package.loaded[...] = expression
 local common = require((...):gsub("expression$", "common"))
-identifier_pattern, format_identifier, find, escape, find_function, parse_text, find_all, split = common.identifier_pattern, common.format_identifier, common.find, common.escape, common.find_function, common.parse_text, common.find_all, common.split
+identifier_pattern, format_identifier, find, escape, find_function, parse_text, find_all, split, find_function_from_list = common.identifier_pattern, common.format_identifier, common.find, common.escape, common.find_function, common.parse_text, common.find_all, common.split, common.find_function_from_list
 
 return expression

@@ -267,6 +267,11 @@ common = {
 	-- returns directly a function expression in case of success
 	-- return nil, err otherwise
 	find_function = function(state, namespace, name, arg, paren_call, implicit_call)
+		local l = common.find_all(state.aliases, state.functions, namespace, name)
+		return common.find_function_from_list(state, namespace, name, l, arg, paren_call, implicit_call)
+	end,
+	--- same as find_function, but take a list of already found ffqm instead of searching
+	find_function_from_list = function(state, namespace, name, names, arg, paren_call, implicit_call)
 		local variants = {}
 		local err = ("compatible function %q variant not found"):format(name)
 		local l = common.find_all(state.aliases, state.functions, namespace, name)

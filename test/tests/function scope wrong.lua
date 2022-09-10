@@ -1,6 +1,6 @@
 local _={}
-_[1]={"error","compatible function \"b\" variant not found; at test/tests/function scope wrong.ans:4"}
+_[1]={"error","can't find function or variable named \"b\"; at test/tests/function scope wrong.ans:4"}
 return {_[1]}
 --[[
-{ "error", 'compatible function "b" variant not found; at test/tests/function scope wrong.ans:4' }
+{ "error", "can't find function or variable named \"b\"; at test/tests/function scope wrong.ans:4" }
 ]]--

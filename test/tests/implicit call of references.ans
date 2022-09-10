@@ -1,0 +1,61 @@
+Function with argument:
+
+$ f(x)
+
+{&f}
+
+Function without argument:
+
+$ a
+	lol
+	$ b
+		hihi
+
+a: {a}
+
+&a: {&a}
+
+:ref = &a
+
+&ref: {&ref}
+
+&&&ref: {&&&ref}
+
+ref: {ref}
+
+ref.b: {ref.b}
+
+ref.b!: {ref.b!}
+
+ref.b(): {ref.b()}
+
+&ref.b: {&ref.b}
+
+&ref.b!: {&ref.b!}
+
+&ref.b(): {&ref.b()}
+
+&ref!: {&ref!}
+
+Objects:
+
+% A
+	$ b
+		KK
+	@1
+
+&A: {&A}
+
+:ref A = &A
+
+ref A: {ref A}
+
+&ref A: {&ref A}
+
+A.b: {A.b}
+
+&A.b: {&A.b}
+
+\(&A).b: {(&A).b}
+
+&(&A).b: {&(&A).b}

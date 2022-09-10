@@ -183,10 +183,23 @@ local function eval(state, exp)
 			value = exp.names
 		}
 	elseif exp.type == "variable reference" then
-		return {
-			type = "variable reference",
-			value = exp.name
-		}
+		-- check if variable is already a reference
+		local v, e = eval(state, exp.expression)
+		if not v then return nil, e end
+		if v.type == "function reference" or v.type == "variable reference" then
+			return v
+		else
+			return { type = "variable reference", value = exp.name }
+		end
+	elseif exp.type == "implicit call if reference" then
+		local v, e = eval(state, exp.expression)
+		if not v then return nil, e end
+		if v.type == "function reference" or v.type == "variable reference" then
+			exp.variant.argument.expression.value = v
+			return eval(state, exp.variant)
+		else
+			return v
+		end
 	-- function
 	elseif exp.type == "function call" then
 		-- eval args: map_brackets
@@ -529,6 +542,9 @@ local function eval(state, exp)
 			type = "event buffer",
 			value = l
 		}
+	-- pass the value along (internal type, used for variable reference implicit calls)
+	elseif exp.type == "value passthrough" then
+		return exp.value
 	else
 		return nil, ("unknown expression %q"):format(tostring(exp.type))
 	end

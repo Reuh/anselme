@@ -244,6 +244,14 @@ lua_functions = {
 			return get_variable(anselme.running.state, v.value)
 		end
 	},
+	["&_(v::variable reference)"] = {
+		mode = "unannotated raw",
+		value = function(v) return v end
+	},
+	["&_(fn::function reference)"] = {
+		mode = "unannotated raw",
+		value = function(v) return v end
+	},
 	-- format
 	["{}(v)"] = {
 		mode = "raw",
