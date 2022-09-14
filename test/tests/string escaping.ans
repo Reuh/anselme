@@ -5,3 +5,5 @@ quote {"\""}
 other codes {"\n"} {"\\"} {"\t"} \{braces}
 
 {"escaping expressions {"a"+"bc"} and \{stuff} \\ and quotes \""}
+
+generic symbol {"\£"}

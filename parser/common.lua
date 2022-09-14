@@ -53,31 +53,12 @@ common = {
 		"{}"
 	},
 	-- escapement code and their value in strings
+	-- only includes the "special" escape codes, as the generic \. -> . is handled by default in parse_text
 	-- I don't think there's a point in supporting form feed, carriage return, and other printer and terminal related codes
 	string_escapes = {
-		-- usual escape codes
 		["\\\\"] = "\\",
-		["\\\""] = "\"",
 		["\\n"] = "\n",
 		["\\t"] = "\t",
-		-- string interpolation
-		["\\{"] = "{",
-		["\\}"] = "}",
-		-- subtext
-		["\\["] = "[",
-		["\\]"] = "]",
-		-- end of text line expressions
-		["\\~"] = "~",
-		["\\#"] = "#",
-		-- decorators
-		["\\$"] = "$",
-		-- line types
-		["\\("] = "(",
-		["\\>"] = ">",
-		["\\%"] = "%",
-		["\\§"] = "§",
-		["\\@"] = "@",
-		["\\:"] = ":",
 	},
 	-- list of possible injections and their associated name in vm.state.inject
 	injections = {
@@ -192,7 +173,9 @@ common = {
 					r = r2
 				end
 				-- replace escape codes
-				local escaped = t:gsub("\\.", common.string_escapes)
+				local escaped = t:gsub("\\.", function(escape)
+					return common.string_escapes[escape] or escape:match("^\\(.)$")
+				end)
 				table.insert(l, escaped)
 			end
 			-- expr

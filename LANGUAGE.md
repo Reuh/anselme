@@ -100,7 +100,7 @@ If an unescaped `~`, `~?` or `#` appears in the line, the associated operator is
     not tagged
 ```
 
-* regular text, i.e. any line that doesn't start with a special line type caracter: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes). Don't accept children lines.
+* regular text, i.e. any line that doesn't start with a special line type character: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes). Don't accept children lines.
 
 ```
 Hello,
@@ -522,14 +522,14 @@ Text
 
 By default, some processing is done on the event buffer before sending it to your game. You can disable these by disabling the associated features flages using `vm:disable` (see #api-reference).
 
-* strip trailing spaces: will remove any space caracters at the end of the text (for text event), or at the end of each choice (for choice event).
+* strip trailing spaces: will remove any space characters at the end of the text (for text event), or at the end of each choice (for choice event).
 
 ```
 (There is a space between the text and the tag expression that would be included in the text event otherwise.)
 Some text # tag
 ```
 
-* strip duplicate spaces: will remove any duplicated space caracters between each element that constitute the text (for text event), or for each choice (for choice event).
+* strip duplicate spaces: will remove any duplicated space characters between each element that constitute the text (for text event), or for each choice (for choice event).
 
 ```
 (There is a space between the text and the tag expression; but there is a space as well after the text interpolation in the last line. The two spaces are converted into a single space (the space will belong to the first text element, i.e. the "text " element).)
@@ -543,7 +543,7 @@ TODO: check if spacing rules are language-specific and move this to language fil
 
 ### Identifiers
 
-Valid identifiers must be at least 1 caracters long and can contain anything except the caracters ``~`^+-=<>/[]*{}|\_!?,;:()"@&$#%`` (that is, every special caracter on a US keyboard except '). They can contain spaces. They can not start with a number.
+Valid identifiers must be at least 1 characters long and can contain anything except the characters ``~`^+-=<>/[]*{}|\_!?,;:()"@&$#%`` (that is, every special character on a US keyboard except '). They can contain spaces. They can not start with a number.
 
 When defining an identifier (using a function, checkpoint or variable delcaration line), it will be defined into the current namespace (defined by the parent function/checkpoint). When evaluating an expression, Anselme will look for variables into the current line's namespace, then go up a level if it isn't found, and so on. Note that the namespace of functions with arguments are not accessible from outside the function.
 
@@ -665,23 +665,15 @@ How conservions are handled from Lua to Anselme:
 
 #### Escape codes
 
-These can be used to represent some caracters in string and other text elements that would otherwise be difficult to express due to conflicts with Anselme syntax.
+These can be used to represent some character in string and other text elements that would otherwise be difficult to express due to conflicts with Anselme syntax; for example to avoid a character at the start of a text line to be interpreted as another line type.
 
-* `\\` for `\`
-* `\"` for `"`
 * `\n` for a newline
 * `\t` for a tabulation
-* `\{` and `\}` for `{` and `}`
-* `\[` and `\]` for `[` and `]`
-* `\~` for `~`
-* `\#` for `#`
-* `\$` for `$`
-* `\(` for `(`
-* `\>` for `>`
-* `\%` for `%`
-* `\§` for `§`
-* `\@` for `@`
-* `\:` for `:`
+* `\\` for `\`
+* `\"` for `"` to escape string delimiters
+* `\{` and `\}` for `{` and `}` to escape text interpolation
+* `\[` and `\]` for `[` and `]` to escape subtexts
+* and, in general, for any character X we can get it by prefixing it with an `\`: `\X` for `X`
 
 #### Truethness
 
