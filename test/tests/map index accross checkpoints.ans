@@ -10,17 +10,17 @@ x={x}
 
 a(x)={a(x)}
 
-§ ch a
+:! ch a
 
 a(x)={a(x)}
 
-§ ch b
+:! ch b
 
 ~ x(2) := 3
 
 a(x)={a(x)}
 
-§ ch c
+:! ch c
 
 a(x)={a(x)}
 

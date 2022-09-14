@@ -1,13 +1,13 @@
 :a = 5
 
-$ f(p)
+:$ f(p)
 	@a
 
-$ f(p) := v
+:$ f(p) := v
 	v={v}
 	~ a := v
 
-$ f(p) := v::string
+:$ f(p) := v::string
 	v2={v}
 	~ a := p
 

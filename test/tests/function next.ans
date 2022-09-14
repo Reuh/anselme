@@ -1,9 +1,9 @@
-$ f
-	$ a
+:$ f
+	:$ a
 		a
-	$ b
+	:$ b
 		b
-	$ c
+	:$ c
 		c
 	~ next(&a, &b, &c)
 

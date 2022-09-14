@@ -1,4 +1,4 @@
-$ bar
+:$ bar
 	:var=5
 
 	~ var := 2
@@ -7,14 +7,14 @@ $ bar
 
 	~ run("parallel")
 
-	§ foo
+	:! foo
 		checkpoint
 
 	after: {var}
 
 	~ run("parallel")
 
-$ parallel
+:$ parallel
 	parallel: {bar.var}
 
 ~ bar

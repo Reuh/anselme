@@ -1,7 +1,7 @@
-$ _-_(a, b)
+:$ _-_(a, b)
 	@"generic minus"
 
-$ _-_(a::string, b::string)
+:$ _-_(a::string, b::string)
 	@a + " minus " + b
 
 {2-5}

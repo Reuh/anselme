@@ -1,7 +1,7 @@
-$ fn
+:$ fn
 	@1
 
-$ add(x)
+:$ add(x)
 	@x+2
 
 :c = &fn

@@ -1,9 +1,9 @@
-$ leave
+:$ leave
 	in interrupt: {oh.bar.var}
 
-$ oh
+:$ oh
 	no
-	$ bar
+	:$ bar
 		:var = 5
 
 		~ var := 2
@@ -12,7 +12,7 @@ $ oh
 
 		~ interrupt("leave")
 
-		§ foo
+		:! foo
 			checkpoint
 
 		after: {var}

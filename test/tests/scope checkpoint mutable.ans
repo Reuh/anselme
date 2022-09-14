@@ -2,13 +2,13 @@
 
 :n = 0
 
-$ f(t)
+:$ f(t)
 	~ t!insert(len(l)+1)
 
 	f1: {l} {t}
 
 	CHECK
-	§ c
+	:! c
 
 	~ n < 1
 		REC

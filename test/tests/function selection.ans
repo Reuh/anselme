@@ -1,8 +1,8 @@
-$ a(x::number)
+:$ a(x::number)
 	@x + 2
 
-$ x
-	$ a(x::string)
+:$ x
+	:$ a(x::string)
 		@x + "heh"
 
 	{a("plop")}

@@ -1,16 +1,16 @@
-$ bar
+:$ bar
 	:var = 5
 
 	~ var := 2
 
-	$ leave
+	:$ leave
 		in interrupt: {var}
 
 	before: {var}
 
 	~ interrupt()
 
-	§ foo
+	:! foo
 		checkpoint
 
 	after: {var}

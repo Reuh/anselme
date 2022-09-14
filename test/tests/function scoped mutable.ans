@@ -1,6 +1,6 @@
 :n = 0
 
-$ f(c=1)
+:$ f(c=1)
 	:a = []
 
 	start: {a}
@@ -20,7 +20,7 @@ new list each time:
 
 ~ f
 
-$ g(c=1, a=[])
+:$ g(c=1, a=[])
 	start: {a}
 
 	~ a!insert(c)

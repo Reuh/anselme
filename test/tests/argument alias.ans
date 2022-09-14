@@ -1,4 +1,4 @@
-$ f(str: foo)
+:$ f(str: foo)
 	@str + foo
 
 {f("bi")} = {f(foo="bi")}

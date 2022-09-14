@@ -1,8 +1,8 @@
-% class
+:% class
 	:a:b = "foo"
 	:c = "bar"
 
-$ new(o::&class, x)
+:$ new(o::&class, x)
 	~ o.c := x
 	@o
 

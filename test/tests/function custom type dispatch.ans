@@ -2,10 +2,10 @@
 :french name="french"::name
 :esperanto name="esperanto"::name
 
-$ a(name)
+:$ a(name)
 	{name} is english or generic
 
-$ a(name:nom::french name)
+:$ a(name:nom::french name)
 	{nom} is french
 
 ~ a("bob"::name)

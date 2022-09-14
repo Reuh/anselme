@@ -422,21 +422,21 @@ lua_functions = {
 }
 
 local anselme_functions = [[
-$ random(l...)
+:$ random(l...)
 	~ l(rand(1, l!len))!
 
-$ next(l...)
+:$ next(l...)
 	:j = 0
 	~? j += 1; j < len(l) & l(j).👁️ != 0
 	~ l(j)!
 
-$ cycle(l...)
+:$ cycle(l...)
 	:f = l(1)
 	:j = 1
 	~? j += 1; j <= len(l) & !((f := l(j); 1) ~ l(j).👁️ < f.👁️)
 	~ f!
 
-$ concat(l::list, separator=""::string)
+:$ concat(l::list, separator=""::string)
 	:r = ""
 	:j = 0
 	~? j += 1; j <= len(l)

@@ -62,15 +62,15 @@ local function parse(state)
 			line.expression = exp
 			-- variable pending definition: expression will be evaluated when variable is needed
 			if line.type == "definition" then
-				state.variables[line.fqm].value.expression = line.expression
+				state.variables[line.name].value.expression = line.expression
 				-- parse constraints
 				if line.constraint then
 					local type_exp, rem2 = expression(line.constraint, state, namespace)
 					if not type_exp then return nil, ("in type constraint, %s; at %s"):format(rem2, line.source) end
 					if rem2:match("[^%s]") then
-						return nil, ("unexpected characters after variable %q: %q; at %s"):format(line.fqm, rem2, line.source)
+						return nil, ("unexpected characters after variable %q: %q; at %s"):format(line.name, rem2, line.source)
 					end
-					state.variable_constraints[line.fqm] = { pending = type_exp }
+					state.variable_constraints[line.name] = { pending = type_exp }
 				end
 			end
 		end

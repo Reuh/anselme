@@ -1,14 +1,14 @@
 Function with argument:
 
-$ f(x)
+:$ f(x)
 
 {&f}
 
 Function without argument:
 
-$ a
+:$ a
 	lol
-	$ b
+	:$ b
 		hihi
 
 a: {a}
@@ -39,8 +39,8 @@ ref.b(): {ref.b()}
 
 Objects:
 
-% A
-	$ b
+:% A
+	:$ b
 		KK
 	@1
 

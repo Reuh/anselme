@@ -1,9 +1,9 @@
-$ f : test
+:$ f : test
 	@"ok"
 
 {f} = {test}
 
-$ g : bis(a)
+:$ g : bis(a)
 	@a
 
 {g("ye")} = {bis("ye")}

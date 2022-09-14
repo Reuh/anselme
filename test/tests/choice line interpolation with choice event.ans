@@ -4,7 +4,7 @@
 > No
 	ko
 
-$ jump button
+:$ jump button
 	A # 1
 	> Suprise choice!
 	@"JOIN"

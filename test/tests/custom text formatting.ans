@@ -1,11 +1,11 @@
 :person = "personne"
 
-$ Person(name, age)
+:$ Person(name, age)
 	@{name=name, age=age}::person
 
 :abject = Person("Darmanin", 38)
 
 {abject}
 
-$ {}(p::person)
+:$ {}(p::person)
 	@"Name: {p("name")}\nAge: {p("age")}"

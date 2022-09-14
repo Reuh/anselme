@@ -1,7 +1,7 @@
-$ fn(x::number)
+:$ fn(x::number)
 	x
 
-$ fn(a="o"::string)
+:$ fn(a="o"::string)
 	a
 
 ~ fn("s")
@@ -10,10 +10,10 @@ $ fn(a="o"::string)
 
 ~ fn()
 
-$ g(n="s", a=5::number)
+:$ g(n="s", a=5::number)
 	@"gn"
 
-$ g(n="s", a="lol"::string)
+:$ g(n="s", a="lol"::string)
 	@"gs"
 
 {g(n="k", a="l")}

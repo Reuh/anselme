@@ -26,7 +26,7 @@ When executing a piece of Anselme code, your scripts will not directly modify th
 Right after reaching a checkpoint line, Anselme will merge the local state with the global one, i.e., make every change accessible to other scripts, and get checkpointed changes from other scripts.
 
 ```
-$ main
+:$ main
     :var = 5
 
     ~ var := 2
@@ -35,14 +35,14 @@ $ main
 
     (But if we run the script "parallel" in parallel at this point, it will still think var==5)
 
-    § foo
+    :! foo
         But the variable will be merged with the global state on a checkpoint
 
     after: {var}==2, still, as expected
 
     (And if we run the script "parallel" in parallel at this point, it will now think var==2)
 
-$ parallel
+:$ parallel
     parallel: {main.var}
 
 ~ main
@@ -62,8 +62,6 @@ State merging also happens after a checkpoint has been manually called or resume
 
 There's different types of lines, depending on their first character(s) (after indentation).
 
-#### Lines that can have children:
-
 * `(`: comment line. Everything following this is ignored. Doesn't even check for children indentation and syntax correctness, so have fun.
 
 ```
@@ -73,6 +71,60 @@ There's different types of lines, depending on their first character(s) (after i
         to say
     here
 ```
+
+#### Text lines:
+
+Lines that can append data to the event buffer and emit text or choice events.
+
+* `>`: write a choice into the [event buffer](#event-buffer). Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer. Support [escape codes](#escape-codes). Empty choices are discarded.
+
+```
+:$ f
+    Third choice
+
+> First choice
+> Second choice
+> Last choice
+> {f}
+```
+
+If an unescaped `~`, `~?` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
+
+```
+(Conditionnaly executing a line)
+:$ fn
+    > show this choice only once ~ 👁️
+
+(Tagging a single line)
+> tagged # 42
+    not tagged
+```
+
+* regular text, i.e. any line that doesn't start with a special line type caracter: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes). Don't accept children lines.
+
+```
+Hello,
+this is some text.
+
+And this is more text, in a different event.
+```
+
+If an unescaped `~`, `~?` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
+
+```
+(Conditionnaly executing a line)
+:$ fn
+    run this line only once ~ 👁️
+
+(Tagging a single line)
+tagged # 42
+```
+
+* empty line: flush the event buffer, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file. Don't accept children lines.
+
+#### Expression lines:
+
+Lines that evaluate an [expression](#expressions) and do something with the result.
 
 * `~`: condition line. Can be followed by an [expression](#expressions); otherwise the expression `1` is assumed. If the expression evaluates to [true](#truethness), run its children. Without children, this line is typically use to simply run an expression.
 
@@ -111,51 +163,111 @@ There's different types of lines, depending on their first character(s) (after i
     This is run.
 ```
 
-* `>`: write a choice into the [event buffer](#event-buffer). Followed by arbitrary text. Support [text interpolation](#text-interpolation); if a text event is created during the text interpolation, it is added to the choice text content instead of the global event buffer. Support [escape codes](#escape-codes). Empty choices are discarded.
+* `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be wrapped in a map and added to the tags send along with any `choice` or `text` event sent from its children. Can be nested.
 
 ```
-$ f
-    Third choice
+# color="red"
+    Text tagged with a red color
 
-> First choice
-> Second choice
-> Last choice
-> {f}
+    # "blink"
+        Tagged with a red color and blink.
 ```
 
-If an unescaped `~`, `~?` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
+* `@`: return line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. Exit the current function and returns the expression's value.
 
 ```
-(Conditionnaly executing a line)
-$ fn
-    > show this choice only once ~ 👁️
+:$ hey
+    @5
 
-(Tagging a single line)
-> tagged # 42
-    not tagged
+{hey} = 5
 ```
 
-* `$`: function line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body. Also define a new namespace for its children (using the function name if it has no arguments, or a unique name otherwise).
+If this line has children, they will be ran _after_ evaluating the returned expression but _before_ exiting the current function. If the children return a value, it is used instead.
+
+```
+(Returns 0 and print 5)
+:$ fn
+    :i=0
+
+    @i
+        ~ i:=5
+        {i}
+
+(Returns 3)
+:$ g
+    @0
+        @3
+```
+
+Please note that Anselme will discard returns values sent from within a choice block. Returns inside choice block still have the expected behaviour of stopping the execution of the choice block.
+
+This is the case because choice blocks are not ran right as they are read, but only at the next event flush (i.e. empty line). This means that if there is no flush in the function itself, the choice will be ran *after* the function has already been executed and returning a value at this point makes no sense:
+
+```
+:$ f
+    > a
+        @1
+    @2
+
+(f will return 2 since the choice is run after the @2 line)
+~ f == 2
+
+    Yes.
+
+(Choice block is actually ran right before the "Yes" line, when the choice event is flushed.)
+```
+
+#### Definition lines:
+
+Definition lines are used to define variables, constants, functions, checkpoints, and objects. Definition lines always start with `:`.
+
+For every definition line type, it is possible to make it so it is immediately ran after definition by inserting a `~` after the initial `:`:
+
+```
+:~ var = &fn
+
+:~$ loop
+    This text is run immediately.
+    > Loop
+        @loop
+    > Exit
+```
+
+is equivalent to
+
+```
+:var = &fn
+~ var
+
+:$ loop
+    This text is run immediately.
+    > Loop
+        @loop
+    > Exit
+~ loop
+```
+
+* `:$`: function definition line. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases), and eventually a parameter list. Define a function using its children as function body. Also define a new namespace for its children (using the function name if it has no arguments, or a unique name otherwise).
 
 The function body is not executed when the line is reached; it must be explicitely called in an expression. See [expressions](#function-calls) to see the different ways of calling a function.
 
 A parameter list can be optionally given after the identifier. Parameter names are identifiers, with eventually an alias (after a `:`) and a default value (after a `=`), and then a type constraint (after a `::`). It is enclosed with paranthesis and contain a comma-separated list of identifiers:
 
 ```
-$ f(a, b: alias for b, c="default for c", d: alias for d = "default for d")
+:$ f(a, b: alias for b, c="default for c", d: alias for d = "default for d")
     first argument: {a}
     second argument: {b}
     third argument: {c}
     fourth argument: {d}
 
-$ f(a::string, b: alias for b::string, c::alias="default for c"::string)
+:$ f(a::string, b: alias for b::string, c::alias="default for c"::string)
     same
 ```
 
 Functions can also have a variable number of arguments. By adding `...` after the last argument identifier, it will be considered a variable length argument ("vararg"), and will contain a list of every extraneous argument.
 
 ```
-$ f(a, b...)
+:$ f(a, b...)
     {b}
 
 (will print [1])
@@ -172,7 +284,7 @@ When a parameter list is given (or just empty parentheses `()`), the function is
 
 ```
 (Non-scoped function: usual behaviour, variables are accessible from everywhere and always.)
-$ f
+:$ f
     :a = 1
     ~ a += 1
 
@@ -182,7 +294,7 @@ $ f
 {f.a} is 2
 
 (Scoped function: can't access g.a from outside the function)
-$ g()
+:$ g()
     :a = 1
     {a}
     ~ a += 1
@@ -198,13 +310,13 @@ This is basically the behaviour you'd expect from functions in most other progra
 Functions with the same name can be defined, as long as they have a different arguments. Functions will be selected based on the number of arguments given, their name and their type constraint:
 
 ```
-$ f(a, b)
+:$ f(a, b)
     a
 
-$ f(x)
+:$ f(x)
     b
 
-$ f(x::string)
+:$ f(x::string)
     c
 
 (will print a)
@@ -223,7 +335,7 @@ Every operator, except assignement operators, `|`, `&`, `,`, `~?`, `~` and `#` c
 (binary operator names: _op_)
 (prefix unary operator: op_)
 (suffix unary operator: _op)
-$ _/_(a::string, b::string)
+:$ _/_(a::string, b::string)
     @"{a}/{b}"
 ```
 
@@ -231,9 +343,9 @@ After the parameter list, you may also write `:=` followed by an identifier, and
 
 ```
 :x = "value"
-$ f()
+:$ f()
     @x
-$ f() := v
+:$ f() := v
     @x := v
 
 value = {f}
@@ -250,7 +362,7 @@ Functions always have the following variables defined in its namespace by defaul
 `👁️`: number, number of times the function was executed before
 `🔖`: function reference, last reached checkpoint. `nil` if no checkpoint reached.
 
-* `§`: checkpoint. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
+* `:!`: checkpoint definition. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
 
 Checkpoints share most of their behavior with functions, with several exceptions. Like functions, the body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#checkpoint-calls) to see the different ways of calling a checkpoint manually.
 
@@ -259,9 +371,9 @@ The local interpreter state will be merged with the global state when the line i
 When executing the parent function after this checkpoint has been reached (using the paranthesis-less function call syntax), the function will resume from this checkpoint, and the checkpoint's children will be run. This is meant to be used as a way to restart the conversation from this point after it was interrupted, providing necessary context.
 
 ```
-$ inane dialog
+:$ inane dialog
     Hello George. Nice weather we're having today?
-    § interrupted
+    :! interrupted
         What was I saying? Ah yes, the weather...
     (further dialog here)
 ```
@@ -271,14 +383,14 @@ Checkpoints always have the following variable defined in its namespace by defau
 `👁️`: number, number of times the checkpoint was executed before
 `🏁`: number, number of times the checkpoint was reached before (includes times where it was resumed from and executed)
 
-* `%`: class. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a class. Also define a new namespace for its children.
+* `:%`: class definition. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a class. Also define a new namespace for its children.
 
 Classes share most of their behavior with functions, with a few exceptions. Classes can not take arguments or be scoped; and when called, if the function does not return a value or returns `()` (nil), it will returns a new object instead based on this class. The object can be used to access variables ("attributes") defined in the class, but if one of these attributes is modified on the object it will not change the value in the base class but only in the object.
 
 Objects can therefore be used to create independant data structures that can contain any variable defined in the base class, inspired by object-oriented programming.
 
 ```
-% class
+:% class
     :a = 1
 
 :object = class
@@ -292,10 +404,10 @@ Is 1: {class.a}
 Note that the new object returned by the class is also automatically given an annotation that is a reference to the class. This can be used to define methods/function that operate only on objects based on this specific class.
 
 ```
-% class
+:% class
     :a = 1
 
-$ show(object::&class)
+:$ show(object::&class)
     a = {object.a}
 
 :object = class
@@ -303,134 +415,17 @@ $ show(object::&class)
 ~ object!show
 ```
 
-* `#`: tag line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. The results of the [expression](#expressions) will be wrapped in a map and added to the tags send along with any `choice` or `text` event sent from its children. Can be nested.
-
-```
-# color="red"
-    Text tagged with a red color
-
-    # "blink"
-        Tagged with a red color and blink.
-```
-
-* `@`: return line. Can be followed by an [expression](#expressions); otherwise nil expression is assumed. Exit the current function and returns the expression's value.
-
-```
-$ hey
-    @5
-
-{hey} = 5
-```
-
-If this line has children, they will be ran _after_ evaluating the returned expression but _before_ exiting the current function. If the children return a value, it is used instead.
-
-```
-(Returns 0 and print 5)
-$ fn
-    :i=0
-
-    @i
-        ~ i:=5
-        {i}
-
-(Returns 3)
-$ g
-    @0
-        @3
-```
-
-Please note that Anselme will discard returns values sent from within a choice block. Returns inside choice block still have the expected behaviour of stopping the execution of the choice block.
-
-This is the case because choice blocks are not ran right as they are read, but only at the next event flush (i.e. empty line). This means that if there is no flush in the function itself, the choice will be ran *after* the function has already been executed and returning a value at this point makes no sense:
-
-```
-$ f
-    > a
-        @1
-    @2
-
-(f will return 2 since the choice is run after the @2 line)
-~ f == 2
-
-    Yes.
-
-(Choice block is actually ran right before the "Yes" line, when the choice event is flushed.)
-```
-
-#### Lines that can't have children:
-
-* `:`: variable declaration. Followed by an [identifier](#identifiers) (with eventually an [alias](#aliases)), a `=` and an [expression](#expressions). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). The expression is not evaluated instantly, but the first time the variable is used.
+* `:`: variable declaration. Followed by an [identifier](#identifiers) (with eventually an [alias](#aliases)), a `=` and an [expression](#expressions). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). The expression is not evaluated instantly, but the first time the variable is used. Don't accept children lines.
 
 ```
 :foo = 42
 :bar : alias = 12
 ```
 
-You can also use two colons instead of one to define a constant:
+* `::`: constant declaration. Work the same way as a variable declaration, but the variable can't be reassigned after their declaration and first evaluation, and their value is marked as constant (i.e. can not be modified even it is of a mutable type). Constants are not stored in save files and should therefore always contain the result of the expression written in the script file, even if the script has been updated.
 
 ```
 ::foo = 42
-```
-
-After their declaration and first evaluation, constants cannot be reassigned and their value is marked as constant (i.e. can not be modified even it is of a mutable type). Constants are not stored in save files and should therefore always contain the result of the expression written in the script file, even if the script has been updated.
-
-* empty line: flush the event buffer, i.e., if there are any pending lines of text or choices, send them to your game. See [Event buffer](#event-buffer). This line always keep the same identation as the last non-empty line, so you don't need to put invisible whitespace on an empty-looking line. Is also automatically added at the end of a file.
-
-* regular text: write some text into the [event buffer](#event-buffer). Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes).
-
-```
-Hello,
-this is some text.
-
-And this is more text, in a different event.
-```
-
-If an unescaped `~`, `~?` or `#` appears in the line, the associated operator is applied to the line (see [operators](#operators)), using the previous text as the left argument and everything that follows as the right argument expression.
-
-```
-(Conditionnaly executing a line)
-$ fn
-    run this line only once ~ 👁️
-
-(Tagging a single line)
-tagged # 42
-```
-
-### Line decorators
-
-Every line can also be followed with decorators, which are appended at the end of the line and affect its behaviour. Decorators are just syntaxic sugar to make some common operations simpler to write.
-
-* `$`: function decorator. Same as a function line, behaving as if this line was it sole child, but also run the function. Function can not take arguments.
-
-```
-text $ f
-```
-
-is equivalent to:
-
-```
-~ f
-$ f
-    text 
-```
-
-This is typically used for immediatletly running functions when defining them, for example for a looping choice :
-
-```
-~$ loop
-    > Loop
-        @loop
-    > Exit
-```
-
-is equivalent to:
-
-```
-$ loop
-    > Loop
-        @loop
-    > Exit
-~ loop
 ```
 
 ### Text interpolation
@@ -449,7 +444,7 @@ Text interpolated in choices have the special property of capturing text events 
 Value of a: {a}
 
 (in text and choices, text events created from an interpolated expression are included in the final text)
-$ f
+:$ f
     wor
     (the returned value comes after)
     @"ld."
@@ -510,7 +505,7 @@ Beyond technical reasons, the event buffer serves as a way to group together sev
 In practise, this is mostly useful to provide some choice or text from another function:
 
 ```
-$ reusable choice
+:$ reusable choice
     > Reusable choice
 
 > Choice A
@@ -538,7 +533,7 @@ Some text # tag
 
 ```
 (There is a space between the text and the tag expression; but there is a space as well after the text interpolation in the last line. The two spaces are converted into a single space (the space will belong to the first text element, i.e. the "text " element).)
-$ f
+:$ f
     text # tag
 
 Some {text} here.
@@ -555,9 +550,9 @@ When defining an identifier (using a function, checkpoint or variable delcaratio
 In practise, this means you have to use the "genealogy" of the variable to refer to it from a line not in the same namespace:
 
 ```
-$ fn1
+:$ fn1
     (everything here is in the fn1 namespace)
-    $ fn2
+    :$ fn2
         (fn1.fn2 namespace)
         :var2 = 42
         Var2 = 42: {var2}
@@ -749,14 +744,14 @@ When the identifier is preceeded by another expression directly (without any ope
 The simplest way to call a function is simply to use its name. If the function has no arguments, parantheses are optional, or can be replaced with a `!`:
 
 ```
-$ f
+:$ f
     called
 
 ~ f
 (equivalent to)
 ~ f!
 
-$ f(a)
+:$ f(a)
     called with {a}
 
 ~ f("an argument")
@@ -765,9 +760,9 @@ $ f(a)
 Please note, however, that if the function contains checkpoints, these two syntaxes behave differently. Without parantheses, the function will resume from the last reached checkpoint; with parantheses, the function always restart from its beginning:
 
 ```
-$ f
+:$ f
     a
-    § checkpoint
+    :! checkpoint
         b
     c
 
@@ -785,12 +780,12 @@ Force no checkpoint, will write "a" and "c":
 Functions with arguments can also be called with a "method-like" syntax using the `!` operator (though Anselme has no concept of classes and methods):
 
 ```
-$ f(a)
+:$ f(a)
     called with {a}
 
 "an argument"!f
 
-$ f(a, b)
+:$ f(a, b)
     called with {a} and {b}
 
 "an argument"!f("another argument")
@@ -799,7 +794,7 @@ $ f(a, b)
 If the function has a return value, any of these calls will of course return the value.
 
 ```
-$ f
+:$ f
     @"text"
 
 this is text: {f}
@@ -808,12 +803,12 @@ this is text: {f}
 Functions can also have default arguments. Defaults values can be any expression and are re-evaluated each time the function is called:
 
 ```
-$ f(a, b=1)
+:$ f(a, b=1)
     @a+b
 
 {f(1)} = 2
 
-$ g(a, b=a)
+:$ g(a, b=a)
     @a+b
 
 {g(1)} = 2
@@ -823,7 +818,7 @@ $ g(a, b=a)
 Arguments can also be passed by naming them instead of their position. These syntaxes can be mixed:
 
 ```
-$ f(a, b, c)
+:$ f(a, b, c)
     @a + b + c
 
 {f(1,2,3)} = {f(c=3,b=2,a=1)} = {f(1,2,c=3)}
@@ -836,7 +831,7 @@ This means that pairs can't be passed directly as arguments to a function (as th
 Functions can have a variable number of arguments. Additional arguments are added in a list:
 
 ```
-$ f(a, b...)
+:$ f(a, b...)
     {a}
 
     {b}
@@ -851,16 +846,16 @@ $ f(a, b...)
 Anselme use dynamic dispatch, meaning the correct function is selected at runtime. The correct function is selected based on number of arguments, argument names, and argument type constraint. The function with the most specific arguments will be selected. If several functions match, an error is thrown.
 
 ```
-$ fn(x::number, y)
+:$ fn(x::number, y)
     a
 
-$ fn(x::number)
+:$ fn(x::number)
     b
 
-$ fn(a::string)
+:$ fn(a::string)
     c
 
-$ fn(x::number, y::number)
+:$ fn(x::number, y::number)
     c
 
 a = {fn(5, "s")}
@@ -871,9 +866,9 @@ c = {fn(5)}
 
 d = {fn(5, 2)}
 
-$ g(x)
+:$ g(x)
 
-$ g(x, a="t")
+:$ g(x, a="t")
 
 error, can't select unique function: {g(5)}
 ```
@@ -887,9 +882,9 @@ Most of the time, you should'nt need to call checkpoints yourself - they will be
 But in the cases when you want to manually set the current checkpoint, you can call it with a similar syntax to paranthesis-less function calls:
 
 ```
-$ f
+:$ f
     a
-    § checkpoint
+    :! checkpoint
         b
     c
 
@@ -907,9 +902,9 @@ Function can always be restarted from the begining using parantheses:
 You can also only execute the checkpoints' children code only by using a parantheses-syntax:
 
 ```
-$ f
+:$ f
     a
-    § checkpoint
+    :! checkpoint
         b
     c
 

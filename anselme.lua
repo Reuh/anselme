@@ -548,7 +548,7 @@ local vm_mt = {
 		else
 			if type(fn) == "function" then fn = { value = fn } end
 			self.state.link_next_function_definition_to_lua_function = fn
-			local s, e = self:loadstring("$"..signature, "", "lua")
+			local s, e = self:loadstring(":$"..signature, "", "lua")
 			if not s then return nil, e end
 			assert(self.state.link_next_function_definition_to_lua_function == nil, "unexpected error while defining lua function")
 			return self

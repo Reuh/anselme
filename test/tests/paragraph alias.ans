@@ -1,4 +1,4 @@
-§ f : test
+:! f : test
 	@"ok"
 
 {f} = {test}

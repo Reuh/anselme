@@ -1,7 +1,7 @@
-$ fn(x)
+:$ fn(x)
 	x
 
-$ fn(a)
+:$ fn(a)
 	a
 
 ~ fn(a=5)

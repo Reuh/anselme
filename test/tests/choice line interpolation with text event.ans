@@ -4,7 +4,7 @@
 	ko
 ~ choose(1)
 
-$ jump button
+:$ jump button
 	A # 1
 
 > Other
@@ -13,6 +13,6 @@ $ jump button
 	ok
 ~ choose(2)
 
-$ move axis
+:$ move axis
 	left # 1
 	@" joystick"

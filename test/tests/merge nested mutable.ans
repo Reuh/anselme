@@ -5,13 +5,13 @@
 
 ~ a!insert(b)
 
-§ c
+:! c
 
 ~ b!insert(3)
 
-§ d
+:! d
 
 ~ a!insert(4)
 
-$ check
+:$ check
 	\[1,\[2,3],4]: {a}
