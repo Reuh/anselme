@@ -82,7 +82,7 @@ common = {
 	--- split a string separated by .
 	split = function(str)
 		local address = {}
-		for name in str:gmatch("[^%.]+") do
+		for name in (str.."."):gmatch("(.-)%.") do
 			table.insert(address, name)
 		end
 		return address
@@ -92,12 +92,14 @@ common = {
 	-- returns value, fqm in case of success
 	-- returns nil, err in case of error
 	find = function(aliases, list, namespace, name)
-		local ns = common.split(namespace)
-		for i=#ns, 1, -1 do
-			local current_namespace = table.concat(ns, ".", 1, i)
-			local fqm = replace_aliases(aliases, current_namespace, name)
-			if list[fqm] then
-				return list[fqm], fqm
+		if namespace ~= "" then
+			local ns = common.split(namespace:gsub("%.$", ""))
+			for i=#ns, 1, -1 do
+				local current_namespace = table.concat(ns, ".", 1, i)
+				local fqm = replace_aliases(aliases, current_namespace, name)
+				if list[fqm] then
+					return list[fqm], fqm
+				end
 			end
 		end
 		-- root namespace
@@ -111,12 +113,14 @@ common = {
 	-- returns a list of fqm
 	find_all = function(aliases, list, namespace, name)
 		local l = {}
-		local ns = common.split(namespace)
-		for i=#ns, 1, -1 do
-			local current_namespace = table.concat(ns, ".", 1, i)
-			local fqm = replace_aliases(aliases, current_namespace, name)
-			if list[fqm] then
-				table.insert(l, fqm)
+		if namespace ~= "" then
+			local ns = common.split(namespace:gsub("%.$", ""))
+			for i=#ns, 1, -1 do
+				local current_namespace = table.concat(ns, ".", 1, i)
+				local fqm = replace_aliases(aliases, current_namespace, name)
+				if list[fqm] then
+					table.insert(l, fqm)
+				end
 			end
 		end
 		-- root namespace
