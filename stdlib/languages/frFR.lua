@@ -4,13 +4,14 @@ return [[
 ~ &number!alias("nombre")
 ~ &string!alias("texte")
 ~ &list!alias("liste")
+~ &map!alias("dictionnaire")
 ~ &pair!alias("paire")
 ~ &function reference!alias("réference de fonction")
 ~ &variable reference!alias("réference de variable")
+~ &object!alias("objet")
 ~ &annotated!alias("annoté")
 
 (Built-in functions)
-(~ &alias!alias("alias")
 ~ &name!alias("nom")
 ~ &value!alias("valeur")
 ~ &len!alias("longueur")
@@ -19,7 +20,6 @@ return [[
 ~ &find!alias("trouver")
 ~ &error!alias("erreur")
 ~ &rand!alias("aléa")
-~ &raw!alias("brut")
 ~ &is a!alias("est un")
 ~ &unannotated!alias("non annoté")
 ~ &cycle!alias("cycler")
@@ -27,7 +27,7 @@ return [[
 ~ &next!alias("séquence")
 
 (Built-in variables)
-:alias 👁️ = "vu"
-:alias 🔖 = "checkpoint"
-:alias 🏁 = "atteint"
+::alias 👁️ = "vu"
+::alias 🔖 = "checkpoint"
+::alias 🏁 = "atteint"
 ]]
