@@ -621,7 +621,7 @@ Default types are:
 
 * `string`: a string. Can be defined between double quotes `"string"`. Support [text interpolation](#text-interpolation). Support [escape codes](#escape-codes).
 
-* `pair`: a couple of values. Types can be mixed. Can be defined using equal sign `"key"=5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax; `key` will not be interpreted as the variable `key` but the string `"key"` (if `key` is a variable and you want to force the use of its value as a key instead of the string `"key"`, you can wrap it in parentheses).
+* `pair`: a couple of values. Types can be mixed. Can be defined using equal sign `"key"=5` or a colon `"key":5`. Pairs named by a string that is also a valid identifier can be created using the `key=5` shorthand syntax; `key` will not be interpreted as the variable `key` but the string `"key"` (if `key` is a variable and you want to force the use of its value as a key instead of the string `"key"`, you can either wrap it in parentheses or use the colon syntax).
 
 * `annotated`: a couple of values. Types can be mixed. Can be defined using colon `expr::type`. The second value is used in type constraints, this is intended to be use to give a custom type to a value.
 
@@ -1023,7 +1023,9 @@ This only works on strings:
 
 `a;`: evaluate a, discard its result, returns nil.
 
-`a = b`: evaluate a and b, returns a new pair with a as key and b as value. If a is an identifier, will interpret it as a string (and not a variable; you can wrap a in parentheses if you want to use the value associated with variable a instead).
+`a = b`: evaluate a and b, returns a new pair with a as key and b as value. If a is an identifier, will interpret it as a string (and not a variable; you can wrap a in parentheses if you want to use the value associated with variable a instead, or just use the alternative pair operator `a:b` which does not have this behavior).
+
+`a : b`: evaluate a and b, returns a new pair with a as key and b as value. Unlike the `a=b` operator, will evaluate a as and will get the value associated with the identifier if a is a variable identifier. Can be used for example to benefit from variable aliases and have translatable keys.
 
 `a :: b`: evaluate a and b, returns a new annotated value with a as value and b as the annotation. This annotation will be checked in type constraints.
 

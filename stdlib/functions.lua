@@ -64,6 +64,15 @@ lua_functions = {
 			}
 		end
 	},
+	["_:_(a, b)"] = {
+		mode = "raw",
+		value = function(a, b)
+			return {
+				type = "pair",
+				value = { a, b }
+			}
+		end
+	},
 	-- annotate
 	["_::_(a, b)"] = {
 		mode = "raw",

@@ -19,11 +19,9 @@ In the end, we decided to reserve all of those except '.
 
 Using other unicode symbols may be also alright, but there also should be a way to only use these symbols.
 
-TODO: add alias to §
-
 Reserved symbols that are still not used in expressions: `\_?@$
 
-Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&%
+Reserved symbols that are still not used as a line type: `^+-=</[]*{}|\_!?.,;)"&%$
 
 # Code Q&A
 
@@ -49,13 +47,6 @@ TODO: support parametric types in contraints: list(number)
           (push a constraint context when checking compatibility)
      or more generic constraints? allow custom functions to check constraints, etc (performance?)
 
-TODO: a way to alias key names in pairs/maps? the alias should not end up in the save file... we could use variable for that, like
-
-     :foo:bar = "key"
-     :map = {bar=42}
-
-     i.e. just remove the special case of interpreting identifiers as strings in pairs. But then might need to distinguish from the named argument syntax in function calls.
-
 TODO: type system is not super nice to use.
      UPDATE: tried to implement a static type system, ain't worth it. Would require major refactoring to go full static with good type inference. The language is supposed to allow to not have to worry about low level stuff, so no deal if the type inference isn't good. Thank you multiple dispatch for making everything complicated (i still love you though)... Well, if I ever reimplement Anselme, let's thank the Julia devs for doing the hard work: https://docs.julialang.org/en/v1/devdocs/inference/
 
@@ -68,7 +59,7 @@ TODO: fn/checkpoint/tag: maybe consider them a regular func call that takes chil
      would allow more flexibility esp. for tags...
      a func def would be:
 
-     :a
+     :a = $
      	stuff
 
      but then args?
