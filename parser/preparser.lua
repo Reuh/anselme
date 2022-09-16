@@ -225,26 +225,39 @@ local function parse_line(line, state, namespace, parent_function)
 					table.insert(line.children, 1, { content = ":🔖=()", source = line.source })
 				end
 				-- custom code injection
-				if r.scoped then
-					if state.inject.scoped_function_start then
-						for i, ll in ipairs(state.inject.scoped_function_start) do
+				if r.subtype == "class" then
+					if state.inject.class_start then
+						for i, ll in ipairs(state.inject.class_start) do
 							table.insert(line.children, 1+i, copy(ll))
 						end
 					end
-					if state.inject.scoped_function_end then
-						for _, ll in ipairs(state.inject.scoped_function_end) do
+					if state.inject.class_end then
+						for _, ll in ipairs(state.inject.class_end) do
 							table.insert(line.children, copy(ll))
 						end
 					end
 				else
-					if state.inject.function_start then
-						for i, ll in ipairs(state.inject.function_start) do
-							table.insert(line.children, 1+i, copy(ll))
+					if r.scoped then
+						if state.inject.scoped_function_start then
+							for i, ll in ipairs(state.inject.scoped_function_start) do
+								table.insert(line.children, 1+i, copy(ll))
+							end
 						end
-					end
-					if state.inject.function_end then
-						for _, ll in ipairs(state.inject.function_end) do
-							table.insert(line.children, copy(ll))
+						if state.inject.scoped_function_end then
+							for _, ll in ipairs(state.inject.scoped_function_end) do
+								table.insert(line.children, copy(ll))
+							end
+						end
+					else
+						if state.inject.function_start then
+							for i, ll in ipairs(state.inject.function_start) do
+								table.insert(line.children, 1+i, copy(ll))
+							end
+						end
+						if state.inject.function_end then
+							for _, ll in ipairs(state.inject.function_end) do
+								table.insert(line.children, copy(ll))
+							end
 						end
 					end
 				end

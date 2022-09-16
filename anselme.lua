@@ -494,6 +494,8 @@ local vm_mt = {
 	-- * `"function return"`: injected at the end of each return's children that is contained in a non-scoped function
 	-- * `"checkpoint start"`: injected at the start of every checkpoint
 	-- * `"checkpoint end"`: injected at the end of every checkpoint
+	-- * `"class start"`: injected at the start of every class
+	-- * `"class end"`: injected at the end of every class
 	-- * `"scoped function start"`: injected at the start of every scoped function
 	-- * `"scoped function end"`: injected at the end of every scoped function
 	-- * `"scoped function return"`: injected at the end of each return's children that is contained in a scoped function

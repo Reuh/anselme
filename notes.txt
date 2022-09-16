@@ -106,3 +106,5 @@ Disadvantages:
 * could do something like `$ ()(l::list(?), i::number)::?`, but then can't return nil on not found...
 
 TODO: write a translation guide/simplify translation process
+
+TODO: make injection nicer. Some decorator-like syntax? to select specific functions to inject to
