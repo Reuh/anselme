@@ -193,7 +193,7 @@ common = {
 				text = rem:match("^%s*}(.*)$")
 			-- start subtext
 			elseif allow_subtext and r:match("^%[") then
-				local exp, rem = common.parse_text(r:gsub("^%[", ""), state, namespace, "text", allow_binops, allow_subtext, true)
+				local exp, rem = common.parse_text(r:gsub("^%[", ""), state, namespace, "text", "#~", allow_subtext, true)
 				if not exp then return nil, rem end
 				if not rem:match("^%]") then return nil, ("expected closing ] at end of subtext before %q"):format(rem) end
 				-- add to text

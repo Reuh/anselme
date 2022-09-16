@@ -538,7 +538,7 @@ common = {
 		-- returns true in case of success
 		-- returns nil, err in case of error
 		make_space_for = function(self, state, type)
-			if #state.interpreter.event_buffer_stack == 0 and state.interpreter.current_event and state.interpreter.current_event.type ~= type then -- FIXME useful?
+			if #state.interpreter.event_buffer_stack == 0 and state.interpreter.current_event and state.interpreter.current_event.type ~= type then
 				return self:manual_flush(state)
 			end
 			return true

@@ -52,6 +52,7 @@ TODO: type system is not super nice to use.
 
 TODO: some sensible way to capture text event in string litterals (string interpolation/subtexts)? -> meh, this means we can capture choice events, and choice events contain their code block, and we don't want to store code blocks in the save file (as code can be updated/translated/whatever)
      ignoring choice events, we might be able to use subtexts in string litterals; using the same code for text lines and text litterals? we would lose tags...
+     -> no. would break ability to switch between two translations of the script as the save would contain the text events from the previous language.
 
 TODO: simplify language, it is much too complicated. Less line types? (var def, func, checkpoint, tag). Rewrite some ad hoc syntax using the expression system?
 
