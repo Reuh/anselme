@@ -386,6 +386,16 @@ lua_functions = {
 	["rand()"] = function() return math.random() end,
 	["rand(a::number)"] = function(a) return math.random(a) end,
 	["rand(a::number, b::number)"] = function(a, b) return math.random(a, b) end,
+	["floor(a::number)"] = function(a) return math.floor(a) end,
+	["ceil(a::number)"] = function(a) return math.ceil(a) end,
+	["round(a::number, increment=1::number)"] = function(a, increment)
+		local n = a / increment
+		if n >= 0 then
+			return math.floor(n + 0.5) * increment
+		else
+			return math.ceil(n - 0.5) * increment
+		end
+	end,
 	["unannotated(v)"] = {
 		mode = "raw",
 		value = function(v)

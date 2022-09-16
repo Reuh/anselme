@@ -24,6 +24,27 @@ local function maybe_alias(rem, fqm, namespace, line, state)
 	return true, rem, alias
 end
 
+--- inject lines defined for the injection that match parent_function type and inject_type in inject_in starting from index inject_at
+local function inject(state, parent_function, inject_type, inject_in, inject_at)
+	inject_at = inject_at or #inject_in+1
+	local prefix
+	if parent_function.subtype == "checkpoint" then
+		prefix = "checkpoint"
+	elseif parent_function.subtype == "class" then
+		prefix = "class"
+	elseif parent_function.scoped then
+		prefix = "scoped_function"
+	else
+		prefix = "function"
+	end
+	local ninject = ("%s_%s"):format(prefix, inject_type)
+	if state.inject[ninject] then
+		for i, ll in ipairs(state.inject[ninject]) do
+			table.insert(inject_in, inject_at+i-1, copy(ll))
+		end
+	end
+end
+
 --- parse a single line into AST
 -- * ast: if success
 -- * nil, error: in case of error
@@ -225,42 +246,8 @@ local function parse_line(line, state, namespace, parent_function)
 					table.insert(line.children, 1, { content = ":🔖=()", source = line.source })
 				end
 				-- custom code injection
-				if r.subtype == "class" then
-					if state.inject.class_start then
-						for i, ll in ipairs(state.inject.class_start) do
-							table.insert(line.children, 1+i, copy(ll))
-						end
-					end
-					if state.inject.class_end then
-						for _, ll in ipairs(state.inject.class_end) do
-							table.insert(line.children, copy(ll))
-						end
-					end
-				else
-					if r.scoped then
-						if state.inject.scoped_function_start then
-							for i, ll in ipairs(state.inject.scoped_function_start) do
-								table.insert(line.children, 1+i, copy(ll))
-							end
-						end
-						if state.inject.scoped_function_end then
-							for _, ll in ipairs(state.inject.scoped_function_end) do
-								table.insert(line.children, copy(ll))
-							end
-						end
-					else
-						if state.inject.function_start then
-							for i, ll in ipairs(state.inject.function_start) do
-								table.insert(line.children, 1+i, copy(ll))
-							end
-						end
-						if state.inject.function_end then
-							for _, ll in ipairs(state.inject.function_end) do
-								table.insert(line.children, copy(ll))
-							end
-						end
-					end
-				end
+				inject(state, r, "start", line.children, 2)
+				inject(state, r, "end", line.children)
 			elseif r.subtype == "checkpoint" then
 				-- define 🏁 variable
 				local reached_alias = state.global_state.builtin_aliases["🏁"]
@@ -270,16 +257,8 @@ local function parse_line(line, state, namespace, parent_function)
 					table.insert(line.children, 1, { content = ":🏁=0", source = line.source })
 				end
 				-- custom code injection
-				if state.inject.checkpoint_start then
-					for i, ll in ipairs(state.inject.checkpoint_start) do
-						table.insert(line.children, 1+i, copy(ll))
-					end
-				end
-				if state.inject.checkpoint_end then
-					for _, ll in ipairs(state.inject.checkpoint_end) do
-						table.insert(line.children, copy(ll))
-					end
-				end
+				inject(state, r, "start", line.children, 2)
+				inject(state, r, "end", line.children)
 			end
 			-- define args
 			for _, param in ipairs(r.params) do
@@ -373,19 +352,7 @@ local function parse_line(line, state, namespace, parent_function)
 		end
 		-- custom code injection
 		if not line.children then line.children = {} end
-		if parent_function.scoped then
-			if state.inject.scoped_function_return then
-				for _, ll in ipairs(state.inject.scoped_function_return) do
-					table.insert(line.children, copy(ll))
-				end
-			end
-		else
-			if state.inject.function_return then
-				for _, ll in ipairs(state.inject.function_return) do
-					table.insert(line.children, copy(ll))
-				end
-			end
-		end
+		inject(state, parent_function, "return", line.children)
 	-- text
 	elseif l:match("[^%s]") then
 		r.type = "text"
@@ -559,9 +526,9 @@ local function parse(state, s, name, source)
 		global_state = state
 	}
 	-- parse injects
-	for inject, ninject in pairs(injections) do
+	for tinject, ninject in pairs(injections) do
 		if state.inject[ninject] then
-			local inject_indented, err = parse_indented(state.inject[ninject], nil, "injected "..inject)
+			local inject_indented, err = parse_indented(state.inject[ninject], nil, "injected "..tinject)
 			if not inject_indented then return nil, err end
 			state_proxy.inject[ninject] = inject_indented
 		end

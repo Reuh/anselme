@@ -1077,6 +1077,12 @@ This only works on strings:
 
 `rand([m[, n]])`: when called whitout arguments, returns a random float in [0,1). Otherwise, returns a random number in [m,n]; m=1 if not given.
 
+`floor(x)`: returns the largest integral value less than or equal x
+
+`ceil(x)`: returns the smallest integral value more than or equal x
+
+`round(x, increment=1)`: returns the number, rounder to the nearest increment
+
 `error(str)`: throw an error with the specified message
 
 `annotation(v::annotated)`: returns v's annotation
