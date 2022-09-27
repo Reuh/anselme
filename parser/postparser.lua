@@ -18,7 +18,7 @@ local function parse(state)
 					if rem:match("[^%s]") then
 						return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param.full_name, rem, line.source)
 					end
-					state.variable_constraints[param.full_name] = { pending = type_exp }
+					state.variable_metadata[param.full_name].constraint = { pending = type_exp }
 				end
 				-- get default value
 				if param.default then
@@ -30,7 +30,7 @@ local function parse(state)
 					param.default = default_exp
 					-- extract type constraint from default value
 					if default_exp.type == "function call" and default_exp.called_name == "_::_" then
-						state.variable_constraints[param.full_name] = { pending = default_exp.argument.expression.right }
+						state.variable_metadata[param.full_name].constraint = { pending = default_exp.argument.expression.right }
 					end
 				end
 			end
@@ -41,7 +41,7 @@ local function parse(state)
 				if rem:match("[^%s]") then
 					return nil, ("unexpected characters after parameter %q: %q; at %s"):format(line.assignment.full_name, rem, line.source)
 				end
-				state.variable_constraints[line.assignment.full_name] = { pending = type_exp }
+				state.variable_metadata[line.assignment.full_name].constraint = { pending = type_exp }
 			end
 			-- get list of scoped variables
 			-- (note includes every variables in the namespace of subnamespace, so subfunctions are scoped alongside this function)
@@ -49,6 +49,7 @@ local function parse(state)
 				line.scoped = {}
 				for name in pairs(state.variables) do
 					if name:sub(1, #namespace) == namespace then
+						if state.variable_metadata[name].persistent then return nil, ("variable %q can not be persistent as it is in a scoped function"):format(name) end
 						table.insert(line.scoped, name)
 					end
 				end
@@ -80,7 +81,7 @@ local function parse(state)
 					if rem2:match("[^%s]") then
 						return nil, ("unexpected characters after variable %q: %q; at %s"):format(line.name, rem2, line.source)
 					end
-					state.variable_constraints[line.name] = { pending = type_exp }
+					state.variable_metadata[line.name].constraint = { pending = type_exp }
 				end
 			end
 		end

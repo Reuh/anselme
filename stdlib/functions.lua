@@ -158,12 +158,10 @@ lua_functions = {
 			if r.constant then
 				return nil, "can't change the value of an attribute of a constant object"
 			end
-			if not check_mutable(state, obj.class.."."..name) then
-				return nil, "can't change the value of a constant attribute"
-			end
 			-- attribute already present in object
 			local var, vfqm = find(state.aliases, obj.attributes, "", obj.class.."."..name)
 			if var then
+				if not check_mutable(state, vfqm) then return nil, "can't change the value of a constant attribute" end
 				obj.attributes[vfqm] = v
 				mark_as_modified(anselme.running.state, obj.attributes)
 				return v
@@ -171,6 +169,7 @@ lua_functions = {
 			-- search for attribute in base class
 			local cvar, cvfqm = find(state.aliases, state.interpreter.global_state.variables, "", obj.class.."."..name)
 			if cvar then
+				if not check_mutable(state, cvfqm) then return nil, "can't change the value of a constant attribute" end
 				obj.attributes[cvfqm] = v
 				mark_as_modified(anselme.running.state, obj.attributes)
 				return v

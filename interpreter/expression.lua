@@ -309,7 +309,7 @@ local function eval(state, exp)
 							local depth, err = check_constraint(state, param.full_name, val)
 							if not depth then
 								ok = false
-								local v = state.variable_constraints[param.full_name].value
+								local v = state.variable_metadata[param.full_name].constraint.value
 								table.insert(tried_function_error_messages, ("%s: argument %s is not of expected type %s"):format(fn.pretty_signature, param.name, format(v) or v))
 								break
 							end
@@ -347,7 +347,7 @@ local function eval(state, exp)
 						local depth, err = check_constraint(state, param.full_name, assignment)
 						if not depth then
 							ok = false
-							local v = state.variable_constraints[param.full_name].value
+							local v = state.variable_metadata[param.full_name].constraint.value
 							table.insert(tried_function_error_messages, ("%s: argument %s is not of expected type %s"):format(fn.pretty_signature, param.name, format(v) or v))
 						end
 						depths.assignment = depth
@@ -418,8 +418,11 @@ local function eval(state, exp)
 					if not s then return nil, e end
 				end
 				-- get function vars
-				local checkpoint, checkpointe = get_variable(state, fn.namespace.."🔖")
-				if not checkpoint then return nil, checkpointe end
+				local checkpoint, checkpointe
+				if fn.resumable then
+					checkpoint, checkpointe = get_variable(state, fn.namespace.."🔖")
+					if not checkpoint then return nil, checkpointe end
+				end
 				local seen, seene = get_variable(state, fn.namespace.."👁️")
 				if not seen then return nil, seene end
 				-- execute lua functions
@@ -488,7 +491,7 @@ local function eval(state, exp)
 				else
 					local e
 					-- eval function from start
-					if paren_call or checkpoint.type == "nil" then
+					if paren_call or not fn.resumable or checkpoint.type == "nil" then
 						ret, e = run(state, fn.child)
 					-- resume at last checkpoint
 					else

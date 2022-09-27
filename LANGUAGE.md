@@ -305,7 +305,7 @@ When a parameter list is given (or just empty parentheses `()`), the function is
 ~ g
 ```
 
-This is basically the behaviour you'd expect from functions in most other programming languages, and what you would use in Anselme any time you don't care about storing the function variables or want the exact same initial function variables each time you call the function (e.g. recursion). Scoped variables are not kept in save files, and are not affected by checkpointing.
+This is basically the behaviour you'd expect from functions in most other programming languages, and what you would use in Anselme any time you don't care about storing the function variables or want the exact same initial function variables each time you call the function (e.g. recursion). Scoped variables can not be persistent, and are not affected by checkpointing.
 
 Functions with the same name can be defined, as long as they have a different arguments. Functions will be selected based on the number of arguments given, their name and their type constraint:
 
@@ -362,6 +362,8 @@ Functions always have the following variables defined in its namespace by defaul
 `👁️`: number, number of times the function was executed before
 `🔖`: function reference, last reached checkpoint. `nil` if no checkpoint reached.
 
+These variables are persistent, unless the function is scoped.
+
 * `:!`: checkpoint definition. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a checkpoint. Also define a new namespace for its children.
 
 Checkpoints share most of their behavior with functions, with several exceptions. Like functions, the body is not executed when the line is reached; it must either be explicitely called in an expression or executed when resuming the parent function (see checkpoint behaviour below). Can be called in an expression. See [expressions](#checkpoint-calls) to see the different ways of calling a checkpoint manually.
@@ -382,6 +384,8 @@ Checkpoints always have the following variable defined in its namespace by defau
 
 `👁️`: number, number of times the checkpoint was executed before
 `🏁`: number, number of times the checkpoint was reached before (includes times where it was resumed from and executed)
+
+These variables are persistent.
 
 * `:%`: class definition. Followed by an [identifier](#identifiers), then eventually an [alias](#aliases). Define a class. Also define a new namespace for its children.
 
@@ -415,6 +419,8 @@ Note that the new object returned by the class is also automatically given an an
 ~ object!show
 ```
 
+Classes have the same default variable defined as functions.
+
 * `:`: variable declaration. Followed by an [identifier](#identifiers) (with eventually an [alias](#aliases)), a `=` and an [expression](#expressions). Defines a variable with a default value and this identifier in the current [namespace]("identifiers"). The expression is not evaluated instantly, but the first time the variable is used. Don't accept children lines.
 
 ```
@@ -422,10 +428,17 @@ Note that the new object returned by the class is also automatically given an an
 :bar : alias = 12
 ```
 
-* `::`: constant declaration. Work the same way as a variable declaration, but the variable can't be reassigned after their declaration and first evaluation, and their value is marked as constant (i.e. can not be modified even it is of a mutable type). Constants are not stored in save files and should therefore always contain the result of the expression written in the script file, even if the script has been updated.
+* `::`: constant declaration. Work the same way as a variable declaration, but the variable can't be reassigned after their declaration and first evaluation, and their value is marked as constant (i.e. can not be modified even it is of a mutable type).
 
 ```
 ::foo = 42
+```
+
+* `:@`: persistent variable declaration. Work the same way as a variable declaration, but the variable will be stored in the save file, and if we loaded a save file its value will be retrieved from the save file instead of from the expression's result.
+
+```
+:@foo = 42
+:@bar : alias = 12
 ```
 
 ### Text interpolation
@@ -575,7 +588,7 @@ Var1 in the fn1 namespace = 2: {fn1.var1}
 
 #### Aliases
 
-When defining identifiers (in variables, functions or checkpoint definitions), they can be followed by a colon and another identifier. This identifier can be used as a new way to access the identifier (i.e., an alias).
+When defining identifiers (in variables, functions, checkpoint or class definitions), they can be followed by a colon and another identifier. This identifier can be used as a new way to access the identifier (i.e., an alias).
 
 ```
 :name: alias = 42
@@ -585,20 +598,20 @@ When defining identifiers (in variables, functions or checkpoint definitions), t
 
 Note that alias have priority over normal identifiers; if both an identifier and an alias have the same name, the alias will be used.
 
-The main purpose of aliases is translation. When saving the state of your game's script, Anselme will store the name of the variables and their contents, and require the name to be the same when loading the save later, in order to correctly restore their values.
+The main purpose of aliases is translation. When saving the state of your game's script, Anselme will store the name of the persistent variables and their contents, and require the name to be the same when loading the save later, in order to correctly restore their values.
 
-This behaviour is fine if you only have one language; but if you want to translate your game, this means the translations will need to keep using the original, untranslated variables and functions names if it wants to be compatible with saves in differents languages. Which is not very practical or nice to read.
+This behaviour is fine if you only have one language; but if you want to translate your game, this means the translations will need to keep using the original, untranslated persistent variables and functions names if it wants to be compatible with saves in differents languages. Which is not very practical or nice to read.
 
 Anselme's solution is to keep the original name in the translated script file, but alias them with a translated name. This way, the translated script can be written withou constantly switching languages:
 
 ```
 (in the original, english script)
-:player name = "John Pizzapone"
+:@player name = "John Pizzapone"
 
 Hi {player name}!
 
 (in a translated, french script)
-:player name : nom du joueur = "John Pizzapone"
+:@player name : nom du joueur = "John Pizzapone"
 
 Salut {nom du joueur} !
 ```

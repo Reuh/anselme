@@ -560,15 +560,26 @@ local vm_mt = {
 
 	--- Save/load script state
 	--
-	-- Only saves variables full names and values, so make sure to not change important variables, checkpoints and functions names between a save and a load.
-	-- Also only save variables with usable identifiers, so will skip functions with arguments, operators, etc. (i.e. every scoped functions).
-	-- Loading should be done after loading all the game scripts (otherwise you will "variable already defined" errors).
+	-- Only saves persistent variables' full names and values.
+	-- Make sure to not change persistent variables names, class name, class attribute names, checkpoint names and functions names between a
+	-- save and a load (alias can of course be changed), as Anselme will not be able to match them to the old names stored in the save file.
+	--
+	-- If a variable is stored in the save file but is not marked as persistent in the current scripts (e.g. if you updated the Anselme scripts to
+	-- remove the persistence), it will not be loaded.
+	--
+	-- Loading should be done after loading all the game scripts (otherwise you will get "variable already defined" errors).
 	--
 	-- Returns this VM.
 	load = function(self, data)
 		assert(anselme.versions.save == data.anselme.versions.save, ("trying to load data from an incompatible version of Anselme; save was done using save version %s but current version is %s"):format(data.anselme.versions.save, anselme.versions.save))
 		for k, v in pairs(data.variables) do
-			self.state.variables[k] = v
+			if self.state.variable_metadata[k] then
+				if self.state.variable_metadata[k].persistent then
+					self.state.variables[k] = v
+				end
+			else
+				self.state.variables[k] = v -- non-existent variable: keep it in case there was a mistake, it's not going to affect anything anyway
+			end
 		end
 		return self
 	end,
@@ -580,23 +591,7 @@ local vm_mt = {
 		local vars = {}
 		for k, v in pairs(self.state.variables) do
 			if should_keep_variable(self.state, k, v) then
-				if v.type == "object" then -- filter object attributes
-					local attributes = {}
-					for kk, vv in pairs(v.value.attributes) do
-						if should_keep_variable(self.state, kk, vv) then
-							attributes[kk] = vv
-						end
-					end
-					vars[k] = {
-						type = "object",
-						value = {
-							class = v.value.class,
-							attributes = attributes
-						}
-					}
-				else
-					vars[k] = v
-				end
+				vars[k] = v
 			end
 		end
 		return {
@@ -669,8 +664,7 @@ local vm_mt = {
 				builtin_aliases = self.state.builtin_aliases,
 				aliases = setmetatable({}, { __index = self.state.aliases }),
 				functions = self.state.functions, -- no need for a cache as we can't define or modify any function from the interpreter for now
-				variable_constraints = self.state.variable_constraints, -- no cache as constraints are expected to be constant
-				variable_constants = self.state.variable_constants,
+				variable_metadata = self.state.variable_metadata, -- no cache as metadata are expected to be constant
 				variables = setmetatable({}, {
 					__index = function(variables, k)
 						local cache = getmetatable(variables).cache
@@ -763,11 +757,8 @@ return setmetatable(anselme, {
 				-- 	}, ...
 				-- }, ...
 			},
-			variable_constraints = {
-				-- foo = { constraint }, ...
-			},
-			variable_constants = {
-				-- foo = true, ...
+			variable_metadata = {
+				-- foo = { constant = true, persistent = true, constraint = constraint, ... }, ...
 			},
 			variables = {
 				-- foo = {

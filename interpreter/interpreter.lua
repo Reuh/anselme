@@ -119,7 +119,7 @@ run_line = function(state, line)
 			value = reached.value + 1
 		})
 		if not s then return nil, e end
-		s, e = set_variable(state, line.parent_function.namespace.."🔖", {
+		s, e = set_variable(state, line.parent_resumable.namespace.."🔖", {
 			type = "function reference",
 			value = { line.name }
 		})
@@ -160,7 +160,7 @@ run_block = function(state, block, resume_from_there, i, j)
 		if not reached then return nil, reachede end
 		local seen, seene = get_variable(state, parent_line.namespace.."👁️")
 		if not seen then return nil, seene end
-		local checkpoint, checkpointe = get_variable(state, parent_line.parent_function.namespace.."🔖")
+		local checkpoint, checkpointe = get_variable(state, parent_line.parent_resumable.namespace.."🔖")
 		if not checkpoint then return nil, checkpointe end
 		local s, e = set_variable(state, parent_line.namespace.."👁️", {
 			type = "number",
@@ -175,7 +175,7 @@ run_block = function(state, block, resume_from_there, i, j)
 		-- don't update checkpoint if an already more precise checkpoint is set
 		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
 		if checkpoint.type == "nil" or not checkpoint.value[1]:match("^"..escape(parent_line.name)) then
-			s, e = set_variable(state, parent_line.parent_function.namespace.."🔖", {
+			s, e = set_variable(state, parent_line.parent_resumable.namespace.."🔖", {
 				type = "function reference",
 				value = { parent_line.name }
 			})
@@ -184,11 +184,11 @@ run_block = function(state, block, resume_from_there, i, j)
 		merge_state(state)
 	end
 	-- go up hierarchy if asked to resume
-	-- will stop at function boundary
+	-- will stop at resumable function boundary
 	-- if parent is a choice, will ignore choices that belong to the same block (like the whole block was executed naturally from a higher parent)
 	-- if parent if a condition, will mark it as a success (skipping following else-conditions) (for the same reasons as for choices)
 	-- if parent pushed a tag, will pop it (tags from parents are added to the stack in run())
-	if resume_from_there and block.parent_line and not block.parent_line.resume_boundary then
+	if resume_from_there and block.parent_line and not block.parent_line.resumable then
 		local parent_line = block.parent_line
 		if parent_line.type == "choice" then
 			state.interpreter.skip_choices_until_flush = true
@@ -212,9 +212,9 @@ local function run(state, block, resume_from_there, i, j)
 	local tags_len = tags:len(state)
 	if resume_from_there then
 		local tags_to_add = {}
-		-- go up in hierarchy in ascending order until function boundary
+		-- go up in hierarchy in ascending order until resumable function boundary
 		local parent_line = block.parent_line
-		while parent_line and not parent_line.resume_boundary do
+		while parent_line and not parent_line.resumable do
 			if parent_line.type == "tag" then
 				local v, e = eval(state, parent_line.expression)
 				if not v then return v, ("%s; at %s"):format(e, parent_line.source) end

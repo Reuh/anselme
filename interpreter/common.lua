@@ -66,7 +66,7 @@ common = {
 	-- returns depth, or math.huge if no constraint
 	-- returns nil, err
 	check_constraint = function(state, fqm, val)
-		local constraint = state.variable_constraints[fqm]
+		local constraint = state.variable_metadata[fqm].constraint
 		if constraint then
 			if not constraint.value then
 				local v, e = eval(state, constraint.pending)
@@ -87,7 +87,7 @@ common = {
 	-- returns true
 	-- returns nil, mutation illegal message
 	check_mutable = function(state, fqm)
-		if state.variable_constants[fqm] then
+		if state.variable_metadata[fqm].constant then
 			return nil, ("can't change the value of a constant %q"):format(fqm)
 		end
 		return true
@@ -114,12 +114,12 @@ common = {
 				return nil, ("%s; while evaluating default value for variable %q defined at %s"):format(e, fqm, var.value.source)
 			end
 			-- make constant if variable is constant
-			if state.variable_constants[fqm] then
+			if state.variable_metadata[fqm].constant then
 				v = copy(v)
 				common.mark_constant(v)
 			end
 			-- set variable
-			local s, err = common.set_variable(state, fqm, v, state.variable_constants[fqm])
+			local s, err = common.set_variable(state, fqm, v, state.variable_metadata[fqm].constant)
 			if not s then return nil, err end
 			return v
 		else
@@ -218,9 +218,10 @@ common = {
 		table.insert(modified, v)
 	end,
 	--- returns true if a variable should be persisted on save
-	-- will exclude: undefined variables, variables in scoped functions, constants, internal anselme variables
+	-- will exclude: variable that have not been evaluated yet and non-persistent variable
+	-- this will by consequence excludes variable in scoped variables (can be neither persistent not evaluated into global state), constants (can not be persistent), internal anselme variables (not marked persistent), etc.
 	should_keep_variable = function(state, name, value)
-		return value.type ~= "undefined argument" and value.type ~= "pending definition" and name:match("^"..identifier_pattern.."$") and not name:match("^anselme%.") and not state.variable_constants[name]
+		return value.type ~= "pending definition" and state.variable_metadata[name].persistent
 	end,
 	--- check truthyness of an anselme value
 	truthy = function(val)

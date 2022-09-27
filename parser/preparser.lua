@@ -48,7 +48,7 @@ end
 --- parse a single line into AST
 -- * ast: if success
 -- * nil, error: in case of error
-local function parse_line(line, state, namespace, parent_function)
+local function parse_line(line, state, namespace, parent_resumable, in_scoped)
 	local l = line.content
 	local r = {
 		source = line.source
@@ -93,10 +93,10 @@ local function parse_line(line, state, namespace, parent_function)
 			local keep_in_ast = false
 			if lr:match("^%$") then
 				r.subtype = "function"
-				r.resume_boundary = true
+				r.resumable = true
 			elseif lr:match("^%%") then
 				r.subtype = "class"
-				r.resume_boundary = true
+				r.resumable = true
 				r.properties = true
 				allow_params = false
 				allow_assign = false
@@ -105,7 +105,7 @@ local function parse_line(line, state, namespace, parent_function)
 				allow_params = false
 				allow_assign = false
 				keep_in_ast = true
-				r.parent_function = parent_function -- store parent function and run checkpoint when line is read
+				r.parent_resumable = parent_resumable -- store parent resumable function and run checkpoint when line is read
 			else
 				error("unknown function line type")
 			end
@@ -231,36 +231,23 @@ local function parse_line(line, state, namespace, parent_function)
 			end
 			-- define variables
 			if not line.children then line.children = {} end
+			local scoped = in_scoped or r.scoped
 			-- define 👁️ variable
 			local seen_alias = state.global_state.builtin_aliases["👁️"]
-			if seen_alias then
-				table.insert(line.children, 1, { content = (":👁️:%s=0"):format(seen_alias), source = line.source })
-			else
-				table.insert(line.children, 1, { content = ":👁️=0", source = line.source })
-			end
-			if r.subtype ~= "checkpoint" then
-				-- define 🔖 variable
+			table.insert(line.children, 1, { content = (":%s👁️%s=0"):format(scoped and "" or "@", seen_alias and ":"..seen_alias or ""), source = line.source })
+			-- define 🔖 variable
+			if r.resumable then
 				local checkpoint_alias = state.global_state.builtin_aliases["🔖"]
-				if checkpoint_alias then
-					table.insert(line.children, 1, { content = (":🔖:%s=()"):format(checkpoint_alias), source = line.source })
-				else
-					table.insert(line.children, 1, { content = ":🔖=()", source = line.source })
-				end
-				-- custom code injection
-				inject(state, r, "start", line.children, 2)
-				inject(state, r, "end", line.children)
-			elseif r.subtype == "checkpoint" then
-				-- define 🏁 variable
-				local reached_alias = state.global_state.builtin_aliases["🏁"]
-				if reached_alias then
-					table.insert(line.children, 1, { content = (":🏁:%s=0"):format(reached_alias), source = line.source })
-				else
-					table.insert(line.children, 1, { content = ":🏁=0", source = line.source })
-				end
-				-- custom code injection
-				inject(state, r, "start", line.children, 2)
-				inject(state, r, "end", line.children)
+				table.insert(line.children, 1, { content = (":%s🔖%s=()"):format(scoped and "" or "@", checkpoint_alias and ":"..checkpoint_alias or ""), source = line.source })
 			end
+			-- define 🏁 variable
+			if r.subtype == "checkpoint" then
+				local reached_alias = state.global_state.builtin_aliases["🏁"]
+				table.insert(line.children, 1, { content = (":%s🏁%s=0"):format(scoped and "" or "@", reached_alias and ":"..reached_alias or ""), source = line.source })
+			end
+			-- custom code injection
+			inject(state, r, "start", line.children, 2)
+			inject(state, r, "end", line.children)
 			-- define args
 			for _, param in ipairs(r.params) do
 				if not state.variables[param.full_name] then
@@ -268,6 +255,7 @@ local function parse_line(line, state, namespace, parent_function)
 						type = "undefined argument",
 						value = nil
 					}
+					state.variable_metadata[param.full_name] = {}
 				else
 					return nil, ("trying to define parameter %q, but a variable with the same name exists; at %s"):format(param.full_name, line.source)
 				end
@@ -278,6 +266,7 @@ local function parse_line(line, state, namespace, parent_function)
 						type = "undefined argument",
 						value = nil
 					}
+					state.variable_metadata[r.assignment.full_name] = {}
 				else
 					return nil, ("trying to define parameter %q, but a variable with the same name exists; at %s"):format(r.assignment.full_name, line.source)
 				end
@@ -298,6 +287,9 @@ local function parse_line(line, state, namespace, parent_function)
 			if rem:match("^:") then
 				rem = rem:match("^:(.*)$")
 				r.constant = true
+			elseif rem:match("^@") then
+				rem = rem:match("^@(.*)$")
+				r.persistent = true
 			end
 			-- get identifier
 			local identifier
@@ -328,7 +320,9 @@ local function parse_line(line, state, namespace, parent_function)
 			r.name = fqm
 			r.expression = exp
 			state.variables[fqm] = { type = "pending definition", value = { expression = nil, source = r.source } }
-			if r.constant then state.variable_constants[fqm] = true end
+			state.variable_metadata[fqm] = {}
+			if r.constant then state.variable_metadata[fqm].constant = true end
+			if r.persistent then state.variable_metadata[fqm].persistent = true end
 		end
 		-- add expression line after to perform the immediate execution
 		if run_immediately then
@@ -344,7 +338,6 @@ local function parse_line(line, state, namespace, parent_function)
 	elseif l:match("^%@") then
 		r.type = "return"
 		r.child = true
-		r.parent_function = parent_function
 		local expr = l:match("^%@(.*)$")
 		if expr:match("[^%s]") then
 			r.expression = expr
@@ -353,7 +346,7 @@ local function parse_line(line, state, namespace, parent_function)
 		end
 		-- custom code injection
 		if not line.children then line.children = {} end
-		inject(state, parent_function, "return", line.children)
+		inject(state, parent_resumable, "return", line.children)
 	-- text
 	elseif l:match("[^%s]") then
 		r.type = "text"
@@ -369,11 +362,11 @@ end
 --- parse an indented into final AST
 -- * block: in case of success
 -- * nil, err: in case of error
-local function parse_block(indented, state, namespace, parent_function)
+local function parse_block(indented, state, namespace, parent_resumable, in_scoped)
 	local block = { type = "block" }
 	for i, l in ipairs(indented) do
 		-- parsable line
-		local ast, err = parse_line(l, state, namespace, parent_function)
+		local ast, err = parse_line(l, state, namespace, parent_resumable, in_scoped)
 		if err then return nil, err end
 		-- add to block AST
 		if not ast.remove_from_block_ast then
@@ -392,7 +385,7 @@ local function parse_block(indented, state, namespace, parent_function)
 			if not ast.child then
 				return nil, ("line %s (%s) can't have children"):format(ast.source, ast.type)
 			else
-				local r, e = parse_block(l.children, state, ast.namespace or namespace, (ast.type == "function" and ast.subtype ~= "checkpoint") and ast or parent_function)
+				local r, e = parse_block(l.children, state, ast.namespace or namespace, (ast.type == "function" and ast.resumable) and ast or parent_resumable, (ast.type == "function" and ast.scoped) or in_scoped)
 				if not r then return r, e end
 				r.parent_line = ast
 				ast.child = r
@@ -507,8 +500,7 @@ local function parse(state, s, name, source)
 	local state_proxy = {
 		inject = {},
 		aliases = setmetatable({}, { __index = state.aliases }),
-		variable_constraints = setmetatable({}, { __index = state.variable_constraints }),
-		variable_constants = setmetatable({}, { __index = state.variable_constants }),
+		variable_metadata = setmetatable({}, { __index = state.variable_metadata }),
 		variables = setmetatable({}, { __index = state.aliases }),
 		functions = setmetatable({}, {
 			__index = function(self, key)
@@ -541,11 +533,8 @@ local function parse(state, s, name, source)
 	for k,v in pairs(state_proxy.aliases) do
 		state.aliases[k] = v
 	end
-	for k,v in pairs(state_proxy.variable_constraints) do
-		state.variable_constraints[k] = v
-	end
-	for k,v in pairs(state_proxy.variable_constants) do
-		state.variable_constants[k] = v
+	for k,v in pairs(state_proxy.variable_metadata) do
+		state.variable_metadata[k] = v
 	end
 	for k,v in pairs(state_proxy.variables) do
 		state.variables[k] = v

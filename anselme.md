@@ -214,6 +214,8 @@ Set some code that will be injected at specific places in all code loaded after 
  * `"function return"`: injected at the end of each return's children that is contained in a non-scoped function
  * `"checkpoint start"`: injected at the start of every checkpoint
  * `"checkpoint end"`: injected at the end of every checkpoint
+ * `"class start"`: injected at the start of every class
+ * `"class end"`: injected at the end of every class
  * `"scoped function start"`: injected at the start of every scoped function
  * `"scoped function end"`: injected at the end of every scoped function
  * `"scoped function return"`: injected at the end of each return's children that is contained in a scoped function
@@ -248,9 +250,14 @@ Define functions from Lua.
 
 Save/load script state
 
- Only saves variables full names and values, so make sure to not change important variables, checkpoints and functions names between a save and a load.
- Also only save variables with usable identifiers, so will skip functions with arguments, operators, etc. (i.e. every scoped functions).
- Loading should be done after loading all the game scripts (otherwise you will "variable already defined" errors).
+ Only saves persistent variables' full names and values.
+ Make sure to not change persistent variables names, class name, class attribute names, checkpoint names and functions names between a
+ save and a load (alias can of course be changed), as Anselme will not be able to match them to the old names stored in the save file.
+
+ If a variable is stored in the save file but is not marked as persistent in the current scripts (e.g. if you updated the Anselme scripts to
+ remove the persistence), it will not be loaded.
+
+ Loading should be done after loading all the game scripts (otherwise you will get "variable already defined" errors).
 
  Returns this VM.
 
