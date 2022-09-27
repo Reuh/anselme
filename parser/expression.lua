@@ -105,6 +105,15 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local l, e = parse_text(d, state, namespace, "string") -- parse interpolated expressions
 			if not l then return l, e end
 			return expression(r, state, namespace, current_priority, l)
+		-- text buffer
+		elseif s:match("^%%%[") then
+			local text = s:match("^%%(.*)$")
+			local v, r = parse_text(text, state, namespace, "text", "#~", true)
+			if not v then return nil, r end
+			return expression(r, state, namespace, current_priority, {
+				type = "text buffer",
+				text = v
+			})
 		-- paranthesis
 		elseif s:match("^%b()") then
 			local content, r = s:match("^(%b())(.*)$")
@@ -134,7 +143,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of list parenthesis expression"):format(r_paren) end
 			end
 			return expression(r, state, namespace, current_priority, {
-				type = "list_brackets",
+				type = "list brackets",
 				expression = exp
 			})
 		-- map parenthesis
@@ -149,7 +158,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of map parenthesis expression"):format(r_paren) end
 			end
 			return expression(r, state, namespace, current_priority, {
-				type = "map_brackets",
+				type = "map brackets",
 				expression = exp
 			})
 		-- identifier

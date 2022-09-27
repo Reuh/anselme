@@ -635,6 +635,8 @@ Default types are:
 
 * `object`: an object/record. Mutable. Can be created by calling a class function.
 
+* `event buffer`: an [event buffer](#event-buffer). Can be created using `%[text]`, where text is interpreted the same way as a text line (so you can perform interpolation, subtexts, add tags, etc.). Note that this only allows for text and flush events; if the text emit choices and custom events an error will be raised.
+
 Every type is immutable, except `list`, `map` and `object`.
 
 How conversions are handled from Anselme to Lua:
@@ -645,11 +647,17 @@ How conversions are handled from Anselme to Lua:
 
 * `string` -> `string`
 
+* `pair` -> `table`, with a single key-value pair.
+
+* `annotated` -> the annotated value (the annotation is stripped)
+
 * `list` -> `table` (purely sequential table).
 
 * `map` -> `table` (will map each key to a key in the Lua table).
 
-* `pair` -> `table`, with a single key-value pair.
+* `object` -> `table` (containing each object and class property and its value)
+
+* `event buffer` -> `table` (a list of events where each event is a list of two elements (event type and its eventual data), like `{ { "text", text = { { tags = {...}, text = "hello" } } }, { "flush" }, ... }`)
 
 How conservions are handled from Lua to Anselme:
 

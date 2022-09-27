@@ -29,11 +29,33 @@ local function eval(state, exp)
 			type = "string",
 			value = t
 		}
+	-- text buffer
+	elseif exp.type == "text buffer" then
+		-- eval text expression
+		local v, e = eval(state, exp.text)
+		if not v then return v, e end
+		local l = v.type == "list" and v.value or { v }
+		-- write resulting buffers (plural if loop in text expression) into a single result buffer
+		local buffer = {}
+		for _, item in ipairs(l) do
+			if item.type == "event buffer" then
+				for _, event in ipairs(item.value) do
+					if event.type ~= "text" and event.type ~= "flush" then
+						return nil, ("event %q can't be captured in a text buffer"):format(event.type)
+					end
+					table.insert(buffer, event)
+				end
+			end
+		end
+		return {
+			type = "event buffer",
+			value = buffer
+		}
 	-- parentheses
 	elseif exp.type == "parentheses" then
 		return eval(state, exp.expression)
 	-- list defined in brackets
-	elseif exp.type == "list_brackets" then
+	elseif exp.type == "list brackets" then
 		if exp.expression then
 			local v, e = eval(state, exp.expression)
 			if not v then return nil, e end
@@ -53,9 +75,9 @@ local function eval(state, exp)
 			}
 		end
 	-- map defined in brackets
-	elseif exp.type == "map_brackets" then
+	elseif exp.type == "map brackets" then
 		-- get constructing list
-		local list, e = eval(state, { type = "list_brackets", expression = exp.expression })
+		local list, e = eval(state, { type = "list brackets", expression = exp.expression })
 		if not list then return nil, e end
 		-- make map
 		local map = {}
@@ -166,7 +188,7 @@ local function eval(state, exp)
 		}
 	-- tag
 	elseif exp.type == "#" then
-		local right, righte = eval(state, { type = "map_brackets", expression = exp.right })
+		local right, righte = eval(state, { type = "map brackets", expression = exp.right })
 		if not right then return nil, righte end
 		tags:push(state, right)
 		local left, lefte = eval(state, exp.left)
@@ -202,7 +224,7 @@ local function eval(state, exp)
 		end
 	-- function
 	elseif exp.type == "function call" then
-		-- eval args: map_brackets
+		-- eval args: map brackets
 		local args = {}
 		local last_contiguous_positional = 0
 		if exp.argument then
@@ -444,7 +466,7 @@ local function eval(state, exp)
 					elseif lua_fn.mode == nil then
 						local l_lua = {}
 						for _, v in ipairs(final_args) do
-							local lv, e = to_lua(v)
+							local lv, e = to_lua(v, state)
 							if e then return nil, e end
 							table.insert(l_lua, lv)
 						end

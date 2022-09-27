@@ -97,6 +97,7 @@ local function parse_line(line, state, namespace, parent_function)
 			elseif lr:match("^%%") then
 				r.subtype = "class"
 				r.resume_boundary = true
+				r.properties = true
 				allow_params = false
 				allow_assign = false
 			elseif lr:match("^%!") then

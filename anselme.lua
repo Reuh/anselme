@@ -250,7 +250,7 @@ local interpreter_methods = {
 			if re then coroutine.yield("error", re) end
 			if rf then r = rf end
 		end
-		return to_lua(r)
+		return to_lua(r, self.state)
 	end,
 	--- Evaluate an expression (string) or block, optionally in a specific namespace (string, will use root namespace if not specified).
 	-- The expression can't yield events.
@@ -292,7 +292,7 @@ local interpreter_methods = {
 		elseif event ~= "return" then
 			return nil, ("evaluated expression generated an %q event; at %s"):format(event, self.state.interpreter.running_line.source)
 		else
-			return to_lua(data)
+			return to_lua(data, self.state)
 		end
 	end,
 }
@@ -730,7 +730,7 @@ local vm_mt = {
 		if not interpreter then return interpreter, err end
 		local r, e = interpreter:eval(expr, namespace)
 		if e then return r, e end
-		assert(interpreter:step() == "return") -- trigger merge / end-of-script things
+		assert(interpreter:step() == "return", "evaluated expression can not emit events") -- trigger merge / end-of-script things
 		return r
 	end
 }

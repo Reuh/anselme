@@ -53,6 +53,16 @@ local function parse(state)
 					end
 				end
 			end
+			-- get list of properties
+			-- (unlike scoped, does not includes subnamespaces)
+			if line.properties then
+				line.properties = {}
+				for name in pairs(state.variables) do
+					if name:sub(1, #namespace) == namespace and not name:sub(#namespace+1):match("%.") then
+						table.insert(line.properties, name)
+					end
+				end
+			end
 		end
 		-- expressions
 		if line.expression then

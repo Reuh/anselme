@@ -5,49 +5,6 @@ local common
 local identifier_pattern
 local copy
 
---- copy some text & process it to be suited to be sent to Lua in an event
-local function post_process_text(state, text)
-	local r = {}
-	-- copy into r & convert tags to lua
-	for _, t in ipairs(text) do
-		local tags = common.to_lua(t.tags)
-		if state.interpreter.base_lua_tags then
-			for k, v in pairs(state.interpreter.base_lua_tags) do
-				if tags[k] == nil then tags[k] = v end
-			end
-		end
-		table.insert(r, {
-			text = t.text,
-			tags = tags
-		})
-	end
-	-- remove trailing spaces
-	if state.feature_flags["strip trailing spaces"] then
-		local final = r[#r]
-		if final then
-			final.text = final.text:match("^(.-) *$")
-			if final.text == "" then
-				table.remove(r)
-			end
-		end
-	end
-	-- remove duplicate spaces
-	if state.feature_flags["strip duplicate spaces"] then
-		for i=1, #r-1 do
-			local a, b = r[i], r[i+1]
-			local na = #a.text:match(" *$")
-			local nb = #b.text:match("^ *")
-			if na > 0 and nb > 0 then -- remove duplicated spaces from second element first
-				b.text = b.text:match("^ *(.-)$")
-			end
-			if na > 1 then
-				a.text = a.text:match("^(.- ) *$")
-			end
-		end
-	end
-	return r
-end
-
 local function random_identifier()
 	local r = ""
 	for _=1, 16 do -- that's live 10^31 possibilities, ought to be enough for anyone
@@ -383,9 +340,9 @@ common = {
 	--- convert anselme value to lua
 	-- lua value: if success (may be nil!)
 	-- nil, err: if error
-	to_lua = function(val)
+	to_lua = function(val, state)
 		if atypes[val.type] and atypes[val.type].to_lua then
-			return atypes[val.type].to_lua(val.value)
+			return atypes[val.type].to_lua(val.value, state)
 		else
 			return nil, ("no Lua exporter for type %q"):format(val.type)
 		end
@@ -598,14 +555,14 @@ common = {
 				local choices
 				-- copy & process text buffer
 				if type == "text" then
-					buffer = post_process_text(state, event.value)
+					buffer = common.post_process_text(state, event.value)
 				-- copy & process choice buffer
 				elseif type == "choice" then
 					-- copy & process choice text content into buffer, and needed private state into choices for each choice
 					buffer = {}
 					choices = {}
 					for _, c in ipairs(event.value) do
-						table.insert(buffer, post_process_text(state, c))
+						table.insert(buffer, common.post_process_text(state, c))
 						table.insert(choices, c._state)
 					end
 					-- discard empty choices
@@ -647,7 +604,49 @@ common = {
 			end
 			return true
 		end
-	}
+	},
+	--- copy some text & process it to be suited to be sent to Lua in an event
+	post_process_text = function(state, text)
+		local r = {}
+		-- copy into r & convert tags to lua
+		for _, t in ipairs(text) do
+			local tags = common.to_lua(t.tags, state)
+			if state.interpreter.base_lua_tags then
+				for k, v in pairs(state.interpreter.base_lua_tags) do
+					if tags[k] == nil then tags[k] = v end
+				end
+			end
+			table.insert(r, {
+				text = t.text,
+				tags = tags
+			})
+		end
+		-- remove trailing spaces
+		if state.feature_flags["strip trailing spaces"] then
+			local final = r[#r]
+			if final then
+				final.text = final.text:match("^(.-) *$")
+				if final.text == "" then
+					table.remove(r)
+				end
+			end
+		end
+		-- remove duplicate spaces
+		if state.feature_flags["strip duplicate spaces"] then
+			for i=1, #r-1 do
+				local a, b = r[i], r[i+1]
+				local na = #a.text:match(" *$")
+				local nb = #b.text:match("^ *")
+				if na > 0 and nb > 0 then -- remove duplicated spaces from second element first
+					b.text = b.text:match("^ *(.-)$")
+				end
+				if na > 1 then
+					a.text = a.text:match("^(.- ) *$")
+				end
+			end
+		end
+		return r
+	end
 }
 
 package.loaded[...] = common
