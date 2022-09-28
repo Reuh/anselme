@@ -82,7 +82,8 @@ local merge_state = require(anselme_root.."interpreter.common").merge_state
 local stdfuncs = require(anselme_root.."stdlib.functions")
 local bootscript = require(anselme_root.."stdlib.bootscript")
 local copy = require(anselme_root.."common").copy
-local should_keep_variable = require(anselme_root.."interpreter.common").should_keep_variable
+local should_be_persisted = require(anselme_root.."interpreter.common").should_be_persisted
+local check_persistable = require(anselme_root.."interpreter.common").check_persistable
 
 -- wrappers for love.filesystem / luafilesystem
 local function list_directory(path)
@@ -168,7 +169,7 @@ local interpreter_methods = {
 				local line = self.state.interpreter.running_line
 				local namespace = self:current_namespace()
 				-- replace state with interrupted state
-				local exp, err = expression(expr, self.state.interpreter.global_state, namespace or "")
+				local exp, err = expression(expr, self.state.interpreter.global_state, namespace or "", "interpreter:interrupt")
 				if not exp then return "error", ("%s; during interrupt %q at %s"):format(err, expr, line and line.source or "unknown") end
 				local r, e = self.vm:run(exp)
 				if not r then return "error", e end
@@ -235,7 +236,7 @@ local interpreter_methods = {
 		end
 		-- parse
 		local err
-		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state.interpreter.global_state, namespace or "") end
+		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state.interpreter.global_state, namespace or "", "interpreter:run") end
 		if not expr then coroutine.yield("error", err) end
 		-- run
 		local r, e
@@ -267,7 +268,7 @@ local interpreter_methods = {
 		end
 		-- parse
 		local err
-		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state.interpreter.global_state, namespace or "") end
+		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state.interpreter.global_state, namespace or "", "interpreter:eval") end
 		if not expr then return nil, err end
 		-- run
 		local co = coroutine.create(function()
@@ -586,11 +587,15 @@ local vm_mt = {
 	--- Save script state.
 	-- See `vm:load`.
 	--
-	-- Returns save data.
+	-- Returns save data in case of success.
+	--
+	-- Returns nil, error message in case of error.
 	save = function(self)
 		local vars = {}
 		for k, v in pairs(self.state.variables) do
-			if should_keep_variable(self.state, k, v) then
+			if should_be_persisted(self.state, k, v) then
+				local s, e = check_persistable(v)
+				if not s then return nil, ("%s; while saving variable %s"):format(e, k) end
 				vars[k] = v
 			end
 		end
@@ -608,11 +613,11 @@ local vm_mt = {
 	--
 	-- Returns self in case of success.
 	--
-	-- Returns nil, error message in case of error
+	-- Returns nil, error message in case of error.
 	postload = function(self)
 		if #self.state.queued_lines > 0 then
 			local r, e = postparse(self.state)
-			if not r then return r, e end
+			if not r then return nil, e end
 		end
 		return self
 	end,
@@ -653,7 +658,7 @@ local vm_mt = {
 		if not s then return s, e end
 		--
 		local err
-		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state, namespace or "") end
+		if type(expr) ~= "table" then expr, err = expression(tostring(expr), self.state, namespace or "", "vm:run") end
 		if not expr then return expr, err end
 		-- interpreter state
 		local interpreter

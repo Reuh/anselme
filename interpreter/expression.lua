@@ -495,7 +495,7 @@ local function eval(state, exp)
 						ret, e = run(state, fn.child)
 					-- resume at last checkpoint
 					else
-						local expr, err = expression(checkpoint.value[1], state, fn.namespace)
+						local expr, err = expression(checkpoint.value[1], state, fn.namespace, "resume from checkpoint")
 						if not expr then return nil, err end
 						ret, e = eval(state, expr)
 					end
@@ -567,6 +567,11 @@ local function eval(state, exp)
 			type = "event buffer",
 			value = l
 		}
+	elseif exp.type == "nonpersistent" then
+		local v, e = eval(state, exp.expression)
+		if not v then return nil, e end
+		v.nonpersistent = true
+		return v
 	-- pass the value along (internal type, used for variable reference implicit calls)
 	elseif exp.type == "value passthrough" then
 		return exp.value

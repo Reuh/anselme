@@ -7,7 +7,7 @@ local copy
 
 local function random_identifier()
 	local r = ""
-	for _=1, 16 do -- that's live 10^31 possibilities, ought to be enough for anyone
+	for _=1, 16 do -- that's like 10^31 possibilities, ought to be enough for anyone
 		r = r .. string.char(math.random(32, 126))
 	end
 	return r
@@ -94,12 +94,40 @@ common = {
 	end,
 	--- mark a value as constant, recursively affecting all the potentially mutable subvalues
 	mark_constant = function(v)
-		if atypes[v.type] and atypes[v.type].mark_constant then
-			atypes[v.type].mark_constant(v)
+		return assert(common.traverse(v, function(v)
 			if v.hash_id then v.hash_id = nil end -- no longer need to compare by id
+		end, "mark_constant"))
+	end,
+	-- traverse v and all the subvalues it contains
+	-- callback(v) is called on every value after traversing its subvalues
+	-- if pertype_callback is given, will then call the associated callback(v) in the type table for each value
+	-- both those callbacks can either returns nil (success) or nil, err (error)
+	-- returns true
+	-- return nil, error
+	traverse = function(v, callback, pertype_callback)
+		if atypes[v.type] and atypes[v.type].traverse then
+			local r, e = atypes[v.type].traverse(v.value, callback, pertype_callback)
+			if not r then return nil, e end
+			r, e = callback(v)
+			if e then return nil, e end
+			if pertype_callback and atypes[v.type][pertype_callback] then
+				r, e = atypes[v.type][pertype_callback](v)
+				if e then return nil, e end
+			end
+			return true
 		else
-			error(("don't know how to mark type %s as constant"):format(v.type))
+			error(("don't know how to traverse type %s"):format(v.type))
 		end
+	end,
+	--- checks if the value can be persisted
+	-- returns true
+	-- returns nil, persist illegal message
+	check_persistable = function(v)
+		return common.traverse(v, function(v)
+			if v.nonpersistent then
+				return nil, ("can't put a non persistable %s into a persistent variable"):format(v.type)
+			end
+		end)
 	end,
 	--- returns a variable's value, evaluating a pending expression if neccessary
 	-- if you're sure the variable has already been evaluated, use state.variables[fqm] directly
@@ -134,6 +162,13 @@ common = {
 			-- check constant
 			if not bypass_constant_check then
 				local s, e = common.check_mutable(state, name)
+				if not s then
+					return nil, ("%s; while assigning value to variable %q"):format(e, name)
+				end
+			end
+			-- check persistence
+			if state.variable_metadata[name].persistent then
+				local s, e = common.check_persistable(val)
 				if not s then
 					return nil, ("%s; while assigning value to variable %q"):format(e, name)
 				end
@@ -220,7 +255,8 @@ common = {
 	--- returns true if a variable should be persisted on save
 	-- will exclude: variable that have not been evaluated yet and non-persistent variable
 	-- this will by consequence excludes variable in scoped variables (can be neither persistent not evaluated into global state), constants (can not be persistent), internal anselme variables (not marked persistent), etc.
-	should_keep_variable = function(state, name, value)
+	-- You may want to check afterwards with check_persistable to check if the value can actually be persisted.
+	should_be_persisted = function(state, name, value)
 		return value.type ~= "pending definition" and state.variable_metadata[name].persistent
 	end,
 	--- check truthyness of an anselme value

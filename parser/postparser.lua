@@ -13,7 +13,7 @@ local function parse(state)
 			for _, param in ipairs(line.params) do
 				-- get type constraints
 				if param.type_constraint then
-					local type_exp, rem = expression(param.type_constraint, state, namespace)
+					local type_exp, rem = expression(param.type_constraint, state, namespace, line.source)
 					if not type_exp then return nil, ("in type constraint, %s; at %s"):format(rem, line.source) end
 					if rem:match("[^%s]") then
 						return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param.full_name, rem, line.source)
@@ -22,7 +22,7 @@ local function parse(state)
 				end
 				-- get default value
 				if param.default then
-					local default_exp, rem = expression(param.default, state, namespace)
+					local default_exp, rem = expression(param.default, state, namespace, line.source)
 					if not default_exp then return nil, ("in default value, %s; at %s"):format(rem, line.source) end
 					if rem:match("[^%s]") then
 						return nil, ("unexpected characters after parameter %q: %q; at %s"):format(param.full_name, rem, line.source)
@@ -36,7 +36,7 @@ local function parse(state)
 			end
 			-- assignment argument
 			if line.assignment and line.assignment.type_constraint then
-				local type_exp, rem = expression(line.assignment.type_constraint, state, namespace)
+				local type_exp, rem = expression(line.assignment.type_constraint, state, namespace, line.source)
 				if not type_exp then return nil, ("in type constraint, %s; at %s"):format(rem, line.source) end
 				if rem:match("[^%s]") then
 					return nil, ("unexpected characters after parameter %q: %q; at %s"):format(line.assignment.full_name, rem, line.source)
@@ -66,8 +66,8 @@ local function parse(state)
 			end
 		end
 		-- expressions
-		if line.expression then
-			local exp, rem = expression(line.expression, state, namespace)
+		if line.expression and type(line.expression) == "string" then
+			local exp, rem = expression(line.expression, state, namespace, line.source)
 			if not exp then return nil, ("%s; at %s"):format(rem, line.source) end
 			if rem:match("[^%s]") then return nil, ("expected end of expression before %q; at %s"):format(rem, line.source) end
 			line.expression = exp
@@ -76,7 +76,7 @@ local function parse(state)
 				state.variables[line.name].value.expression = line.expression
 				-- parse constraints
 				if line.constraint then
-					local type_exp, rem2 = expression(line.constraint, state, namespace)
+					local type_exp, rem2 = expression(line.constraint, state, namespace, line.source)
 					if not type_exp then return nil, ("in type constraint, %s; at %s"):format(rem2, line.source) end
 					if rem2:match("[^%s]") then
 						return nil, ("unexpected characters after variable %q: %q; at %s"):format(line.name, rem2, line.source)
@@ -92,9 +92,13 @@ local function parse(state)
 			if err:match("[^%s]") then return nil, ("expected end of expression in end-of-text expression before %q"):format(err) end
 			line.text = txt
 		end
-		state.queued_lines[i] = nil
+		table.remove(state.queued_lines, i)
 	end
-	return true
+	if #state.queued_lines > 0 then -- lines were added during post-parsing, process these
+		return parse(state)
+	else
+		return true
+	end
 end
 
 package.loaded[...] = parse

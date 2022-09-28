@@ -125,7 +125,12 @@ if args.script or args.game then
 		print("error", err)
 	end
 	if args.save then
-		print(inspect(vm:save()))
+		local s, e = vm:save()
+		if s then
+			print(inspect(s))
+		else
+			print(("Error while saving: %s"):format(e))
+		end
 	end
 
 -- test mode
@@ -147,7 +152,7 @@ else
 		-- simple random to get the same result across lua versions
 		local prev = 0
 		local function badrandom(a, b)
-			prev = (42424242424242 * prev + 242) % 2^32
+			prev = (15485863 * prev + 11) % 2038074743
 			return a + prev % (b-a+1)
 		end
 		function math.random(a, b)

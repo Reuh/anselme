@@ -945,7 +945,7 @@ From lowest to highest priority:
 ```
 _;_   _;
 _:=_  _+=_  _-=_  _//=_  _/=_  _*=_  _%=_  _^=_
-_,_
+_,_   $_
 _~?_  _~_   _#_
 _=_
 _|_   _&_
@@ -1029,6 +1029,10 @@ This only works on strings:
 `&fn`: returns a function reference to the given function. If it is already a reference, returns the same reference.
 
 `a!fn(args)`: call the function or function reference with the variable as first argument. Parantheses are optional.
+
+`$x`: returns a reference to an anonymous function that returns the expression `x`. Note that the returned reference *can not* be persisted.
+
+`$(parameters)x`: returns a reference to an anonymous function that returns the expression `x` and takes some parameters (same syntax as function definition lines). Note that the returned reference *can not* be persisted.
 
 ##### Variable references
 

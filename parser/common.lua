@@ -187,7 +187,7 @@ common = {
 			end
 			-- expr
 			if r:match("^{") then
-				local exp, rem = expression(r:gsub("^{", ""), state, namespace)
+				local exp, rem = expression(r:gsub("^{", ""), state, namespace, "interpolated expression")
 				if not exp then return nil, rem end
 				if not rem:match("^%s*}") then return nil, ("expected closing } at end of expression before %q"):format(rem) end
 				-- wrap in format() call
@@ -213,7 +213,7 @@ common = {
 				end
 			-- binop expression at the end of the text
 			elseif allow_binops and r:match(("^[%s]"):format(allow_binops)) then
-				local exp, rem = expression(r, state, namespace, nil, text_exp)
+				local exp, rem = expression(r, state, namespace, "text binop suffix", nil, text_exp)
 				if not exp then return nil, rem end
 				return exp, rem
 			elseif r == "" then

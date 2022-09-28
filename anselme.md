@@ -266,7 +266,9 @@ Save/load script state
 Save script state.
  See `vm:load`.
 
- Returns save data.
+ Returns save data in case of success.
+
+ Returns nil, error message in case of error.
 
 ### vm:postload ()
 
@@ -275,7 +277,7 @@ Perform parsing that needs to be done after loading code.
 
  Returns self in case of success.
 
- Returns nil, error message in case of error
+ Returns nil, error message in case of error.
 
 ### vm:enable (...)
 

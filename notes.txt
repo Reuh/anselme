@@ -108,3 +108,7 @@ Disadvantages:
 TODO: write a translation guide/simplify translation process
 
 TODO: make injection nicer. Some decorator-like syntax? to select specific functions to inject to
+
+TODO: allow multiple aliases for a single identifier?
+
+TODO: closures. Especially for when returning a subfunction from a scoped variable.

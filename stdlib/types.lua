@@ -1,4 +1,4 @@
-local format, to_lua, from_lua, events, anselme, escape, hash, mark_constant, update_hashes, get_variable, find_function_variant_from_fqm, post_process_text
+local format, to_lua, from_lua, events, anselme, escape, hash, update_hashes, get_variable, find_function_variant_from_fqm, post_process_text, traverse
 
 local types = {}
 types.lua = {
@@ -88,7 +88,7 @@ types.anselme = {
 		hash = function()
 			return "nil()"
 		end,
-		mark_constant = function() end,
+		traverse = function() return true end,
 	},
 	number = {
 		format = function(val)
@@ -100,7 +100,7 @@ types.anselme = {
 		hash = function(val)
 			return ("n(%s)"):format(val)
 		end,
-		mark_constant = function() end,
+		traverse = function() return true end,
 	},
 	string = {
 		format = function(val)
@@ -112,7 +112,7 @@ types.anselme = {
 		hash = function(val)
 			return ("s(%s)"):format(val)
 		end,
-		mark_constant = function() end,
+		traverse = function() return true end,
 	},
 	pair = {
 		format = function(val)
@@ -136,9 +136,12 @@ types.anselme = {
 			if not v then return v, ve end
 			return ("p(%s=%s)"):format(k, v)
 		end,
-		mark_constant = function(v)
-			mark_constant(v.value[1])
-			mark_constant(v.value[2])
+		traverse = function(val, callback, pertype_callback)
+			local k, ke = traverse(val[1], callback, pertype_callback)
+			if not k then return k, ke end
+			local v, ve = traverse(val[2], callback, pertype_callback)
+			if not v then return v, ve end
+			return true
 		end,
 	},
 	annotated = {
@@ -161,9 +164,12 @@ types.anselme = {
 			if not v then return v, ve end
 			return ("a(%s::%s)"):format(k, v)
 		end,
-		mark_constant = function(v)
-			mark_constant(v.value[1])
-			mark_constant(v.value[2])
+		traverse = function(val, callback, pertype_callback)
+			local k, ke = traverse(val[1], callback, pertype_callback)
+			if not k then return k, ke end
+			local v, ve = traverse(val[2], callback, pertype_callback)
+			if not v then return v, ve end
+			return true
 		end,
 	},
 	list = {
@@ -195,12 +201,16 @@ types.anselme = {
 			end
 			return ("l(%s)"):format(table.concat(l, ","))
 		end,
+		traverse = function(val, callback, pertype_callback)
+			for _, item in ipairs(val) do
+				local s, e = traverse(item, callback, pertype_callback)
+				if not s then return s, e end
+			end
+			return true
+		end,
 		mark_constant = function(v)
 			v.constant = true
-			for _, item in ipairs(v.value) do
-				mark_constant(item)
-			end
-		end
+		end,
 	},
 	map = {
 		mutable = true,
@@ -239,12 +249,17 @@ types.anselme = {
 			table.sort(l)
 			return ("m(%s)"):format(table.concat(l, ","))
 		end,
+		traverse = function(val, callback, pertype_callback)
+			for _, v in pairs(val) do
+				local ks, ke = traverse(v[1], callback, pertype_callback)
+				if not ks then return ks, ke end
+				local vs, ve = traverse(v[2], callback, pertype_callback)
+				if not vs then return vs, ve end
+			end
+			return true
+		end,
 		mark_constant = function(v)
 			v.constant = true
-			for _, val in pairs(v.value) do
-				mark_constant(val[1])
-				mark_constant(val[2])
-			end
 			update_hashes(v)
 		end,
 	},
@@ -296,6 +311,13 @@ types.anselme = {
 			table.sort(attributes)
 			return ("%%(%s;%s)"):format(val.class, table.concat(attributes, ","))
 		end,
+		traverse = function(v, callback, pertype_callback)
+			for _, attrib in pairs(v.attributes) do
+				local s, e = traverse(attrib, callback, pertype_callback)
+				if not s then return s, e end
+			end
+			return true
+		end,
 		mark_constant = function(v)
 			v.constant = true
 		end,
@@ -312,8 +334,7 @@ types.anselme = {
 		hash = function(val)
 			return ("&f(%s)"):format(table.concat(val, ", "))
 		end,
-		mark_constant = function() end,
-
+		traverse = function() return true end,
 	},
 	["variable reference"] = {
 		format = function(val)
@@ -323,9 +344,9 @@ types.anselme = {
 		hash = function(val)
 			return ("&v(%s)"):format(val)
 		end,
-		mark_constant = function() end,
+		traverse = function() return true end,
 	},
-	-- event buffer: can only be used outside of Anselme internal for text & flush events (through text buffers)
+	-- event buffer: can only be used outside of Anselme internals for text & flush events (through text buffers)
 	["event buffer"] = {
 		format = function(val) -- triggered from subtexts
 			local v, e = events:write_buffer(anselme.running.state, val)
@@ -365,13 +386,25 @@ types.anselme = {
 			end
 			return ("eb(%s)"):format(table.concat(l, ","))
 		end,
-		mark_constant = function() end,
+		traverse = function(val, callback, pertype_callback)
+			for _, event in ipairs(val) do
+				if event.type == "text" then
+					for _, t in ipairs(event.value) do
+						local s, e = traverse(t.tags, callback, pertype_callback)
+						if not s then return s, e end
+					end
+				elseif event.type ~= "flush" then
+					return nil, ("event %q in event buffer cannot be traversed"):format(event.type)
+				end
+			end
+			return true
+		end,
 	},
 }
 
 package.loaded[...] = types
 local common = require((...):gsub("stdlib%.types$", "interpreter.common"))
-format, to_lua, from_lua, events, hash, mark_constant, update_hashes, get_variable, post_process_text = common.format, common.to_lua, common.from_lua, common.events, common.hash, common.mark_constant, common.update_hashes, common.get_variable, common.post_process_text
+format, to_lua, from_lua, events, hash, update_hashes, get_variable, post_process_text, traverse = common.format, common.to_lua, common.from_lua, common.events, common.hash, common.update_hashes, common.get_variable, common.post_process_text, common.traverse
 anselme = require((...):gsub("stdlib%.types$", "anselme"))
 local pcommon = require((...):gsub("stdlib%.types$", "parser.common"))
 escape, find_function_variant_from_fqm = pcommon.escape, pcommon.find_function_variant_from_fqm

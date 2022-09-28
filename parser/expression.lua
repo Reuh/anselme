@@ -1,4 +1,4 @@
-local identifier_pattern, format_identifier, find, escape, find_function, parse_text, find_all, split, find_function_from_list
+local identifier_pattern, format_identifier, find, escape, find_function, parse_text, find_all, split, find_function_from_list, preparse
 
 --- binop priority
 local binops_prio = {
@@ -26,7 +26,7 @@ local implicit_multiply_priority = 9.5 -- just above / so 1/2x gives 1/(2x)
 local prefix_unops_prio = {
 	[1] = {},
 	[2] = {},
-	[3] = {},
+	[3] = { "$" },
 	[4] = {},
 	[5] = {},
 	[6] = {},
@@ -81,11 +81,22 @@ local function get_text_in_litteral(s, start_pos)
 	end
 	return d, r
 end
+local function random_identifier_alpha()
+	local r = ""
+	for _=1, 18 do -- that's live 10^30 possibilities, ought to be enough for anyone
+		if math.random(1, 2) == 1 then
+			r = r .. string.char(math.random(65, 90))
+		else
+			r = r .. string.char(math.random(97, 122))
+		end
+	end
+	return r
+end
 
 --- parse an expression
 -- return expr, remaining if success
 -- returns nil, err if error
-local function expression(s, state, namespace, current_priority, operating_on)
+local function expression(s, state, namespace, source, current_priority, operating_on)
 	s = s:match("^%s*(.*)$")
 	current_priority = current_priority or 0
 	if not operating_on then
@@ -95,7 +106,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			if not d then
 				d, r = s:match("^(%d+)(.*)$")
 			end
-			return expression(r, state, namespace, current_priority, {
+			return expression(r, state, namespace, source, current_priority, {
 				type = "number",
 				value = tonumber(d)
 			})
@@ -104,13 +115,13 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local d, r = get_text_in_litteral(s)
 			local l, e = parse_text(d, state, namespace, "string") -- parse interpolated expressions
 			if not l then return l, e end
-			return expression(r, state, namespace, current_priority, l)
+			return expression(r, state, namespace, source, current_priority, l)
 		-- text buffer
 		elseif s:match("^%%%[") then
 			local text = s:match("^%%(.*)$")
 			local v, r = parse_text(text, state, namespace, "text", "#~", true)
 			if not v then return nil, r end
-			return expression(r, state, namespace, current_priority, {
+			return expression(r, state, namespace, source, current_priority, {
 				type = "text buffer",
 				text = v
 			})
@@ -121,13 +132,13 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local exp
 			if content:match("[^%s]") then
 				local r_paren
-				exp, r_paren = expression(content, state, namespace)
+				exp, r_paren = expression(content, state, namespace, source)
 				if not exp then return nil, "invalid expression inside parentheses: "..r_paren end
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of parenthesis expression"):format(r_paren) end
 			else
 				exp = { type = "nil", value = nil }
 			end
-			return expression(r, state, namespace, current_priority, {
+			return expression(r, state, namespace, source, current_priority, {
 				type = "parentheses",
 				expression = exp
 			})
@@ -138,11 +149,11 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local exp
 			if content:match("[^%s]") then
 				local r_paren
-				exp, r_paren = expression(content, state, namespace)
+				exp, r_paren = expression(content, state, namespace, source)
 				if not exp then return nil, "invalid expression inside list parentheses: "..r_paren end
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of list parenthesis expression"):format(r_paren) end
 			end
-			return expression(r, state, namespace, current_priority, {
+			return expression(r, state, namespace, source, current_priority, {
 				type = "list brackets",
 				expression = exp
 			})
@@ -153,11 +164,11 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			local exp
 			if content:match("[^%s]") then
 				local r_paren
-				exp, r_paren = expression(content, state, namespace)
+				exp, r_paren = expression(content, state, namespace, source)
 				if not exp then return nil, "invalid expression inside map parentheses: "..r_paren end
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of map parenthesis expression"):format(r_paren) end
 			end
-			return expression(r, state, namespace, current_priority, {
+			return expression(r, state, namespace, source, current_priority, {
 				type = "map brackets",
 				expression = exp
 			})
@@ -168,7 +179,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			-- string:value pair shorthand using =
 			if r:match("^=[^=]") and pair_priority > current_priority then
 				local val
-				val, r = expression(r:match("^=(.*)$"), state, namespace, pair_priority)
+				val, r = expression(r:match("^=(.*)$"), state, namespace, source, pair_priority)
 				if not val then return val, r end
 				local args = {
 					type = "list",
@@ -181,7 +192,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 				-- find compatible variant
 				local variant, err = find_function(state, namespace, "_=_", args, true)
 				if not variant then return variant, err end
-				return expression(r, state, namespace, current_priority, variant)
+				return expression(r, state, namespace, source, current_priority, variant)
 			end
 			-- variables
 			-- if name isn't a valid variable, suffix call: detect if a prefix is valid variable, suffix _._ call is handled in the binop section below
@@ -193,7 +204,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					if i < #nl then
 						r = "."..table.concat(nl, ".", i+1, #nl)..r
 					end
-					return expression(r, state, namespace, current_priority, {
+					return expression(r, state, namespace, source, current_priority, {
 						type = "variable",
 						name = vfqm
 					})
@@ -207,14 +218,14 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					if i < #nl then
 						r = "."..table.concat(nl, ".", i+1, #nl)..r
 					end
-					return expression(r, state, namespace, current_priority, {
+					return expression(r, state, namespace, source, current_priority, {
 						type = "potential function",
 						called_name = name,
 						names = lfnqm
 					})
 				end
 			end
-			return nil, ("can't find function or variable named %q"):format(name)
+			return nil, ("can't find function or variable named %q in namespace %q"):format(name, namespace)
 		end
 		-- prefix unops
 		for prio, oplist in ipairs(prefix_unops_prio) do
@@ -224,15 +235,15 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					local sright = s:match("^"..escaped.."(.*)$")
 					-- function and variable reference
 					if op == "&" then
-						local right, r = expression(sright, state, namespace, prio)
+						local right, r = expression(sright, state, namespace, source, prio)
 						if not right then return nil, ("invalid expression after unop %q: %s"):format(op, r) end
 						if right.type == "potential function" then
-							return expression(r, state, namespace, current_priority, {
+							return expression(r, state, namespace, source, current_priority, {
 								type = "function reference",
 								names = right.names
 							})
 						elseif right.type == "variable" then
-							return expression(r, state, namespace, current_priority, {
+							return expression(r, state, namespace, source, current_priority, {
 								type = "variable reference",
 								name = right.name,
 								expression = right
@@ -241,16 +252,45 @@ local function expression(s, state, namespace, current_priority, operating_on)
 							-- find variant
 							local variant, err = find_function(state, namespace, op.."_", right, true)
 							if not variant then return variant, err end
-							return expression(r, state, namespace, current_priority, variant)
+							return expression(r, state, namespace, source, current_priority, variant)
 						end
+					-- anonymous function
+					elseif op == "$" then
+						-- get eventual arguments
+						local params = "()"
+						if sright:match("^%b()") then
+							params, sright = sright:match("^(%b())(.*)$")
+						end
+						-- define function
+						local fn_name = ("%s🥸%s"):format(namespace, random_identifier_alpha())
+						local s, e = preparse(state, (":$%s%s\n\t@%s"):format(fn_name, params, fn_name), "", source)
+						if not s then return nil, e end
+						local fn = state.functions[fn_name][1]
+						-- parse return expression
+						local right, r = expression(sright, state, fn.namespace, source, prio)
+						if not right then return nil, ("invalid expression after unop %q: %s"):format(op, r) end
+						-- put expression in return line
+						for _, c in ipairs(fn.child) do
+							if c.type == "return" and c.expression == fn_name then
+								c.expression = right
+							end
+						end
+						-- return reference to created function
+						return expression(r, state, namespace, source, current_priority, {
+							type = "nonpersistent",
+							expression = {
+								type = "function reference",
+								names = { fn_name }
+							}
+						})
 					-- normal prefix unop
 					else
-						local right, r = expression(sright, state, namespace, prio)
+						local right, r = expression(sright, state, namespace, source, prio)
 						if not right then return nil, ("invalid expression after unop %q: %s"):format(op, r) end
 						-- find variant
 						local variant, err = find_function(state, namespace, op.."_", right, true)
 						if not variant then return variant, err end
-						return expression(r, state, namespace, current_priority, variant)
+						return expression(r, state, namespace, source, current_priority, variant)
 					end
 				end
 			end
@@ -275,7 +315,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					-- get arguments
 					if content:match("[^%s]") then
 						local err
-						args, err = expression(content, state, namespace)
+						args, err = expression(content, state, namespace, source)
 						if not args then return args, err end
 						if err:match("[^%s]") then return nil, ("unexpected %q at end of argument list"):format(err) end
 					end
@@ -285,12 +325,12 @@ local function expression(s, state, namespace, current_priority, operating_on)
 				-- find compatible variant
 				local variant, err = find_function_from_list(state, namespace, operating_on.called_name, operating_on.names, args, paren_call, implicit_call)
 				if not variant then return variant, err end
-				return expression(r, state, namespace, current_priority, variant)
+				return expression(r, state, namespace, source, current_priority, variant)
 			-- implicit call on variable reference. Might be canceled afterwards due to finding a higher priority operator.
 			elseif operating_on.type == "variable" or (operating_on.type == "function call" and operating_on.called_name == "_._") then
 				local implicit_call_variant, err = find_function(state, namespace, "_!", { type = "value passthrough" }, false, true)
 				if not implicit_call_variant then return implicit_call_variant, err end
-				return expression(s, state, namespace, current_priority, {
+				return expression(s, state, namespace, source, current_priority, {
 					type = "implicit call if reference",
 					variant = implicit_call_variant,
 					expression = operating_on
@@ -323,7 +363,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 								-- get arguments
 								if content:match("[^%s]") then
 									local err
-									args, err = expression(content, state, namespace)
+									args, err = expression(content, state, namespace, source)
 									if not args then return args, err end
 									if err:match("[^%s]") then return nil, ("unexpected %q at end of argument map"):format(err) end
 								end
@@ -353,7 +393,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 							-- find compatible variant
 							local variant, err = find_function(state, namespace, name, args, paren_call)
 							if not variant then return variant, err end
-							return expression(r, state, namespace, current_priority, variant)
+							return expression(r, state, namespace, source, current_priority, variant)
 						-- namespace
 						elseif op == "." and sright:match("^"..identifier_pattern) then
 							local name, r = sright:match("^("..identifier_pattern..")(.-)$")
@@ -366,14 +406,14 @@ local function expression(s, state, namespace, current_priority, operating_on)
 							}
 							local variant, err = find_function(state, namespace, "_._", args, true)
 							if not variant then return variant, err end
-							return expression(r, state, namespace, current_priority, variant)
+							return expression(r, state, namespace, source, current_priority, variant)
 						-- other binops
 						else
-							local right, r = expression(sright, state, namespace, prio)
+							local right, r = expression(sright, state, namespace, source, prio)
 							if right then
 								-- list constructor (can't do this through a function call since we need to build a list for its arguments)
 								if op == "," then
-									return expression(r, state, namespace, current_priority, {
+									return expression(r, state, namespace, source, current_priority, {
 										type = "list",
 										left = operating_on,
 										right = right
@@ -408,18 +448,18 @@ local function expression(s, state, namespace, current_priority, operating_on)
 										end
 										-- rewrite function to perform assignment
 										operating_on.assignment = right
-										return expression(r, state, namespace, current_priority, operating_on)
+										return expression(r, state, namespace, source, current_priority, operating_on)
 									elseif operating_on.type ~= "variable" then
 										return nil, ("trying to perform assignment on a %s expression"):format(operating_on.type)
 									end
 									-- assign to a variable
-									return expression(r, state, namespace, current_priority, {
+									return expression(r, state, namespace, source, current_priority, {
 										type = ":=",
 										left = operating_on,
 										right = right
 									})
 								elseif op == "&" or op == "|" or op == "~?" or op == "~" or op == "#" then
-									return expression(r, state, namespace, current_priority, {
+									return expression(r, state, namespace, source, current_priority, {
 										type = op,
 										left = operating_on,
 										right = right
@@ -434,7 +474,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 									}
 									local variant, err = find_function(state, namespace, "_"..op.."_", args, true)
 									if not variant then return variant, err end
-									return expression(r, state, namespace, current_priority, variant)
+									return expression(r, state, namespace, source, current_priority, variant)
 								end
 							end
 						end
@@ -458,12 +498,12 @@ local function expression(s, state, namespace, current_priority, operating_on)
 						-- remove ! after a previously-assumed implicit function call
 						if op == "!" and operating_on.type == "function call" and operating_on.implicit_call then
 							operating_on.implicit_call = false
-							return expression(r, state, namespace, current_priority, operating_on)
+							return expression(r, state, namespace, source, current_priority, operating_on)
 						-- normal suffix unop
 						else
 							local variant, err = find_function(state, namespace, "_"..op, operating_on, true)
 							if not variant then return variant, err end
-							return expression(r, state, namespace, current_priority, variant)
+							return expression(r, state, namespace, source, current_priority, variant)
 						end
 					end
 				end
@@ -479,19 +519,19 @@ local function expression(s, state, namespace, current_priority, operating_on)
 			content = content:gsub("^%(", ""):gsub("%)$", "")
 			-- get arguments
 			if content:match("[^%s]") then
-				local right, r_paren = expression(content, state, namespace)
+				local right, r_paren = expression(content, state, namespace, source)
 				if not right then return right, r_paren end
 				if r_paren:match("[^%s]") then return nil, ("unexpected %q at end of index/call expression"):format(r_paren) end
 				args = { type = "list", left = args, right = right }
 			end
 			local variant, err = find_function(state, namespace, "()", args, true)
 			if not variant then return variant, err end
-			return expression(r, state, namespace, current_priority, variant)
+			return expression(r, state, namespace, source, current_priority, variant)
 		end
 		-- implicit multiplication
 		if implicit_multiply_priority > current_priority then
 			if s:match("^"..identifier_pattern) then
-				local right, r = expression(s, state, namespace, implicit_multiply_priority)
+				local right, r = expression(s, state, namespace, source, implicit_multiply_priority)
 				if right then
 					local args = {
 						type = "list",
@@ -500,7 +540,7 @@ local function expression(s, state, namespace, current_priority, operating_on)
 					}
 					local variant, err = find_function(state, namespace, "_*_", args, true)
 					if not variant then return variant, err end
-					return expression(r, state, namespace, current_priority, variant)
+					return expression(r, state, namespace, source, current_priority, variant)
 				end
 			end
 		end
@@ -512,5 +552,7 @@ end
 package.loaded[...] = expression
 local common = require((...):gsub("expression$", "common"))
 identifier_pattern, format_identifier, find, escape, find_function, parse_text, find_all, split, find_function_from_list = common.identifier_pattern, common.format_identifier, common.find, common.escape, common.find_function, common.parse_text, common.find_all, common.split, common.find_function_from_list
+
+preparse = require((...):gsub("expression$", "preparser"))
 
 return expression
