@@ -108,7 +108,7 @@ run_line = function(state, line)
 				if not iv then return nil, ("%s; at %s"):format(ie, line.source) end
 			end
 		end
-	elseif line.type == "flush_events" then
+	elseif line.type == "flush events" then
 		local v, e = events:flush(state)
 		if not v then return nil, ("%s; in event flush at %s"):format(e, line.source) end
 	elseif line.type == "function" and line.subtype == "checkpoint" then
@@ -151,36 +151,8 @@ run_block = function(state, block, resume_from_there, i, j)
 		end
 		i = i + 1
 	end
-	-- if we are exiting a checkpoint block, mark it as ran and update checkpoint
-	-- (when resuming from a checkpoint, execution is resumed from inside the checkpoint, the line.subtype=="checkpoint" check in run_line is never called)
-	-- (and we want this to be done after executing the checkpoint block anyway)
+	-- if we reach the end of a checkpoint block (we are resuming execution from a checkpoint), merge state
 	if block.parent_line and block.parent_line.type == "function" and block.parent_line.subtype == "checkpoint" then
-		local parent_line = block.parent_line
-		local reached, reachede = get_variable(state, parent_line.namespace.."🏁")
-		if not reached then return nil, reachede end
-		local seen, seene = get_variable(state, parent_line.namespace.."👁️")
-		if not seen then return nil, seene end
-		local checkpoint, checkpointe = get_variable(state, parent_line.parent_resumable.namespace.."🔖")
-		if not checkpoint then return nil, checkpointe end
-		local s, e = set_variable(state, parent_line.namespace.."👁️", {
-			type = "number",
-			value = seen.value + 1
-		})
-		if not s then return nil, e end
-		s, e = set_variable(state, parent_line.namespace.."🏁", {
-			type = "number",
-			value = reached.value + 1
-		})
-		if not s then return nil, e end
-		-- don't update checkpoint if an already more precise checkpoint is set
-		-- (since we will go up the whole checkpoint hierarchy when resuming from a nested checkpoint)
-		if checkpoint.type == "nil" or not checkpoint.value[1]:match("^"..escape(parent_line.name)) then
-			s, e = set_variable(state, parent_line.parent_resumable.namespace.."🔖", {
-				type = "function reference",
-				value = { parent_line.name }
-			})
-			if not s then return nil, e end
-		end
 		merge_state(state)
 	end
 	-- go up hierarchy if asked to resume

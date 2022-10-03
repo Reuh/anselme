@@ -1,18 +1,22 @@
 local _={}
+_[29]={}
+_[28]={}
+_[27]={}
+_[26]={}
 _[25]={}
 _[24]={}
 _[23]={}
 _[22]={}
 _[21]={}
-_[20]={tags=_[25],text="2"}
-_[19]={tags=_[25],text="Reached: "}
-_[18]={tags=_[24],text="1"}
-_[17]={tags=_[24],text="Seen: "}
-_[16]={tags=_[23],text="seen!"}
-_[15]={tags=_[22],text="1"}
-_[14]={tags=_[22],text="Reached: "}
-_[13]={tags=_[21],text="0"}
-_[12]={tags=_[21],text="Seen: "}
+_[20]={text="1",tags=_[29]}
+_[19]={text="Reached: ",tags=_[28]}
+_[18]={text="1",tags=_[27]}
+_[17]={text="Seen: ",tags=_[26]}
+_[16]={text="seen!",tags=_[25]}
+_[15]={text="1",tags=_[24]}
+_[14]={text="Reached: ",tags=_[23]}
+_[13]={text="0",tags=_[22]}
+_[12]={text="Seen: ",tags=_[21]}
 _[11]={_[19],_[20]}
 _[10]={_[17],_[18]}
 _[9]={_[16]}
@@ -27,17 +31,17 @@ _[1]={"text",_[7]}
 return {_[1],_[2],_[3],_[4],_[5],_[6]}
 --[[
 { "text", { {
-      tags = <1>{},
+      tags = {},
       text = "Seen: "
     }, {
-      tags = <table 1>,
+      tags = {},
       text = "0"
     } } }
 { "text", { {
-      tags = <1>{},
+      tags = {},
       text = "Reached: "
     }, {
-      tags = <table 1>,
+      tags = {},
       text = "1"
     } } }
 { "text", { {
@@ -45,18 +49,18 @@ return {_[1],_[2],_[3],_[4],_[5],_[6]}
       text = "seen!"
     } } }
 { "text", { {
-      tags = <1>{},
+      tags = {},
       text = "Seen: "
     }, {
-      tags = <table 1>,
+      tags = {},
       text = "1"
     } } }
 { "text", { {
-      tags = <1>{},
+      tags = {},
       text = "Reached: "
     }, {
-      tags = <table 1>,
-      text = "2"
+      tags = {},
+      text = "1"
     } } }
 { "return" }
 ]]--

@@ -397,8 +397,15 @@ local function eval(state, exp)
 			local fn = selected_variant.variant
 			if fn.type ~= "function" then
 				return nil, ("unknown function type %q"):format(fn.type)
-			-- checkpoint: no args and resume execution
+			-- checkpoint: no args and can resume execution
 			elseif fn.subtype == "checkpoint" then
+				-- set current checkpoint
+				local s, e = set_variable(state, fn.parent_resumable.namespace.."🔖", {
+					type = "function reference",
+					value = { fn.name }
+				})
+				if not s then return nil, e end
+				-- run checkpoint content, eventually resuming
 				local r, e = run(state, fn.child, not paren_call)
 				if not r then return nil, e end
 				return r
@@ -423,8 +430,6 @@ local function eval(state, exp)
 					checkpoint, checkpointe = get_variable(state, fn.namespace.."🔖")
 					if not checkpoint then return nil, checkpointe end
 				end
-				local seen, seene = get_variable(state, fn.namespace.."👁️")
-				if not seen then return nil, seene end
 				-- execute lua functions
 				-- I guess we could technically skip getting & updating the seen and checkpoints vars since they can't be used from Anselme
 				-- but it's also kinda fun to known how many time a function was ran
@@ -501,12 +506,6 @@ local function eval(state, exp)
 					end
 					if not ret then return nil, e end
 				end
-				-- update function vars
-				local s, e = set_variable(state, fn.namespace.."👁️", {
-					type = "number",
-					value = seen.value + 1
-				})
-				if not s then return nil, e end
 				-- for classes: build resulting object
 				if fn.subtype == "class" and ret and ret.type == "nil" then
 					ret = {

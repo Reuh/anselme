@@ -247,7 +247,7 @@ local interpreter_methods = {
 		end
 		if not r then coroutine.yield("error", e) end
 		if self.state.interpreter.current_event then -- flush final events
-			local rf, re = run_line(self.state, { type = "flush_events" })
+			local rf, re = run_line(self.state, { type = "flush events" })
 			if re then coroutine.yield("error", re) end
 			if rf then r = rf end
 		end
@@ -540,6 +540,8 @@ local vm_mt = {
 	--
 	-- * `signature`: string, full signature of the function
 	-- * `fn`: function (Lua function or table, see examples in `stdlib/functions.lua`)
+	--
+	-- Alternatively, can also take a table as a sole argument to load several functions: { ["signature"] = fn, ... }
 	--
 	-- Returns this VM.
 	loadfunction = function(self, signature, fn)

@@ -105,6 +105,7 @@ local function parse_line(line, state, namespace, parent_resumable, in_scoped)
 				allow_params = false
 				allow_assign = false
 				keep_in_ast = true
+				if not parent_resumable then return nil, ("checkpoint definition line is not in a function; at %s"):format(line.source) end
 				r.parent_resumable = parent_resumable -- store parent resumable function and run checkpoint when line is read
 			else
 				error("unknown function line type")
@@ -248,6 +249,8 @@ local function parse_line(line, state, namespace, parent_resumable, in_scoped)
 			-- custom code injection
 			inject(state, r, "start", line.children, 2)
 			inject(state, r, "end", line.children)
+			-- update 👁️ variable
+			table.insert(line.children, { content = "~👁️+=1", source = line.source })
 			-- define args
 			for _, param in ipairs(r.params) do
 				if not state.variables[param.full_name] then
@@ -336,6 +339,7 @@ local function parse_line(line, state, namespace, parent_resumable, in_scoped)
 		r.expression = ("{%s}"):format(expr)
 	-- return
 	elseif l:match("^%@") then
+		if not parent_resumable then return nil, ("return line is not in a function; at %s"):format(line.source) end
 		r.type = "return"
 		r.child = true
 		local expr = l:match("^%@(.*)$")
@@ -347,13 +351,15 @@ local function parse_line(line, state, namespace, parent_resumable, in_scoped)
 		-- custom code injection
 		if not line.children then line.children = {} end
 		inject(state, parent_resumable, "return", line.children)
+		-- update 👁️ variable
+		table.insert(line.children, { content = "~👁️+=1", source = line.source })
 	-- text
 	elseif l:match("[^%s]") then
 		r.type = "text"
 		r.text = l
 	-- flush events
 	else
-		r.type = "flush_events"
+		r.type = "flush events"
 	end
 	if not r.type then return nil, ("unknown line %s type"):format(line.source) end
 	return r

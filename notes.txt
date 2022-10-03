@@ -83,8 +83,6 @@ TODO: fn/checkpoint/tag: maybe consider them a regular func call that takes chil
      a
      ~ tag.pop()
 
-TODO: perform seen/reached/etc default variable not in interpreter but using parse-time macro
-
 TODO: make language simple enough to be able to reimplement it in, say, nim. Especially the AST interpreter (we could precompile a lot of stuff...)
 
 TODO: test reacheability of script paths + visualization of different branches the script can take. For one of those overarching story visualization thingy.

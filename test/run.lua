@@ -152,7 +152,7 @@ else
 		-- simple random to get the same result across lua versions
 		local prev = 0
 		local function badrandom(a, b)
-			prev = (15485863 * prev + 11) % 2038074743
+			prev = (4241 * prev + 11) % 6997
 			return a + prev % (b-a+1)
 		end
 		function math.random(a, b)

@@ -359,8 +359,8 @@ Functions can return a value using a [return line](#lines-that-can-t-have-childr
 
 Functions always have the following variables defined in its namespace by default:
 
-`👁️`: number, number of times the function was executed before
-`🔖`: function reference, last reached checkpoint. `nil` if no checkpoint reached.
+`👁️`: number, number of times the function was executed/resumed before (incremented when reaching the end of the function or a return line)
+`🔖`: function reference, last reached checkpoint. `()` (nil) if no checkpoint reached. (updated when reaching a checkpoint or directly executing a checkpoint)
 
 These variables are persistent, unless the function is scoped.
 
@@ -382,8 +382,8 @@ When executing the parent function after this checkpoint has been reached (using
 
 Checkpoints always have the following variable defined in its namespace by default:
 
-`👁️`: number, number of times the checkpoint was executed before
-`🏁`: number, number of times the checkpoint was reached before (includes times where it was resumed from and executed)
+`👁️`: number, number of times the checkpoint was executed/resumed before (incremented when reaching the end of the function or a return line)
+`🏁`: number, number of times the checkpoint was reached before (incremented when reaching the checkpoint line; not incremented when resuming from/executing the checkpoint directly)
 
 These variables are persistent.
 
@@ -901,7 +901,7 @@ But in the cases when you want to manually set the current checkpoint, you can c
         b
     c
 
-Force run the function starting from checkpoint, will write "b" and "c" and set the current checkpoint to "checkpoint":
+Set the current checkpoint to "checkpoint" and force run the function starting from this checkpoint, will write "b" and "c":
 ~ f.checkpoint
 
 Will correctly resumes from the last set checkpoint, and write "b" and "c":
@@ -921,7 +921,7 @@ You can also only execute the checkpoints' children code only by using a paranth
         b
     c
 
-Run the checkpoint only, will only write "b" and set the current checkpoint to "checkpoint":
+Set the current checkpoint to "checkpoint" and run this checkpoint only, will only write "b":
 ~ f.checkpoint()
 
 And will resume from the checkpoint like before:

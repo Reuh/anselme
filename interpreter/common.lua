@@ -41,7 +41,7 @@ common = {
 			end
 		end
 		-- scoping: since merging means we will re-copy every variable from global state again, we need to simulate this
-		-- behavious for scoped variables (to have consistent references for mutables values in particular), including
+		-- behaviour for scoped variables (to have consistent references for mutables values in particular), including
 		-- scopes that aren't currently active
 		fix_not_modified_references(mt.scoped, copy_cache, modified_tables) -- replace not modified values in scope with original before re-copying to keep consistent references
 		for _, scopes in pairs(mt.scoped) do
