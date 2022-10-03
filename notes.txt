@@ -85,9 +85,6 @@ TODO: fn/checkpoint/tag: maybe consider them a regular func call that takes chil
 
 TODO: perform seen/reached/etc default variable not in interpreter but using parse-time macro
 
-TODO: no function call without () (reference to fn instead?). Fn could be stored in save but replaced with new versions on code reload... -> how to track these references?
-     if we make fn first class this means anonymous fn, is it ok? -> no way to track anonymous fn, so no.
-
 TODO: make language simple enough to be able to reimplement it in, say, nim. Especially the AST interpreter (we could precompile a lot of stuff...)
 
 TODO: test reacheability of script paths + visualization of different branches the script can take. For one of those overarching story visualization thingy.

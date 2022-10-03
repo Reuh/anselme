@@ -12,42 +12,42 @@ run_line = function(state, line)
 	if line.type == "condition" then
 		line.parent_block.last_condition_success = nil
 		local v, e = eval(state, line.expression)
-		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; at %s"):format(e, line.source) end
 		if truthy(v) then
 			line.parent_block.last_condition_success = true
 			v, e = run_block(state, line.child)
-			if e then return v, e end
+			if e then return nil, e end
 			if v then return v end
 		end
 	elseif line.type == "else-condition" then
 		if not line.parent_block.last_condition_success then
 			local v, e = eval(state, line.expression)
-			if not v then return v, ("%s; at %s"):format(e, line.source) end
+			if not v then return nil, ("%s; at %s"):format(e, line.source) end
 			if truthy(v) then
 				line.parent_block.last_condition_success = true
 				v, e = run_block(state, line.child)
-				if e then return v, e end
+				if e then return nil, e end
 				if v then return v end
 			end
 		end
 	elseif line.type == "while" then
 		line.parent_block.last_condition_success = nil
 		local v, e = eval(state, line.expression)
-		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; at %s"):format(e, line.source) end
 		while truthy(v) do
 			line.parent_block.last_condition_success = true
 			v, e = run_block(state, line.child)
-			if e then return v, e end
+			if e then return nil, e end
 			if v then return v end
 			-- next iteration
 			v, e = eval(state, line.expression)
-			if not v then return v, ("%s; at %s"):format(e, line.source) end
+			if not v then return nil, ("%s; at %s"):format(e, line.source) end
 		end
 	elseif line.type == "choice" then
 		local v, e = events:make_space_for(state, "choice")
-		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; in automatic event flush at %s"):format(e, line.source) end
 		v, e = eval(state, line.text)
-		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; at %s"):format(e, line.source) end
 		local l = v.type == "list" and v.value or { v }
 		-- convert text events to choices
 		for _, item in ipairs(l) do
@@ -78,39 +78,39 @@ run_line = function(state, line)
 					end
 				end
 				local iv, ie = events:write_buffer(state, final_buffer)
-				if not iv then return iv, ("%s; at %s"):format(ie, line.source) end
+				if not iv then return nil, ("%s; at %s"):format(ie, line.source) end
 			end
 		end
 	elseif line.type == "tag" then
 		local v, e = eval(state, line.expression)
-		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; at %s"):format(e, line.source) end
 		tags:push(state, v)
 		v, e = run_block(state, line.child)
 		tags:pop(state)
-		if e then return v, e end
+		if e then return nil, e end
 		if v then return v end
 	elseif line.type == "return" then
 		local v, e = eval(state, line.expression)
-		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; at %s"):format(e, line.source) end
 		local cv, ce = run_block(state, line.child)
-		if ce then return cv, ce end
+		if ce then return nil, ce end
 		if cv then return cv end
 		return v
 	elseif line.type == "text" then
 		local v, e = events:make_space_for(state, "text") -- do this before any evaluation start
-		if not v then return v, ("%s; in automatic event flush at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; in automatic event flush at %s"):format(e, line.source) end
 		v, e = eval(state, line.text)
-		if not v then return v, ("%s; at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; at %s"):format(e, line.source) end
 		local l = v.type == "list" and v.value or { v }
 		for _, item in ipairs(l) do
 			if item.type == "event buffer" then
 				local iv, ie = events:write_buffer(state, item.value)
-				if not iv then return iv, ("%s; at %s"):format(ie, line.source) end
+				if not iv then return nil, ("%s; at %s"):format(ie, line.source) end
 			end
 		end
 	elseif line.type == "flush_events" then
 		local v, e = events:flush(state)
-		if not v then return v, ("%s; in event flush at %s"):format(e, line.source) end
+		if not v then return nil, ("%s; in event flush at %s"):format(e, line.source) end
 	elseif line.type == "function" and line.subtype == "checkpoint" then
 		local reached, reachede = get_variable(state, line.namespace.."🏁")
 		if not reached then return nil, reachede end
@@ -146,7 +146,7 @@ run_block = function(state, block, resume_from_there, i, j)
 		-- run line
 		if not skip then
 			local v, e = run_line(state, line)
-			if e then return v, e end
+			if e then return nil, e end
 			if v then return v end
 		end
 		i = i + 1
@@ -199,10 +199,9 @@ run_block = function(state, block, resume_from_there, i, j)
 			tags:pop(state)
 		end
 		local v, e = run_block(state, parent_line.parent_block, resume_from_there, parent_line.parent_position+1)
-		if e then return v, e end
-		if v then return v, e end
+		if e then return nil, e end
+		if v then return v end
 	end
-	return nil
 end
 
 -- returns var in case of success
@@ -217,7 +216,7 @@ local function run(state, block, resume_from_there, i, j)
 		while parent_line and not parent_line.resumable do
 			if parent_line.type == "tag" then
 				local v, e = eval(state, parent_line.expression)
-				if not v then return v, ("%s; at %s"):format(e, parent_line.source) end
+				if not v then return nil, ("%s; at %s"):format(e, parent_line.source) end
 				table.insert(tags_to_add, v)
 			end
 			parent_line = parent_line.parent_block.parent_line
@@ -236,7 +235,7 @@ local function run(state, block, resume_from_there, i, j)
 		tags:trim(state, tags_len)
 	end
 	-- return
-	if e then return v, e end
+	if e then return nil, e end
 	if v then
 		return v
 	else

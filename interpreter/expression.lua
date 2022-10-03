@@ -508,8 +508,8 @@ local function eval(state, exp)
 				})
 				if not s then return nil, e end
 				-- for classes: build resulting object
-				if fn.subtype == "class" then
-					local object = {
+				if fn.subtype == "class" and ret and ret.type == "nil" then
+					ret = {
 						type = "annotated",
 						value = {
 							{
@@ -525,9 +525,6 @@ local function eval(state, exp)
 							}
 						}
 					}
-					if ret and ret.type == "nil" then
-						ret = object
-					end
 				end
 				-- pop scope
 				if fn.scoped then
