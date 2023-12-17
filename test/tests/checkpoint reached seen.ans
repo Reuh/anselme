@@ -1,8 +1,0 @@
-:! p
-	seen!
-
-Seen: {p.seen}
-
-Reached: {p.reached}
-
-@p ~ !p.seen

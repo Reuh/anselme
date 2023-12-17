@@ -1,0 +1,12 @@
+This document describes how to use the main Anselme modules. This is generated automatically from the source files.
+
+Note that this file only describes the `anselme` and `state.State` modules, which are only a selection of what I consider to be the "public API" of Anselme that I will try to keep stable.
+If you need more advanced control on Anselme, feel free to look into the other source files to find more; the most useful functions should all be reasonably commented.
+
+# anselme
+
+{{anselme.lua}}
+
+# State
+
+{{state/State.lua}}

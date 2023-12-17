@@ -1,7 +1,0 @@
-:$ fn(x::number)
-	x
-
-:$ fn(a::number)
-	a
-
-~ fn(5)
