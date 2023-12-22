@@ -32,7 +32,7 @@ return primary {
 		if type_check:match(rem, 0, nil_val) then
 			local exp
 			exp, rem = type_check:parse(source, rem, nil, 0, nil_val)
-			type_check_exp = exp.arguments.list[2]
+			type_check_exp = exp.arguments.positional[2]
 		end
 
 		return ident:to_symbol{ constant = constant, persistent = persistent, exported = exported, type_check = type_check_exp }:set_source(source), rem

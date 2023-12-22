@@ -18,7 +18,7 @@ return infix {
 	end,
 
 	build_ast = function(self, left, right)
-		left.arguments:set_assignment(right)
+		left.arguments:add_assignment(right)
 		return Call:new(left.func, left.arguments) -- recreate Call since we modified left.arguments
 	end,
 }

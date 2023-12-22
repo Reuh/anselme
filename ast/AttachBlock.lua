@@ -1,7 +1,7 @@
 local ast = require("ast")
 local Identifier, Quote
 
-local attached_block_identifier
+local attached_block_identifier, attached_block_symbol
 
 local AttachBlock = ast.abstract.Node {
 	type = "attach block",
@@ -26,7 +26,7 @@ local AttachBlock = ast.abstract.Node {
 
 	_eval = function(self, state)
 		state.scope:push_partial(attached_block_identifier)
-		state.scope:define(attached_block_identifier:to_symbol(), Quote:new(self.block)) -- _ is always wrapped in a Call when it appears
+		state.scope:define(attached_block_symbol, Quote:new(self.block)) -- _ is always wrapped in a Call when it appears
 		local exp = self.expression:eval(state)
 		state.scope:pop()
 
@@ -35,7 +35,7 @@ local AttachBlock = ast.abstract.Node {
 
 	_prepare = function(self, state)
 		state.scope:push_partial(attached_block_identifier)
-		state.scope:define(attached_block_identifier:to_symbol(), Quote:new(self.block))
+		state.scope:define(attached_block_symbol, Quote:new(self.block))
 		self.expression:prepare(state)
 		state.scope:pop()
 	end
@@ -45,5 +45,6 @@ package.loaded[...] = AttachBlock
 Identifier, Quote = ast.Identifier, ast.Quote
 
 attached_block_identifier = Identifier:new("_")
+attached_block_symbol = attached_block_identifier:to_symbol()
 
 return AttachBlock

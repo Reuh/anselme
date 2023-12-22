@@ -7,51 +7,48 @@ local ArgumentTuple
 ArgumentTuple = ast.abstract.Node {
 	type = "argument tuple",
 
-	list = nil, -- list of expr
-	named = nil, -- { [string] = expr, ... }
-	assignment = nil, -- expr
-	arity = 0,
+	arguments = nil,
+
+	positional = nil, -- list of expr - can be sparse! but for each hole there should be an associated named arg
+	named = nil, -- { [string name] = arg1, [pos number] = string name, ... }
+	assignment = nil, -- expr; always the last argument if set
+	arity = 0, -- number of arguments, i.e. number of positional+named+assignment arguments
 
 	init = function(self, ...)
-		self.list = { ... }
+		self.positional = { ... }
 		self.named = {}
-		self.arity = #self.list
+		self.arity = #self.positional
 	end,
-	insert_positional = function(self, position, val) -- only for construction
-		local l = {}
-		for k, v in pairs(self.list) do
-			if k >= position then l[k+1] = v
-			else l[k] = v end
-		end
-		l[position] = val
-		self.list = l
+	add_positional = function(self, val) -- only for construction
+		assert(not (self.positional[self.arity+1]) or self.assignment)
 		self.arity = self.arity + 1
+		self.positional[self.arity] = val
 	end,
-	set_positional = function(self, position, val) -- only for construction
-		assert(not self.list[position])
-		self.list[position] = val
-		self.arity = self.arity + 1
-	end,
-	set_named = function(self, identifier, val) -- only for construction
+	add_named = function(self, identifier, val) -- only for construction
 		local name = identifier.name
-		assert(not self.named[name])
+		assert(not (self.named[name] or self.assignment))
+		self.arity = self.arity + 1
 		self.named[name] = val
-		self.arity = self.arity + 1
+		self.named[self.arity] = name
 	end,
-	set_assignment = function(self, val) -- only for construction
+	add_assignment = function(self, val) -- only for construction
 		assert(not self.assignment)
-		self.assignment = val
 		self.arity = self.arity + 1
+		self.assignment = val
 		self.format_priority = operator_priority["_=_"]
 	end,
 
 	_format = function(self, state, priority, ...)
 		local l = {}
-		for _, e in pairs(self.list) do
-			table.insert(l, e:format(state, operator_priority["_,_"], ...))
-		end
-		for n, e in pairs(self.named) do
-			table.insert(l, n.."="..e:format_right(state, operator_priority["_=_"], ...))
+		for i=1, self.arity do
+			if self.positional[i] then
+				table.insert(l, self.positional[i]:format(state, operator_priority["_,_"], ...))
+			elseif self.named[i] then
+				local name = self.named[i]
+				table.insert(l, name.."="..self.named[name]:format_right(state, operator_priority["_=_"], ...))
+			else
+				break
+			end
 		end
 		local s = ("(%s)"):format(table.concat(l, ", "))
 		if self.assignment then
@@ -61,59 +58,43 @@ ArgumentTuple = ast.abstract.Node {
 	end,
 
 	traverse = function(self, fn, ...)
-		for _, e in pairs(self.list) do
-			fn(e, ...)
+		for i=1, self.arity do
+			if self.positional[i] then
+				fn(self.positional[i], ...)
+			elseif self.named[i] then
+				fn(self.named[self.named[i]], ...)
+			else
+				fn(self.assignment, ...)
+			end
 		end
-		for _, e in pairs(self.named) do
-			fn(e, ...)
-		end
-		if self.assignment then
-			fn(self.assignment, ...)
-		end
-	end,
-
-	-- need to redefine hash to include a table.sort as pairs() in :traverse is non-deterministic
-	-- as well as doesn't account for named arguments names
-	_hash = function(self)
-		local t = {}
-		for _, e in pairs(self.list) do
-			table.insert(t, e:hash())
-		end
-		for n, e in pairs(self.named) do
-			table.insert(t, ("%s=%s"):format(n, e:hash()))
-		end
-		if self.assignment then
-			table.insert(t, self.assignment:hash())
-		end
-		table.sort(t)
-		return ("%s<%s>"):format(self.type, table.concat(t, ";"))
 	end,
 
 	_eval = function(self, state)
 		local r = ArgumentTuple:new()
-		for i, e in pairs(self.list) do
-			r:set_positional(i, e:eval(state))
-		end
-		for n, e in pairs(self.named) do
-			r:set_named(Identifier:new(n), e:eval(state))
-		end
-		if self.assignment then
-			r:set_assignment(self.assignment:eval(state))
+		for i=1, self.arity do
+			if self.positional[i] then
+				r:add_positional(self.positional[i]:eval(state))
+			elseif self.named[i] then
+				r:add_named(Identifier:new(self.named[i]), self.named[self.named[i]]:eval(state))
+			else
+				r:add_assignment(self.assignment:eval(state))
+			end
 		end
 		return r
 	end,
 
+	-- recreate new argumenttuple with a first positional argument added
 	with_first_argument = function(self, first)
 		local r = ArgumentTuple:new()
-		r:set_positional(1, first)
-		for i, e in pairs(self.list) do
-			r:set_positional(i+1, e)
-		end
-		for n, e in pairs(self.named) do
-			r:set_named(Identifier:new(n), e)
-		end
-		if self.assignment then
-			r:set_assignment(self.assignment)
+		r:add_positional(first)
+		for i=1, self.arity do
+			if self.positional[i] then
+				r:add_positional(self.positional[i])
+			elseif self.named[i] then
+				r:add_named(Identifier:new(self.named[i]), self.named[self.named[i]])
+			else
+				r:add_assignment(self.assignment)
+			end
 		end
 		return r
 	end,
@@ -140,9 +121,9 @@ ArgumentTuple = ast.abstract.Node {
 		for i, param in ipairs(params.list) do
 			-- search in args
 			local arg
-			if self.list[i] then
+			if self.positional[i] then
 				used_list[i] = true
-				arg = self.list[i]
+				arg = self.positional[i]
 			elseif self.named[param.identifier.name] then
 				used_named[param.identifier.name] = true
 				arg = self.named[param.identifier.name]
@@ -166,14 +147,17 @@ ArgumentTuple = ast.abstract.Node {
 			end
 		end
 		-- check for unused arguments
-		for i in pairs(self.list) do
-			if not used_list[i] then
-				return false, ("%sth positional argument is unused"):format(i)
-			end
-		end
-		for n in pairs(self.named) do
-			if not used_named[n] then
-				return false, ("named argument %s is unused"):format(n)
+		for i=1, self.arity do
+			if self.positional[i] then
+				if not used_list[i] then
+					return false, ("%sth positional argument is unused"):format(i)
+				end
+			elseif self.named[i] then
+				if not used_named[self.named[i]] then
+					return false, ("named argument %s is unused"):format(self.named[i])
+				end
+			else
+				break
 			end
 		end
 		if self.assignment and not used_assignment then
@@ -186,8 +170,8 @@ ArgumentTuple = ast.abstract.Node {
 	-- assume :match_parameter_tuple was already called and returned true
 	bind_parameter_tuple = function(self, state, params)
 		for i, arg in ipairs(params.list) do
-			if self.list[i] then
-				state.scope:define(arg.identifier:to_symbol(), self.list[i])
+			if self.positional[i] then
+				state.scope:define(arg.identifier:to_symbol(), self.positional[i])
 			elseif self.named[arg.identifier.name] then
 				state.scope:define(arg.identifier:to_symbol(), self.named[arg.identifier.name])
 			elseif i == params.max_arity and params.assignment then

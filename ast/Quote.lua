@@ -1,5 +1,6 @@
 -- prevent an expression from being immediately evaluated, and instead only evaluate it when the node is explicitely called
--- it can be used to evaluate the expression on demand, as if the quote call AST was simply replaced by the unevaluated associated expression AST (like a macro)
+-- it can be used to evaluate the expression on demand, as if the quote call AST was simply replaced by the unevaluated associated expression AST.
+-- kinda like a function, but no parameters, no closure and no new scope
 -- keep in mind that this thus bypass any scoping rule, closure, etc.
 --
 -- used for infix operators where the evaluation of the right term depends of the left one (lazy boolean operators, conditionals, etc.)

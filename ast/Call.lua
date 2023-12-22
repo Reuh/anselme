@@ -52,14 +52,14 @@ Call = ast.abstract.Node {
 			if Identifier:is(self.func) then
 				local name, arity = self.func.name, self.arguments.arity
 				if infix[name] and arity == 2 then
-					local left = self.arguments.list[1]:format(...)
-					local right = self.arguments.list[2]:format_right(...)
+					local left = self.arguments.positional[1]:format(...)
+					local right = self.arguments.positional[2]:format_right(...)
 					return ("%s %s %s"):format(left, name:match("^_(.*)_$"), right)
 				elseif prefix[name] and arity == 1 then
-					local right = self.arguments.list[1]:format_right(...)
+					local right = self.arguments.positional[1]:format_right(...)
 					return ("%s%s"):format(name:match("^(.*)_$"), right)
 				elseif suffix[name] and arity == 1 then
-					local left = self.arguments.list[1]:format(...)
+					local left = self.arguments.positional[1]:format(...)
 					return ("%s%s"):format(left, name:match("^_(.*)$"))
 				end
 			end

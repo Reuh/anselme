@@ -19,8 +19,7 @@ return infix {
 
 	build_ast = function(self, left, right)
 		if Call:is(right) then
-			right.arguments:insert_positional(1, left)
-			return right
+			return Call:new(right.func, right.arguments:with_first_argument(left))
 		else
 			return Call:new(right, ArgumentTuple:new(left))
 		end

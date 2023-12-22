@@ -70,9 +70,9 @@ local function add_to_set(set, val)
 end
 
 --# class creation logic #--
-local new_class, class_mt
+local class_mt
 
-new_class = function(...)
+local function new_class(...)
 	local class = {}
 	local include = {...}
 	for i=1, #include do

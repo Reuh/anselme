@@ -2,10 +2,8 @@
 
 local primary = require("parser.expression.primary.primary")
 
-local StringInterpolation = require("ast.StringInterpolation")
-
 local ast = require("ast")
-local String = ast.String
+local String, StringInterpolation = ast.String, ast.StringInterpolation
 
 local expression_to_ast = require("parser.expression.to_ast")
 

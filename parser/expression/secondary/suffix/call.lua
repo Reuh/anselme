@@ -27,11 +27,11 @@ return secondary {
 			exp = Tuple:new(exp)
 		end
 
-		for i, v in ipairs(exp.list) do
+		for _, v in ipairs(exp.list) do
 			if Assignment:is(v) then
-				args:set_named(v.identifier, v.expression)
+				args:add_named(v.identifier, v.expression)
 			else
-				args:set_positional(i, v)
+				args:add_positional(v)
 			end
 		end
 
