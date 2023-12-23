@@ -58,14 +58,8 @@ Table = ast.abstract.Runtime {
 		return s:has(key)
 	end,
 	iter = function(self, state)
-		local t, h = self.branched:get(state).table, nil
-		return function()
-			local e
-			h, e = next(t, h)
-			if h == nil then return nil
-			else return e[1], e[2]
-			end
-		end
+		local s = self.branched:get(state)
+		return s:iter()
 	end,
 
 	to_struct = function(self, state)

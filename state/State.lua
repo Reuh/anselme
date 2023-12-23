@@ -6,6 +6,7 @@ local ScopeStack = require("state.ScopeStack")
 local tag_manager = require("state.tag_manager")
 local event_manager = require("state.event_manager")
 local resumable_manager = require("state.resumable_manager")
+local translation_manager = require("state.translation_manager")
 local uuid = require("common").uuid
 local parser = require("parser")
 local binser = require("lib.binser")
@@ -32,6 +33,7 @@ State = class {
 			event_manager:setup(self)
 			tag_manager:setup(self)
 			resumable_manager:setup(self)
+			translation_manager:setup(self)
 		end
 	end,
 

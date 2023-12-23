@@ -3,7 +3,8 @@ local Identifier, Quote
 
 local attached_block_identifier, attached_block_symbol
 
-local AttachBlock = ast.abstract.Node {
+local AttachBlock
+AttachBlock = ast.abstract.Node {
 	type = "attach block",
 
 	expression = nil,
@@ -38,7 +39,18 @@ local AttachBlock = ast.abstract.Node {
 		state.scope:define(attached_block_symbol, Quote:new(self.block))
 		self.expression:prepare(state)
 		state.scope:pop()
-	end
+	end,
+
+	-- class method: if the block identifier is defined in the current scope, wrap node in an AttachBlock so the block is still defined in this node
+	-- used to preserve the defined _ block without the need to build a full closure
+	-- used e.g. for -> translation, as we want to preserve _ while still executing the translation in the Translatable scope and not restore a different scope from a closure
+	-- (operates on un-evaluated nodes!)
+	preserve = function(self, state, node)
+		if state.scope:defined_in_current(attached_block_symbol) then
+			return AttachBlock:new(node, state.scope:get(attached_block_identifier).expression) -- unwrap Quote as that will be rewrap on eval
+		end
+		return node
+	end,
 }
 
 package.loaded[...] = AttachBlock

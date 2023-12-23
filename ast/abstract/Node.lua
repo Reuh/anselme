@@ -44,6 +44,9 @@ traverse = {
 	end,
 	hash = function(self, t)
 		table.insert(t, self:hash())
+	end,
+	list_translatable = function(self, t)
+		self:list_translatable(t)
 	end
 }
 
@@ -117,6 +120,15 @@ Node = class {
 	-- prepare this node. can mutate the node (considered to be part of construction).
 	_prepare = function(self, state)
 		self:traverse(traverse.prepare, state)
+	end,
+
+	-- generate a list of translatable nodes that appear in this node
+	-- should only be called on non-runtime nodes
+	-- if a node is translatable, redefine this to add it to the table - note that it shouldn't call :traverse or :list_translatable on its children, as nested translations should not be needed
+	list_translatable = function(self, t)
+		t = t or {}
+		self:traverse(traverse.list_translatable, t)
+		return t
 	end,
 
 	-- same as eval, but make the evaluated expression as a resume boundary

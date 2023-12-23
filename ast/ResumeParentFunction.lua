@@ -26,11 +26,11 @@ local ResumeParentFunction = ast.abstract.Node {
 	end,
 
 	_eval = function(self, state)
-		if resumable_manager:resuming(state, self) then
+		if self:resuming(state) then
 			self.expression:eval(state)
-			return resumable_manager:get_data(state, self):call(state, ArgumentTuple:new())
+			return self:get_data(state):call(state, ArgumentTuple:new())
 		else
-			resumable_manager:set_data(state, self, resumable_manager:capture(state, 1))
+			self:set_data(state, resumable_manager:capture(state, 1))
 			return self.expression:eval(state)
 		end
 	end

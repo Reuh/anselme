@@ -112,7 +112,17 @@ Struct = ast.abstract.Runtime {
 	has = function(self, key)
 		local hash = key:hash()
 		return not not self.table[hash]
-	end
+	end,
+	iter = function(self)
+		local t, h = self.table, nil
+		return function()
+			local e
+			h, e = next(t, h)
+			if h == nil then return nil
+			else return e[1], e[2]
+			end
+		end
+	end,
 }
 
 package.loaded[...] = Struct

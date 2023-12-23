@@ -1,7 +1,7 @@
 local string = require("parser.expression.primary.string")
 
 local ast = require("ast")
-local TextInterpolation = ast.TextInterpolation
+local TextInterpolation, Translatable = ast.TextInterpolation, ast.Translatable
 
 return string {
 	type = "text",
@@ -11,6 +11,7 @@ return string {
 	interpolation = TextInterpolation,
 
 	parse = function(self, source, str, limit_pattern)
+		local start_source = source:clone()
 		local interpolation, rem = string.parse(self, source, str, limit_pattern)
 
 		-- restore | when chaining with a choice operator
@@ -19,6 +20,6 @@ return string {
 			source:increment(-1)
 		end
 
-		return interpolation, rem
+		return Translatable:new(interpolation):set_source(start_source), rem
 	end
 }

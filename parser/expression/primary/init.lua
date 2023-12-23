@@ -28,6 +28,7 @@ local primaries = {
 	r("prefix.negation"),
 	r("prefix.not"),
 	r("prefix.mutable"),
+	r("prefix.translatable"),
 }
 
 return {

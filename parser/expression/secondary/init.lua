@@ -8,6 +8,7 @@ local secondaries = {
 	-- binary infix operators
 	-- 1
 	r("infix.semicolon"),
+	r("infix.translate"),
 	-- 2
 	r("infix.tuple"),
 	r("infix.tag"),
