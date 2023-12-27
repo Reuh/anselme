@@ -31,6 +31,7 @@ return function(main_state)
 		"text",
 		"structures",
 		"closure",
-		"checkpoint"
+		"checkpoint",
+		"persist",
 	})
 end

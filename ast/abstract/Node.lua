@@ -85,6 +85,7 @@ Node = class {
 		local s, r = pcall(self._eval, self, state)
 		if s then
 			r._evaluated = true
+			r:set_source(self.source)
 			return r
 		else
 			error(format_error(state, self, r), 0)

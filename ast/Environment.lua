@@ -16,7 +16,11 @@ local VariableMetadata = ast.abstract.Runtime {
 		self.branched = Branched:new(state, value)
 	end,
 	get = function(self, state)
-		return self.branched:get(state)
+		if self.symbol.alias then
+			return self.branched:get(state):call(state, ArgumentTuple:new())
+		else
+			return self.branched:get(state)
+		end
 	end,
 	set = function(self, state, value)
 		assert(not self.symbol.constant, ("trying to change the value of constant %s"):format(self.symbol.string))
@@ -24,7 +28,13 @@ local VariableMetadata = ast.abstract.Runtime {
 			local r = self.symbol.type_check:call(state, ArgumentTuple:new(value))
 			if not r:truthy() then error(("type check failure for %s; %s does not satisfy %s"):format(self.symbol.string, value, self.symbol.type_check)) end
 		end
-		self.branched:set(state, value)
+		if self.symbol.alias then
+			local assign_args = ArgumentTuple:new()
+			assign_args:add_assignment(value)
+			self.branched:get(state):call(state, assign_args)
+		else
+			self.branched:set(state, value)
+		end
 	end,
 
 	_format = function(self, ...)
@@ -108,6 +118,19 @@ local Environment = ast.abstract.Runtime {
 			self:define(state, symbol, exp)
 		end
 	end,
+	define_alias = function(self, state, symbol, call)
+		assert(symbol.alias, "symbol is not an alias")
+		assert(call.type == "call", "alias expression must be a call")
+
+		local get = ast.Function:new(ast.ParameterTuple:new(), call):eval(state)
+
+		local set_param = ast.ParameterTuple:new()
+		set_param:insert_assignment(ast.FunctionParameter:new(ast.Identifier:new("value")))
+		local assign_expr = ast.Call:new(call.func, call.arguments:with_assignment(ast.Identifier:new("value")))
+		local set = ast.Function:new(set_param, assign_expr):eval(state)
+
+		self:define(state, symbol, ast.Overload:new(get, set))
+	end,
 
 	-- returns bool if variable defined in current or parent environment
 	defined = function(self, state, identifier)
@@ -156,17 +179,6 @@ local Environment = ast.abstract.Runtime {
 		return self:_get_variable(state, identifier):set(state, val)
 	end,
 
-	-- returns a list {[symbol]=val,...} of all persistent variables in the current strict layer
-	list_persistent = function(self, state)
-		assert(self.export, "not an export scope layer")
-		local r = {}
-		for _, vm in self.variables:iter(state) do
-			if vm.symbol.persistent then
-				r[vm.symbol] = vm:get(state)
-			end
-		end
-		return r
-	end,
 	-- returns a list {[symbol]=val,...} of all exported variables in the current strict layer
 	list_exported = function(self, state)
 		assert(self.export, "not an export scope layer")

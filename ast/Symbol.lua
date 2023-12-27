@@ -11,8 +11,8 @@ Symbol = ast.abstract.Node {
 	constant = nil, -- bool
 	type_check = nil, -- exp
 
+	alias = nil, -- bool
 	exported = nil, -- bool
-	persistent = nil, -- bool, imply exported
 
 	confined_to_branch = nil, -- bool
 
@@ -20,23 +20,29 @@ Symbol = ast.abstract.Node {
 		modifiers = modifiers or {}
 		self.string = str
 		self.constant = modifiers.constant
-		self.persistent = modifiers.persistent
 		self.type_check = modifiers.type_check
+		self.alias = modifiers.alias
 		self.confined_to_branch = modifiers.confined_to_branch
-		self.exported = modifiers.exported or modifiers.persistent
+		self.exported = modifiers.exported
 		if self.type_check then
 			self.format_priority = operator_priority["_::_"]
 		end
 	end,
 
 	_eval = function(self, state)
-		return Symbol:new(self.string, {
-			constant = self.constant,
-			persistent = self.persistent,
-			type_check = self.type_check and self.type_check:eval(state),
-			confined_to_branch = self.confined_to_branch,
-			exported = self.exported
-		})
+		return self:with {
+			type_check = self.type_check and self.type_check:eval(state)
+		}
+	end,
+
+	with = function(self, modifiers)
+		modifiers = modifiers or {}
+		for _, k in ipairs{"constant", "type_check", "alias", "exported", "confined_to_branch"} do
+			if modifiers[k] == nil then
+				modifiers[k] = self[k]
+			end
+		end
+		return Symbol:new(self.string, modifiers)
 	end,
 
 	_hash = function(self)
@@ -48,7 +54,7 @@ Symbol = ast.abstract.Node {
 		if self.constant then
 			s = s .. ":"
 		end
-		if self.persistent then
+		if self.alias then
 			s = s .. "&"
 		end
 		if self.exported then

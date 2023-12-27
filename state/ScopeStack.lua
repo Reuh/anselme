@@ -74,6 +74,7 @@ local ScopeStack = class {
 	-- methods that call the associated method from the current scope, see ast.Environment for details
 	define = function(self, symbol, exp) self.current:define(self.state, symbol, exp) end,
 	define_overloadable = function(self, symbol, exp) return self.current:define_overloadable(self.state, symbol, exp) end,
+	define_alias = function(self, symbol, exp) return self.current:define_alias(self.state, symbol, exp) end,
 	defined = function(self, identifier) return self.current:defined(self.state, identifier) end,
 	defined_in_current = function(self, symbol) return self.current:defined_in_current(self.state, symbol) end,
 	set = function(self, identifier, exp) self.current:set(self.state, identifier, exp) end,
@@ -138,12 +139,6 @@ local ScopeStack = class {
 	-- reminder: scopes are mutable
 	capture = function(self)
 		return self.current
-	end,
-
-	-- return a table { [symbol] = value } of persistent variables defined on the root scope on this branch
-	list_persistent_global = function(self)
-		local env = self.stack[1]
-		return env:list_persistent(self.state)
 	end,
 
 	_debug_state = function(self, filter)

@@ -98,6 +98,21 @@ ArgumentTuple = ast.abstract.Node {
 		end
 		return r
 	end,
+	-- recreate new argumenttuple with an assignment argument added
+	with_assignment = function(self, assignment)
+		local r = ArgumentTuple:new()
+		for i=1, self.arity do
+			if self.positional[i] then
+				r:add_positional(self.positional[i])
+			elseif self.named[i] then
+				r:add_named(Identifier:new(self.named[i]), self.named[self.named[i]])
+			else
+				r:add_assignment(self.assignment) -- welp it'll error below anyway
+			end
+		end
+		r:add_assignment(assignment)
+		return r
+	end,
 
 	-- return specificity (>=0), secondary specificity (>=0)
 	-- return false, failure message

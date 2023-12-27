@@ -30,12 +30,16 @@ local Definition = ast.abstract.Node {
 		end
 
 		local symbol = self.symbol:eval(state)
-		local val = self.expression:eval(state)
-
-		if Overloadable:issub(val) then
-			state.scope:define_overloadable(symbol, val)
+		if symbol.alias then
+			state.scope:define_alias(symbol, self.expression)
 		else
-			state.scope:define(symbol, val)
+			local val = self.expression:eval(state)
+
+			if Overloadable:issub(val) then
+				state.scope:define_overloadable(symbol, val)
+			else
+				state.scope:define(symbol, val)
+			end
 		end
 
 		return Nil:new()
@@ -46,7 +50,9 @@ local Definition = ast.abstract.Node {
 		symbol:prepare(state)
 		val:prepare(state)
 
-		if Overloadable:issub(val) then
+		if self.symbol.alias then
+			state.scope:define(symbol:with{ alias = false }, val) -- disable alias to avoid call in Identifier:_prepare
+		elseif Overloadable:issub(val) then
 			state.scope:define_overloadable(symbol, val)
 		else
 			state.scope:define(symbol, val)

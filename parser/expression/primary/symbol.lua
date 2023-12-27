@@ -16,11 +16,11 @@ return primary {
 
 	parse = function(self, source, str)
 		local mod_const, mod_export, rem = source:consume(str:match("^(%:(:?)([&@]?))(.-)$"))
-		local constant, persistent, type_check_exp, exported
+		local constant, alias, type_check_exp, exported
 
 		-- get modifier
 		if mod_const == ":" then constant = true end
-		if mod_export == "&" then persistent = true
+		if mod_export == "&" then alias = true
 		elseif mod_export == "@" then exported = true end
 
 		-- name
@@ -35,6 +35,6 @@ return primary {
 			type_check_exp = exp.arguments.positional[2]
 		end
 
-		return ident:to_symbol{ constant = constant, persistent = persistent, exported = exported, type_check = type_check_exp }:set_source(source), rem
+		return ident:to_symbol{ constant = constant, alias = alias, exported = exported, type_check = type_check_exp }:set_source(source), rem
 	end
 }

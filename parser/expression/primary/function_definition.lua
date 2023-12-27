@@ -167,11 +167,11 @@ return primary {
 		local mod_const, mod_exported, rem = source:consume(str:match("^(%:(:?)([&@]?)%$)(.-)$"))
 
 		-- get modifiers
-		local constant, exported, persistent
+		local constant, exported, alias
 		if mod_const == ":" then constant = true end
 		if mod_exported == "@" then exported = true
-		elseif mod_exported == "&" then persistent = true end
-		local modifiers = { constant = constant, exported = exported, persistent = persistent }
+		elseif mod_exported == "&" then alias = true end
+		local modifiers = { constant = constant, exported = exported, alias = alias }
 
 		-- search for a valid signature
 		local symbol, parameters
