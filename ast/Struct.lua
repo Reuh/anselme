@@ -71,6 +71,7 @@ Struct = ast.abstract.Runtime {
 			-- _:_ has higher priority than _,_
 			table.insert(l, e[1]:format(state, operator_priority["_:_"], ...)..":"..e[2]:format_right(state, operator_priority["_:_"], ...))
 		end
+		table.sort(l)
 		return ("{%s}"):format(table.concat(l, ", "))
 	end,
 

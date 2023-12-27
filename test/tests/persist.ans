@@ -1,0 +1,11 @@
+| pouet={persist("pouet", 7)} (7)
+
+:&d = persist("pouet", 12)
+
+| d={d} (7)
+
+d = 9
+
+| d={d} (9)
+
+| pouet={persist("pouet", 21)} (9)

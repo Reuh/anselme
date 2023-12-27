@@ -1,0 +1,34 @@
+:c = ()
+:choice = 2
+
+:g = $
+	|c
+	#pouet
+	|d
+
+:f = $(anchor=())
+	:x = 8
+	anchor ~>
+		|a
+		| A |>
+			| b
+			c = #pouet
+			g!
+			| e
+			_
+				| f
+				| g
+		| B |>
+			| boum
+
+		|h {x}
+
+| <<>>
+f(c)
+
+| <<>>
+choice = 1
+f(c)
+
+| <<>>
+f(c)
