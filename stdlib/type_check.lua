@@ -2,10 +2,12 @@ local ast = require("ast")
 local Boolean = ast.Boolean
 
 return {
+	{ "nil", "(x)", function(state, x) return Boolean:new(x.type == "nil") end },
 	{ "number", "(x)", function(state, x) return Boolean:new(x.type == "number") end },
 	{ "string", "(x)", function(state, x) return Boolean:new(x.type == "string") end },
 	{ "boolean", "(x)", function(state, x) return Boolean:new(x.type == "boolean") end },
 	{ "symbol", "(x)", function(state, x) return Boolean:new(x.type == "symbol") end },
+	{ "anchor", "(x)", function(state, x) return Boolean:new(x.type == "anchor") end },
 
 	{ "text", "(x)", function(state, x) return Boolean:new(x.type == "text") end },
 

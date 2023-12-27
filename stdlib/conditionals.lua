@@ -21,8 +21,9 @@ return {
 		"_~_", "(condition, expression)", function(state, condition, expression)
 			ensure_if_variable(state)
 			if condition:truthy() then
+				local r = expression:call(state, ArgumentTuple:new())
 				set_if_variable(state, true)
-				return expression:call(state, ArgumentTuple:new())
+				return r
 			else
 				set_if_variable(state, false)
 				return Nil:new()
@@ -36,8 +37,9 @@ return {
 			if last_if_success(state) then
 				return Nil:new()
 			else
+				local r = expression:call(state, ArgumentTuple:new())
 				set_if_variable(state, true)
-				return expression:call(state, ArgumentTuple:new())
+				return r
 			end
 		end
 	},

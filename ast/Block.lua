@@ -1,6 +1,8 @@
 local ast = require("ast")
 local Nil, Return, AutoCall, ArgumentTuple, Flush
 
+local resume_manager = require("state.resume_manager")
+
 local Block = ast.abstract.Node {
 	type = "block",
 
@@ -34,11 +36,11 @@ local Block = ast.abstract.Node {
 	_eval = function(self, state)
 		local r
 		state.scope:push()
-		if self:resuming(state) then
-			local resuming = self:get_resume_data(state)
+		if self:contains_resume_target(state) then
+			local anchor = resume_manager:get(state)
 			local resumed = false
 			for _, e in ipairs(self.expressions) do
-				if e == resuming then resumed = true end
+				if e:contains_anchor(anchor) then resumed = true end
 				if resumed then
 					r = e:eval(state)
 					if AutoCall:issub(r) then
@@ -51,7 +53,6 @@ local Block = ast.abstract.Node {
 			end
 		else
 			for _, e in ipairs(self.expressions) do
-				self:set_resume_data(state, e)
 				r = e:eval(state)
 				if AutoCall:issub(r) then
 					r = r:call(state, ArgumentTuple:new())

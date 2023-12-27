@@ -1,5 +1,5 @@
 local ast = require("ast")
-local Nil, Choice, AttachBlock = ast.Nil, ast.Choice, ast.AttachBlock
+local Nil, Choice, AttachBlock, ArgumentTuple = ast.Nil, ast.Choice, ast.AttachBlock, ast.ArgumentTuple
 
 local event_manager = require("state.event_manager")
 local translation_manager = require("state.translation_manager")
@@ -19,7 +19,12 @@ return {
 	{
 		"_|>_", "(txt::text, fn)",
 		function(state, text, func)
-			event_manager:write(state, Choice:new(text, func))
+			if func:contains_resume_target(state) then
+				func:call(state, ArgumentTuple:new())
+				event_manager:write_and_discard_on_flush(state, Choice:new(text, func))
+			else
+				event_manager:write(state, Choice:new(text, func))
+			end
 			return Nil:new()
 		end
 	},

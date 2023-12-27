@@ -5,7 +5,6 @@ local class = require("class")
 local ScopeStack = require("state.ScopeStack")
 local tag_manager = require("state.tag_manager")
 local event_manager = require("state.event_manager")
-local resumable_manager = require("state.resumable_manager")
 local translation_manager = require("state.translation_manager")
 local uuid = require("common").uuid
 local parser = require("parser")
@@ -25,14 +24,12 @@ State = class {
 			self.scope = ScopeStack:new(self, branch_from)
 
 			event_manager:reset(self) -- events are isolated per branch
-			resumable_manager:reset(self) -- resumable stack is isolated per branch
 		-- create new empty state
 		else
 			self.scope = ScopeStack:new(self)
 
 			event_manager:setup(self)
 			tag_manager:setup(self)
-			resumable_manager:setup(self)
 			translation_manager:setup(self)
 		end
 	end,

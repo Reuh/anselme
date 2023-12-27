@@ -45,7 +45,7 @@ Function = Overloadable {
 		state.scope:push()
 		args:bind_parameter_tuple(state, self.parameters)
 
-		local exp = self.expression:eval_resumable(state)
+		local exp = self.expression:eval(state)
 
 		state.scope:pop()
 

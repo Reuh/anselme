@@ -12,8 +12,8 @@ local binser = require("lib.binser")
 
 local uuid = require("common").uuid
 
-local State, Runtime
-local resumable_manager
+local State, Runtime, Call, Identifier, ArgumentTuple
+local resume_manager
 
 local custom_call_identifier
 
@@ -99,8 +99,8 @@ Node = class {
 	end,
 
 	-- prepare the AST after parsing and before evaluation
-	-- this behave like a cached :traverse through the AST, except this keeps track of the scope stack
-	-- i.e. when :prepare is called on a node, it should be in a similar scope stack context as will be when it will be evaluated
+	-- this behave like a cached :traverse through the AST, except this keeps track of the scope stack and preserve evaluation order
+	-- i.e. when :prepare is called on a node, it should be in a similar scope stack context and order as will be when it will be evaluated
 	-- used to predefine exported variables and other compile-time variable handling
 	-- note: the state here is a temporary state only used during the prepare step
 	-- the actual preparation is done in _prepare
@@ -122,6 +122,30 @@ Node = class {
 		self:traverse(traverse.prepare, state)
 	end,
 
+	-- returns a reversed list { [anchor] = true, ... } of the anchors contained in this node and its children
+	_list_anchors = function(self)
+		if not self._list_anchors_cache then
+			self._list_anchors_cache = {}
+			self:traverse(function(v)
+				for name in pairs(v:_list_anchors()) do
+					self._list_anchors_cache[name] = true
+				end
+			end)
+		end
+		return self._list_anchors_cache
+	end,
+	_list_anchors_cache = nil,
+
+	-- returns true if the node or its children contains the anchor
+	contains_anchor = function(self, anchor)
+		return not not self:_list_anchors()[anchor.name]
+	end,
+
+	-- returns true if we are currently trying to resume to an anchor target contained in the current node
+	contains_resume_target = function(self, state)
+		return resume_manager:resuming(state) and self:contains_anchor(resume_manager:get(state))
+	end,
+
 	-- generate a list of translatable nodes that appear in this node
 	-- should only be called on non-runtime nodes
 	-- if a node is translatable, redefine this to add it to the table - note that it shouldn't call :traverse or :list_translatable on its children, as nested translations should not be needed
@@ -129,26 +153,6 @@ Node = class {
 		t = t or {}
 		self:traverse(traverse.list_translatable, t)
 		return t
-	end,
-
-	-- same as eval, but make the evaluated expression as a resume boundary
-	-- i.e. if a checkpoint is defined somewhere in this eval, it will start back from this node eval when resuming
-	eval_resumable = function(self, state)
-		return resumable_manager:eval(state, self)
-	end,
-	-- set the current resume data for this node
-	-- (relevant inside :eval)
-	set_resume_data = function(self, state, data)
-		resumable_manager:set_data(state, self, data)
-	end,
-	-- get the current resume data for this node
-	get_resume_data = function(self, state)
-		return resumable_manager:get_data(state, self)
-	end,
-	-- returns true if the current node is in a resuming state
-	-- (relevant inside :eval)
-	resuming = function(self, state)
-		return resumable_manager:resuming(state, self)
 	end,
 
 	-- return result AST
@@ -276,11 +280,11 @@ Node = class {
 	-- Thus, any require here that may require other Nodes shall be done here. This method is called in anselme.lua after everything else is required.
 	_i_hate_cycles = function(self)
 		local ast = require("ast")
-		custom_call_identifier = ast.Identifier:new("_!")
-		Runtime = ast.abstract.Runtime
+		Runtime, Call, Identifier, ArgumentTuple = ast.abstract.Runtime, ast.Call, ast.Identifier, ast.ArgumentTuple
+		custom_call_identifier = Identifier:new("_!")
 
 		State = require("state.State")
-		resumable_manager = require("state.resumable_manager")
+		resume_manager = require("state.resume_manager")
 	end,
 
 	_debug_traverse = function(self, level)

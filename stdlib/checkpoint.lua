@@ -1,10 +1,22 @@
-local resumable_manager = require("state.resumable_manager")
+local ast = require("ast")
+local ArgumentTuple = ast.ArgumentTuple
+
+local resume_manager = require("state.resume_manager")
 
 return {
 	{
-		"new checkpoint", "(level::number=0)",
-		function(state, level)
-			return resumable_manager:capture(state, level.number)
+		"_~>_", "(anchor::anchor, quote)",
+		function(state, anchor, quote)
+			resume_manager:push(state, anchor)
+			local r = quote:call(state, ArgumentTuple:new())
+			resume_manager:pop(state)
+			return r
+		end
+	},
+	{
+		"_~>_", "(anchor::nil, quote)",
+		function(state, anchor, quote)
+			return quote:call(state, ArgumentTuple:new())
 		end
 	}
 }

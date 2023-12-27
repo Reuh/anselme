@@ -12,6 +12,7 @@ local primaries = {
 	r("function_definition"),
 	r("symbol"),
 	r("identifier"),
+	r("anchor"),
 	r("block_identifier"),
 	r("tuple"),
 	r("struct"),
