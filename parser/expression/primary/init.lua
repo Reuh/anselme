@@ -21,7 +21,6 @@ local primaries = {
 	-- 1
 	r("prefix.semicolon"),
 	r("prefix.function"),
-	-- 2
 	r("prefix.return"),
 	-- 3.5
 	r("prefix.else"),

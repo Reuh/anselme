@@ -42,7 +42,6 @@ local function_parameter_maybe_parenthesis = function_parameter_no_default {
 	end
 }
 
-
 -- signature type 1: unary prefix
 -- :$-parameter exp
 -- returns symbol, parameter_tuple, rem if success
@@ -195,7 +194,7 @@ return primary {
 			-- parse expression
 			local right
 			s, right, rem = pcall(expression_to_ast, source, rem, limit_pattern, operator_priority["$_"])
-			if not s then error(("invalid expression after unop %q: %s"):format(self.operator, right), 0) end
+			if not s then error(("invalid expression in function definition: %s"):format(right), 0) end
 
 			-- return function
 			local fn = Function:new(parameters, right):set_source(source_start)
