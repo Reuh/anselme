@@ -11,9 +11,9 @@ Typed = ast.abstract.Runtime {
 	expression = nil,
 	type_expression = nil,
 
-	init = function(self, type, expression)
-		self.type_expression = type
+	init = function(self, expression, type)
 		self.expression = expression
+		self.type_expression = type
 	end,
 
 	_format = function(self, state, prio, ...)
@@ -30,8 +30,8 @@ Typed = ast.abstract.Runtime {
 	end,
 
 	traverse = function(self, fn, ...)
-		fn(self.type_expression, ...)
 		fn(self.expression, ...)
+		fn(self.type_expression, ...)
 	end
 }
 

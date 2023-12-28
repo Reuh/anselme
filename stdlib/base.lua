@@ -50,9 +50,9 @@ return {
 		end
 	},
 	{
-		"type", "(type, value)",
-		function(state, t, v)
-			return Typed:new(t, v)
+		"type", "(value, type)",
+		function(state, v, t)
+			return Typed:new(v, t)
 		end
 	},
 	{ "true", Boolean:new(true) },
