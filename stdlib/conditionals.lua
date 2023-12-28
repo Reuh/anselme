@@ -1,5 +1,5 @@
 local ast = require("ast")
-local ArgumentTuple, Nil, Boolean, Identifier = ast.ArgumentTuple, ast.Nil, ast.Boolean, ast.Identifier
+local ArgumentTuple, Nil, Boolean, Identifier, Return = ast.ArgumentTuple, ast.Nil, ast.Boolean, ast.Identifier, ast.Return
 
 local if_identifier = Identifier:new("_if_status")
 local if_symbol = if_identifier:to_symbol()
@@ -58,6 +58,7 @@ return {
 			end
 			while cond:truthy() do
 				r = expression:call(state, ArgumentTuple:new())
+				if Return:is(r) then break end
 				cond = condition:call(state, ArgumentTuple:new())
 			end
 			return r
