@@ -156,6 +156,21 @@ Node = class {
 		return t
 	end,
 
+	-- generate anselme code that can be used as a base for a translation file
+	-- will include every translatable element found in this node and its children
+	-- TODO: generate more stable context than source position, and only add necessery context to the tag
+	generate_translation_template = function(self)
+		local l = self:list_translatable()
+		local r = {}
+		for _, tr in ipairs(l) do
+			table.insert(r, "(("..tr.source.."))")
+			table.insert(r, Call:new(Identifier:new("_#_"), ArgumentTuple:new(tr.context, Identifier:new("_"))))
+			table.insert(r, "\t"..Call:new(Identifier:new("_->_"), ArgumentTuple:new(tr, tr)):format())
+			table.insert(r, "")
+		end
+		return table.concat(r, "\n")
+	end,
+
 	-- call the node with the given arguments
 	-- return result AST
 	-- arg is a ArgumentTuple node (already evaluated)
