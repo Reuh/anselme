@@ -1,4 +1,5 @@
 local class = require("class")
+local utf8 = utf8 or require("lua-utf8")
 
 local Source
 Source = class {

@@ -43,11 +43,16 @@
 -- end
 -- ```
 
-local parser = require("parser")
-local State = require("state.State")
-require("ast.abstract.Node"):_i_hate_cycles()
+-- LuaJIT compatibility
+-- TODO: too heavyhanded
+if _VERSION == "Lua 5.1" then
+	package.path = "./?/init.lua;" .. package.path
+	table.unpack = unpack
+end
 
-return {
+local parser, State
+
+local anselme = {
 	--- Global version string. Follow semver.
 	version = "2.0.0-alpha",
 
@@ -78,3 +83,11 @@ return {
 		return State:new()
 	end,
 }
+
+package.loaded[...] = anselme
+
+parser = require("parser")
+State = require("state.State")
+require("ast.abstract.Node"):_i_hate_cycles()
+
+return anselme

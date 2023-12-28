@@ -30,7 +30,7 @@ comment = primary {
 				subcomment, rem = comment:parse(source, rem, limit_pattern)
 
 				table.insert(content_list, "((")
-				for _, c in ipairs(subcomment) do table.insert(content_list, c) end
+				table.insert(content_list, subcomment)
 				table.insert(content_list, "))")
 			-- no end token after the comment
 			elseif not rem:match("^%)%)") then

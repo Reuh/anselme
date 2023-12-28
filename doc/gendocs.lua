@@ -2,6 +2,8 @@
 -- Behold! A documentation generator that doesn't try to be smart!
 -- Call this from the root anselme directory: `lua doc/gendocs.lua`
 
+local utf8 = utf8 or require("lua-utf8")
+
 local files = {
 	"doc/api.md"
 }

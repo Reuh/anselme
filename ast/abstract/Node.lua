@@ -1,6 +1,7 @@
 local class = require("class")
 local fmt = require("common").fmt
 local binser = require("lib.binser")
+local utf8 = utf8 or require("lua-utf8")
 
 -- NODES SHOULD BE IMMUTABLE AFTER CREATION IF POSSIBLE!
 -- i don't think i actually rely on this behavior for anything but it makes me feel better about life in general

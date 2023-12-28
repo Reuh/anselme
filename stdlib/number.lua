@@ -42,7 +42,7 @@ return {
 	{ "_-_", "(a::number, b::number)", function(state, a, b) return Number:new(a.number - b.number) end },
 	{ "_*_", "(a::number, b::number)", function(state, a, b) return Number:new(a.number * b.number) end },
 	{ "_/_", "(a::number, b::number)", function(state, a, b) return Number:new(a.number / b.number) end },
-	{ "_//_", "(a::number, b::number)", function(state, a, b) return Number:new(a.number // b.number) end },
+	{ "_//_", "(a::number, b::number)", function(state, a, b) return Number:new(math.floor(a.number / b.number)) end },
 	{ "_%_", "(a::number, b::number)", function(state, a, b) return Number:new(a.number % b.number) end },
 	{ "_^_", "(a::number, b::number)", function(state, a, b) return Number:new(a.number ^ b.number) end },
 	{ "-_", "(a::number)", function(state, a) return Number:new(-a.number) end },

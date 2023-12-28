@@ -1,5 +1,7 @@
 --- transform raw code string into a nested tree of lines
 
+local utf8 = utf8 or require("lua-utf8")
+
 local Source = require("parser.Source")
 
 local function indented_to_tree(indented)
