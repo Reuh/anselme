@@ -62,8 +62,8 @@ local secondaries = {
 }
 
 -- add generated assignement+infix operator combos, before the rest
-local assignment_operators = r("infix.assignment_with_infix")
-for i, op in ipairs(assignment_operators) do
+local compound_assignments = r("infix.assignment_with_infix")
+for i, op in ipairs(compound_assignments) do
 	table.insert(secondaries, i, op)
 end
 
