@@ -10,7 +10,9 @@ Documentation:
 
 ---
 
-Write tests. Kinda mandatory actually, while I've tried to improve and do it much better than Anselme v1 there's still plenty interweaved moving parts here. Not sure how much better I can do with the same design requirements tbh. See anselme v1 tests to get a base library of tests.
+Write tests. Still missing:
+* some tests from anselme v1
+* tests for anselme v2 features
 
 ---
 
@@ -19,18 +21,22 @@ Also improve compatibility with Lua 5.3 and LuaJIT (I don't think we should supp
 
 ---
 
-Translation. TODO Design
+Translation.
 
-Translation model:
-- for text, choices: text+line+file as id, translation (either text or function)
-- for strings, assets, ...: ? translatable string ?
-- for variable names: ?
-- for stdlib: ?
+Translation model for stdlib: ?
+
+For translation context/disambiguation:
+* text+line+file - OK
+* func/var hierarchy?
+
+Do some more fancy scope work to allow the translation to access variables defined in the translation file?
 
 ---
 
-Persistence "issue": Storing a closure stores it whole environment, which includes all the stdlib. Technically it works, but that's a lot of useless information. Would need to track which variable is used (should be doable in prepare) and prune the closure.
-Or register all functions as ressources in binser - that makes kinda sense, they're immutable, and their signature should be unique. Would need to track which functions are safe to skip / can be reloaded from somewhere on load.
+Persistence "issue": Storing a closure stores it whole environment, which includes all the stdlib. Technically it works, but that's a lot of useless information. Would need to track which variable is used (should be doable in prepare) and prune the closure (list identifiers and symbols used in children and regroup in a single exported+normal layer). The closure would also captures things like _translations that should not be persisted and prevent any update to it or its upvalues (the captured scope in the closure will not be able to be linked with the real scope in the reloaded script)...
+Or register all functions as ressources in binser - that makes kinda sense, they're immutable, and their signature should be unique. Would need to track which functions are safe to skip / can be reloaded from somewhere on load. Would need to distinguish anonymous from non anonymous functions...
+
+Or just say closures probably shouldn't be persisted. Yeah, probably easier.
 
 ---
 
