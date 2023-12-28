@@ -44,9 +44,9 @@ Closure = Runtime(Overloadable) {
 	format_parameters = function(self, state)
 		return self.func.parameters:format(state)
 	end,
-	call_compatible = function(self, state, args)
+	call_dispatched = function(self, state, args)
 		state.scope:push(self.exported_scope)
-		local exp = self.func:call_compatible(state, args)
+		local exp = self.func:call_dispatched(state, args)
 		state.scope:pop()
 		return exp
 	end,

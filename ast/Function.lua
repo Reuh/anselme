@@ -41,7 +41,7 @@ Function = Overloadable {
 	format_parameters = function(self, state)
 		return self.parameters:format(state)
 	end,
-	call_compatible = function(self, state, args)
+	call_dispatched = function(self, state, args)
 		state.scope:push()
 		args:bind_parameter_tuple(state, self.parameters)
 

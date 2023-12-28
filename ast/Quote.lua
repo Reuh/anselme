@@ -26,8 +26,14 @@ Quote = ast.abstract.Node {
 		fn(self.expression, ...)
 	end,
 
-	call = function(self, state, args)
-		assert(args.arity == 0, "Quote! does not accept arguments")
+	dispatch = function(self, state, args)
+		if args.arity == 0 then
+			return self, args
+		else
+			return nil, "Quote! does not accept arguments"
+		end
+	end,
+	call_dispatched = function(self, state, args)
 		return self.expression:eval(state)
 	end
 }

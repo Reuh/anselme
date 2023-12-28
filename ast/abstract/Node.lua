@@ -64,7 +64,7 @@ Node = class {
 	-- to be preferably used during construction only
 	set_source = function(self, source)
 		local str_source = tostring(source)
-		if self.source == "?" then
+		if self.source == "?" and str_source ~= "?" then
 			self.source = str_source
 			self:traverse(traverse.set_source, str_source)
 		end
@@ -156,16 +156,39 @@ Node = class {
 		return t
 	end,
 
+	-- call the node with the given arguments
 	-- return result AST
 	-- arg is a ArgumentTuple node (already evaluated)
-	-- redefine if relevant
+	-- do not redefine; instead redefine :dispatch and :call_dispatched
 	call = function(self, state, arg)
+		local dispatched, dispatched_arg = self:dispatch(state, arg)
+		if dispatched then
+			return dispatched:call_dispatched(state, dispatched_arg)
+		else
+			error(("can't call %s %s: %s"):format(self.type, self:format(state), dispatched_arg), 0)
+		end
+	end,
+	-- find a function that can be called with the given arguments
+	-- return function, arg if a function is found that can be called with arg. The returned arg may be different than the input arg.
+	-- return nil, message if no matching function found
+	dispatch = function(self, state, arg)
+		-- by default, look for custom call operator
 		if state.scope:defined(custom_call_identifier) then
 			local custom_call = custom_call_identifier:eval(state)
-			return custom_call:call(state, arg:with_first_argument(self))
-		else
-			error("trying to call a "..self.type..": "..self:format(state))
+			local dispatched, dispatched_arg = custom_call:dispatch(state, arg:with_first_argument(self))
+			if dispatched then
+				return dispatched, dispatched_arg
+			else
+				return nil, dispatched_arg
+			end
 		end
+		return nil, "not callable"
+	end,
+	-- call the node with the given arguments
+	-- this assumes that this node was correctly dispatched to (was returned by a previous call to :dispatch)
+	-- you can therefore assume that the arguments are valid and compatible with this node
+	call_dispatched = function(self, state, arg)
+		error(("%s is not callable"):format(self.type))
 	end,
 
 	-- merge any changes back into the main branch

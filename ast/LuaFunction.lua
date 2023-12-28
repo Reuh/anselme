@@ -34,7 +34,7 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 	format_parameters = function(self, state)
 		return self.parameters:format(state)
 	end,
-	call_compatible = function(self, state, args)
+	call_dispatched = function(self, state, args)
 		local lua_args = { state }
 
 		state.scope:push()

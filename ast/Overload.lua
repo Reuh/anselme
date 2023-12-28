@@ -29,7 +29,7 @@ Overload = ast.abstract.Node {
 		end
 	end,
 
-	call = function(self, state, args)
+	dispatch = function(self, state, args)
 		local failure = {} -- list of failure messages (kept until we find the first success)
 		local success, success_specificity, success_secondary_specificity = nil, -1, -1
 		-- some might think that iterating a list for every function call is a terrible idea, but that list has a fixed number of elements, so big O notation says suck it up
@@ -42,7 +42,7 @@ Overload = ast.abstract.Node {
 					if secondary_specificity > success_secondary_specificity then
 						success, success_specificity, success_secondary_specificity = fn, specificity, secondary_specificity
 					elseif secondary_specificity == success_secondary_specificity then
-						error(("more than one function match %s, matching functions were at least (specificity %s.%s):\n\t• %s\n\t• %s"):format(args:format(state), specificity, secondary_specificity, fn:format_parameters(state), success:format_parameters(state)), 0)
+						return nil, ("more than one function match %s, matching functions were at least (specificity %s.%s):\n\t• %s\n\t• %s"):format(args:format(state), specificity, secondary_specificity, fn:format_parameters(state), success:format_parameters(state))
 					end
 				end
 				-- no need to add error message for less specific function since we already should have at least one success
@@ -51,10 +51,9 @@ Overload = ast.abstract.Node {
 			end
 		end
 		if success then
-			return success:call_compatible(state, args)
+			return success, args
 		else
-			-- error
-			error(("no function match %s, possible functions were:\n\t• %s"):format(args:format(state), table.concat(failure, "\n\t• ")), 0)
+			return nil, ("no function match %s, possible functions were:\n\t• %s"):format(args:format(state), table.concat(failure, "\n\t• "))
 		end
 	end
 }
