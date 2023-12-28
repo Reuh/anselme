@@ -124,12 +124,16 @@ local Environment = ast.abstract.Runtime {
 
 		local get = ast.Function:new(ast.ParameterTuple:new(), call):eval(state)
 
-		local set_param = ast.ParameterTuple:new()
-		set_param:insert_assignment(ast.FunctionParameter:new(ast.Identifier:new("value")))
-		local assign_expr = ast.Call:new(call.func, call.arguments:with_assignment(ast.Identifier:new("value")))
-		local set = ast.Function:new(set_param, assign_expr):eval(state)
+		if symbol.constant then
+			self:define(state, symbol, get)
+		else
+			local set_param = ast.ParameterTuple:new()
+			set_param:insert_assignment(ast.FunctionParameter:new(ast.Identifier:new("value")))
+			local assign_expr = ast.Call:new(call.func, call.arguments:with_assignment(ast.Identifier:new("value")))
+			local set = ast.Function:new(set_param, assign_expr):eval(state)
 
-		self:define(state, symbol, ast.Overload:new(get, set))
+			self:define(state, symbol, ast.Overload:new(get, set))
+		end
 	end,
 
 	-- returns bool if variable defined in current or parent environment
