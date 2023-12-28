@@ -1,0 +1,26 @@
+:$ fn(x::number)
+	|x
+
+:$ fn(a::string="o")
+	|a
+
+fn("s")
+
+fn(5)
+
+fn()
+
+:$ g(n="s", a::number=5)
+	@"gn"
+
+:$ g(n="s", a::string="lol")
+	@"gs"
+
+|{g(n="k", a="l")}
+|{g(n="k", a=1)}
+|{g(n="k", "l")}
+|{g(n="k", 1)}
+|{g("k", "l")}
+|{g("k", 1)}
+|{g("k", a="l")}
+|{g("k", a=1)}

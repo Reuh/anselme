@@ -150,8 +150,8 @@ ArgumentTuple = ast.abstract.Node {
 			end
 			-- not found
 			if not arg then return false, ("missing parameter %s"):format(param.identifier:format(state)) end
-			-- type check
-			if param.type_check then
+			-- type check (assume ok for default values)
+			if param.type_check and arg ~= param.default then
 				local r = param.type_check:call(state, ArgumentTuple:new(arg))
 				if not r:truthy() then return false, ("type check failure for parameter %s in function %s"):format(param.identifier:format(state), params:format(state)) end
 				if Number:is(r) then
