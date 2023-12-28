@@ -23,7 +23,8 @@ local TupleToStruct = ast.abstract.Node {
 
 	_eval = function(self, state)
 		local t = Struct:new()
-		for i, e in ipairs(self.tuple.list) do
+		local tuple = self.tuple:eval(state)
+		for i, e in ipairs(tuple.list) do
 			if Pair:is(e) then
 				t:set(e.name, e.value)
 			else

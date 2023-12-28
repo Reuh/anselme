@@ -1,0 +1,4 @@
+--# parse error #--
+[0m[31m[0m[31ma is already defined in the current scope[0m
+	↳ from [4mtest/tests/define override.ans:3:4[0m in definition: [2m:a = 2[0m[0m
+	↳ from [4m?[0m in block: [2m:a = 5…[0m

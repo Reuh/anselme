@@ -1,0 +1,12 @@
+:$ f(x)
+	$(y) x + y
+
+:add two = f(2)
+
+:add five = f(5)
+
+|{add two(3)} = 5
+|{add five(3)} = 8
+
+|{add two(2)} = 4
+|{add five(2)} = 7

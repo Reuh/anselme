@@ -1,8 +1,27 @@
+-- Require LuaFileSystem: luarocks install luafilesystem
+
 local lfs = require("lfs")
 
 local anselme = require("anselme")
 local persistent_manager = require("state.persistent_manager")
 
+-- simple random to get the same result across lua versions
+local prev = 0
+local function badrandom(a, b)
+	prev = (4241 * prev + 11) % 6997
+	return a + prev % (b-a+1)
+end
+function math.random(a, b)
+	if not a and not b then
+		return badrandom(0, 999) / 1000
+	elseif not b then
+		return badrandom(1, a)
+	else
+		return badrandom(a, b)
+	end
+end
+
+-- run a test file and return the result
 local function run(path)
 	local state = anselme:new()
 	state:load_stdlib()
@@ -10,8 +29,12 @@ local function run(path)
 	local run_state = state:branch()
 
 	local f = assert(io.open(path, "r"))
-	local block = anselme.parse(f:read("*a"), path)
+	local s, block = pcall(anselme.parse, f:read("*a"), path)
 	f:close()
+
+	if not s then
+		return "--# parse error #--\n"..tostring(block)
+	end
 
 	run_state:run(block)
 
@@ -48,6 +71,29 @@ local function run(path)
 	return table.concat(out, "\n")
 end
 
+-- display an animated loading indicator
+io.stdout:setvbuf("no")
+local loading = {
+	loop = { "⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷" },
+	loop_pos = 1,
+	erase_code = "",
+
+	write = function(self, message)
+		self:clear()
+		local str = self.loop[self.loop_pos].." "..message
+		self.erase_code = ("\b"):rep(#str)
+		io.write(str)
+	end,
+	clear = function(self)
+		io.write(self.erase_code)
+	end,
+	update = function(self)
+		self.loop_pos = self.loop_pos + 1
+		if self.loop_pos > #self.loop then self.loop_pos = 1 end
+	end
+}
+
+-- list tests
 local tests = {}
 for test in lfs.dir("test/tests/") do
 	if test:match("%.ans$") then
@@ -55,89 +101,85 @@ for test in lfs.dir("test/tests/") do
 	end
 end
 
-if arg[1] == "help" then
-	print("usage:")
-	print("lua test/run.lua: run all the tests")
-	print("lua test/run.lua write: write missing result files")
-	print("lua test/run.lua help: display this message")
-elseif arg[1] == "write" then
-	for _, test in ipairs(tests) do
-		local f = io.open(test:gsub("^test/tests/", "test/results/"), "r")
-		if f then
-			f:close()
-		else
-			repeat
-				local rerun = false
+-- run!
+if not arg[1] or arg[1] == "update" then
+	local total, failure, errored, notfound = #tests, 0, 0, 0
+
+	for i, test in ipairs(tests) do
+		repeat
+			local rerun = false
+
+			-- load result
+			local f = io.open(test:gsub("^test/tests/", "test/results/"), "r")
+			local expected
+			if f then
+				expected = f:read("*a")
+				f:close()
+			end
+
+			-- run test
+			local result = run(test)
+			if result ~= expected then
+				loading:clear()
 				print("* "..test)
-				local c = assert(io.open(test, "r"))
-				local code = c:read("*a")
-				c:close()
-				print("  Code:")
-				print("    "..code:gsub("\n", "\n    "))
-				local s, result = pcall(run, test)
-				if not s then
-					print("  Unexpected error: "..tostring(result))
-					local r
-					repeat
-						io.write("Edit this file? (y/N) ")
-						r = io.read("*l"):lower()
-					until r == "y" or r == "n" or r == ""
-					if r == "y" then
-						os.execute(("micro %q"):format(test)) -- hardcoded but oh well
-						rerun = true
-					end
+				if expected then failure = failure + 1
+				else notfound = notfound + 1
+				end
+				if arg[1] == "update" then
+					local c = assert(io.open(test, "r"))
+					local code = c:read("*a")
+					c:close()
+					print("  Code:")
+					print("    "..code:gsub("\n", "\n    "))
+				end
+				if expected then
+					print("  Expected result: \n    "..expected:gsub("\n", "\n    "))
+					print("  But received: \n    "..result:gsub("\n", "\n    "))
 				else
-					print("  Result:")
-					print("    "..result:gsub("\n", "\n    "))
+					print("  No result file found, generated result: \n    "..result:gsub("\n", "\n    "))
+				end
+				if arg[1] == "update" then
 					local r
 					repeat
-						io.write("Write this result? (y/N/e) ")
+						if expected then
+							io.write("Update this result? (y/N/e) ")
+						else
+							io.write("Write this result? (y/N/e) ")
+						end
 						r = io.read("*l"):lower()
 					until r == "y" or r == "n" or r == "e" or r == ""
 					if r == "y" then
 						local o = assert(io.open(test:gsub("^test/tests/", "test/results/"), "w"))
 						o:write(result)
 						o:close()
+						if expected then failure = failure - 1
+						else notfound = notfound - 1
+						end
 					elseif r == "e" then
 						os.execute(("micro %q"):format(test)) -- hardcoded but oh well
 						rerun = true
+						if expected then failure = failure - 1
+						else notfound = notfound - 1
+						end
 					end
 				end
-			until not rerun
-		end
-	end
-elseif not arg[1] then
-	local total, failure, errored, notfound = #tests, 0, 0, 0
-
-	for _, test in ipairs(tests) do
-		local f = io.open(test:gsub("^test/tests/", "test/results/"), "r")
-		if f then
-			local s, result = pcall(run, test)
-			if not s then
-				errored = errored + 1
-				print("* "..test)
-				print("  Unexpected error: "..tostring(result))
-			else
-				local expected = f:read("*a")
-				if result ~= expected then
-					failure = failure + 1
-					print("* "..test)
-					print("  Expected: \n    "..expected:gsub("\n", "\n    "))
-					print("  But received: \n    "..result:gsub("\n", "\n    "))
-					print("")
-				end
+				print("")
 			end
-			f:close()
-		else
-			notfound = notfound + 1
-			print("* "..test)
-			print("  Result file not found.")
-			print("")
-		end
+		until not rerun
+
+		-- status
+		loading:write(("%s/%s tests ran"):format(i, #tests))
+		if i % 10 == 0 then loading:update() end
 	end
 
+	loading:clear()
 	print("#### Results ####")
-	print(("%s successes, %s failures, %s errors, %s missing result files, out of %s tests"):format(total-failure-notfound-errored, failure, errored, notfound, total))
+	local successes = total-failure-notfound-errored
+	print(("%s successes, %s failures, %s errors, %s missing result files, out of %s tests"):format(successes, failure, errored, notfound, total))
+	if successes < total then os.exit(1) end
 else
-	print("unknown command, run `lua test/run.lua help` for usage")
+	print("usage:")
+	print("lua test/run.lua: run all the tests")
+	print("lua test/run.lua update: run all tests, optionally updating incorrect or missing results")
+	print("lua test/run.lua help: display this message")
 end

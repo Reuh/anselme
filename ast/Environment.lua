@@ -23,7 +23,9 @@ local VariableMetadata = ast.abstract.Runtime {
 		end
 	end,
 	set = function(self, state, value)
-		assert(not self.symbol.constant, ("trying to change the value of constant %s"):format(self.symbol.string))
+		if self.symbol.constant then
+			error(("trying to change the value of constant %s"):format(self.symbol.string), 0)
+		end
 		if self.symbol.type_check then
 			local r = self.symbol.type_check:call(state, ArgumentTuple:new(value))
 			if not r:truthy() then error(("type check failure for %s; %s does not satisfy %s"):format(self.symbol.string, value, self.symbol.type_check)) end
@@ -82,7 +84,7 @@ local Environment = ast.abstract.Runtime {
 	define = function(self, state, symbol, exp)
 		local name = symbol.string
 		if self:defined_in_current(state, symbol) then
-			error(name.." is already defined in the current scope")
+			error(name.." is already defined in the current scope", 0)
 		end
 		if (self.partial and not self.partial[name])
 			or (self.export ~= symbol.exported) then
@@ -107,7 +109,7 @@ local Environment = ast.abstract.Runtime {
 			elseif Overloadable:issub(val) then
 				exp = Overload:new(exp, val)
 			elseif self:defined_in_current(state, symbol) then
-				error(("can't add an overload variant to non-overloadable variable %s defined in the same scope"):format(identifier))
+				error(("can't add an overload variant to non-overloadable variable %s defined in the same scope"):format(identifier), 0)
 			end
 		end
 

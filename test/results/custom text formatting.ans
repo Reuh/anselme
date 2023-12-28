@@ -1,0 +1,8 @@
+--# run #--
+--- text ---
+| {}"" {}"\"Name: Darmanin\\\
+Age: 38\"" {}""|
+--- return ---
+()
+--# saved #--
+{}

@@ -1,0 +1,11 @@
+:@choice=1
+
+:$ jump button
+	1 # |A
+	| Suprise choice! |> ()
+	@"JOIN"
+
+| Press {jump button!} to jump. |>
+	|ok
+| No |>
+	|ko

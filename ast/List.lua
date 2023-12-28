@@ -49,13 +49,13 @@ List = ast.abstract.Runtime {
 	get = function(self, state, index)
 		local list = self.branched:get(state)
 		if index < 0 then index = #list.list + 1 + index end
-		if index > #list.list or index == 0 then error("list index out of bounds") end
+		if index > #list.list or index == 0 then error("list index out of bounds", 0) end
 		return list.list[index]
 	end,
 	set = function(self, state, index, val)
 		local list = self:_prepare_branch(state)
 		if index < 0 then index = #list.list + 1 + index end
-		if index > #list.list or index == 0 then error("list index out of bounds") end
+		if index > #list.list+1 or index == 0 then error("list index out of bounds", 0) end
 		list.list[index] = val
 	end,
 	insert = function(self, state, val)

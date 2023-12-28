@@ -1,0 +1,19 @@
+--# run #--
+--- choice ---
+=> | {}"Press " {1:1}"A" {}" to jump. "|
+ > | {}"No "|
+--- text ---
+| {}"ok"|
+--- choice ---
+=> | {}"Other "|
+--- text ---
+| {}"ok"|
+| {1:1}"left"|
+--- choice ---
+=> | {}"Use " {}" joystick" {}" to move. "|
+--- text ---
+| {}"ko"|
+--- return ---
+()
+--# saved #--
+{}

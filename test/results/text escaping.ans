@@ -1,0 +1,16 @@
+--# run #--
+--- text ---
+| {}"expression " {}"{" {}"a}"|
+--- text ---
+| {}"quote " {}"\"" {}""|
+--- text ---
+| {}"other codes " {}"\
+" {}" " {}"\\" {}" " {}"\9" {}""|
+--- text ---
+| {}"decorators " {}"#" {}" tag " {}"~" {}" condition " {}"$" {}" fn"|
+--- text ---
+| {}"sub " {}"[" {}"text]"|
+--- return ---
+()
+--# saved #--
+{}

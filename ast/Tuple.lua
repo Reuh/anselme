@@ -58,7 +58,7 @@ Tuple = ast.abstract.Node {
 
 	get = function(self, index)
 		if index < 0 then index = #self.list + 1 + index end
-		if index > #self.list or index == 0 then error("tuple index out of bounds") end
+		if index > #self.list or index == 0 then error("tuple index out of bounds", 0) end
 		return self.list[index]
 	end
 }

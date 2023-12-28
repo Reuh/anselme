@@ -1,0 +1,13 @@
+:$ jump button
+	1 # | A
+
+	@
+
+:$ move axis
+	1 # | left
+
+	@" joystick"
+
+| Press {jump button!} to jump.
+
+| Use {move axis!} to move.

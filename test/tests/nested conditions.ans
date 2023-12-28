@@ -1,0 +1,19 @@
+1 ~
+	|yes
+	() ~
+		|no
+~
+	|nope
+	1 ~
+		|niet
+		() ~
+			|still no
+~
+	|nein
+
+() ~
+	|nah
+~
+	|ye
+	~
+		|da

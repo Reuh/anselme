@@ -1,0 +1,12 @@
+:person = "personne"
+
+:$ format(p::is(person))
+	p = p!value
+	@"Name: {p("name")}\nAge: {p("age")}"
+
+:$ Person(name, age)
+	@{"name":name, "age":age}!type(person)
+
+:abject = Person("Darmanin", 38)
+
+|{abject}

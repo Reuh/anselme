@@ -1,0 +1,7 @@
+--# run #--
+--- error ---
+./state/State.lua:145: [0m[31m[0m[31mtrying to change the value of constant a[0m
+	↳ from [4mtest/tests/constant variable.ans:5:3[0m in assignment: [2ma = 52[0m[0m
+	↳ from [4m?[0m in block: [2m::a = 3…[0m
+--# saved #--
+{}

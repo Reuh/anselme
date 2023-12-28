@@ -1,0 +1,14 @@
+--# run #--
+--- text ---
+| {}"expression " {}"a" {}""|
+--- text ---
+| {}"quote " {}"\"" {}""|
+--- text ---
+| {}"other codes " {}"\
+" {}" " {}"\\" {}" " {}"\9" {}" " {}"{" {}"braces}"|
+--- text ---
+| {}"" {}"escaping expressions abc and {stuff} \\ and quotes \"" {}""|
+--- return ---
+()
+--# saved #--
+{}
