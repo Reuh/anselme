@@ -22,6 +22,9 @@ local VariableMetadata = ast.abstract.Runtime {
 			return self.branched:get(state)
 		end
 	end,
+	get_symbol = function(self)
+		return self.symbol
+	end,
 	set = function(self, state, value)
 		if self.symbol.constant then
 			error(("trying to change the value of constant %s"):format(self.symbol.string), 0)
@@ -179,6 +182,10 @@ local Environment = ast.abstract.Runtime {
 	-- get variable value in current or parent environment
 	get = function(self, state, identifier)
 		return self:_get_variable(state, identifier):get(state)
+	end,
+	-- get the symbol that was used to define the variable in current or parent environment
+	get_symbol = function(self, state, identifier)
+		return self:_get_variable(state, identifier):get_symbol()
 	end,
 	-- set variable value in current or parent environment
 	set = function(self, state, identifier, val)

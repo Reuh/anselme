@@ -79,6 +79,7 @@ local ScopeStack = class {
 	defined_in_current = function(self, symbol) return self.current:defined_in_current(self.state, symbol) end,
 	set = function(self, identifier, exp) self.current:set(self.state, identifier, exp) end,
 	get = function(self, identifier) return self.current:get(self.state, identifier)	end,
+	get_symbol = function(self, identifier) return self.current:get_symbol(self.state, identifier)	end,
 	depth = function(self) return self.current:depth() end,
 
 	-- push new scope

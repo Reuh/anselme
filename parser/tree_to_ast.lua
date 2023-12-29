@@ -3,7 +3,7 @@
 local tree_to_block
 
 local ast = require("ast")
-local Block, Flush, AttachBlock
+local Block, Flush, PartialScope
 
 local expression_to_ast = require("parser.expression.to_ast")
 
@@ -26,7 +26,7 @@ end
 local function line_to_expression(content, tree)
 	if #tree > 0 then
 		local child_block = tree_to_block(tree)
-		return AttachBlock:new(expect_end_block(expression_to_ast(tree.source:clone(), content.." _", " _$")), child_block):set_source(tree.source)
+		return PartialScope:attach_block(expect_end_block(expression_to_ast(tree.source:clone(), content.." _", " _$")), child_block):set_source(tree.source)
 	else
 		return expect_end(expression_to_ast(tree.source:clone(), content, nil, nil, nil, Flush:new())):set_source(tree.source)
 	end
@@ -47,6 +47,6 @@ tree_to_block = function(tree)
 end
 
 package.loaded[...] = tree_to_block
-Block, Flush, AttachBlock = ast.Block, ast.Flush, ast.AttachBlock
+Block, Flush, PartialScope = ast.Block, ast.Flush, ast.PartialScope
 
 return tree_to_block

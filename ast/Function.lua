@@ -33,6 +33,10 @@ Function = Overloadable {
 	traverse = function(self, fn, ...)
 		fn(self.parameters, ...)
 		fn(self.expression, ...)
+		for sym, val in pairs(self.exports) do
+			fn(sym, ...)
+			fn(val, ...)
+		end
 	end,
 
 	compatible_with_arguments = function(self, state, args)

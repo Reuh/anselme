@@ -1,5 +1,5 @@
 local ast = require("ast")
-local Nil, Choice, AttachBlock, ArgumentTuple = ast.Nil, ast.Choice, ast.AttachBlock, ast.ArgumentTuple
+local Nil, Choice, PartialScope, ArgumentTuple = ast.Nil, ast.Choice, ast.PartialScope, ast.ArgumentTuple
 
 local event_manager = require("state.event_manager")
 local translation_manager = require("state.translation_manager")
@@ -33,7 +33,8 @@ return {
 	{
 		"_->_", "(original::is(\"quote\"), translated::is(\"quote\"))",
 		function(state, original, translated)
-			translation_manager:set(state, tag_manager:get(state), original.expression, AttachBlock:preserve(state, translated.expression))
+			local exp = PartialScope:preserve(state, translated.expression, ast.Identifier:new("_"))
+			translation_manager:set(state, tag_manager:get(state), original.expression, exp)
 			return Nil:new()
 		end
 	}
