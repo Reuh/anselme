@@ -2,8 +2,9 @@
 
 local lfs = require("lfs")
 
+package.path = "./?/init.lua;./?.lua;" .. package.path
 local anselme = require("anselme")
-local persistent_manager = require("state.persistent_manager")
+local persistent_manager = require("anselme.state.persistent_manager")
 
 -- simple random to get the same result across lua versions
 local prev = 0

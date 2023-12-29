@@ -1,6 +1,6 @@
 -- LDoc doesn't like me so I don't like LDoc.
 -- Behold! A documentation generator that doesn't try to be smart!
--- Call this from the root anselme directory: `lua doc/gendocs.lua`
+-- Call this from the root anselme repository directory: `lua doc/gendocs.lua`
 
 local utf8 = utf8 or require("lua-utf8")
 

@@ -5,8 +5,8 @@ If you need more advanced control on Anselme, feel free to look into the other s
 
 # anselme
 
-{{anselme.lua}}
+{{anselme/init.lua}}
 
 # State
 
-{{state/State.lua}}
+{{anselme/state/State.lua}}
