@@ -1,7 +1,7 @@
 --# run #--
 --- text ---
-| {}"ok"|
-| {}"ok bis"|
+| {}"ok" |
+| {}"ok bis" |
 --- return ---
 ()
 --# saved #--

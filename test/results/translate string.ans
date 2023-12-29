@@ -1,8 +1,8 @@
 --# run #--
 --- text ---
-| {}"" {}"Hello" {}""|
+| {}"" {}"Hello" {}"" |
 --- text ---
-| {}"" {}"Bonjour" {}""|
+| {}"" {}"Bonjour" {}"" |
 --- return ---
 ()
 --# saved #--

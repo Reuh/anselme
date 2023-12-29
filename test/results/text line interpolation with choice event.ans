@@ -1,18 +1,18 @@
 --# run #--
 --- text ---
-| {1:1}"A"|
+| {1:1}"A" |
 --- choice ---
-=> | {}"Surprise choice! "|
+=> | {}"Surprise choice!" |
 --- text ---
-| {}"ok"|
-| {}"Press " {}"()" {}" to jump."|
+| {}"ok" |
+| {}"Press " {}"()" {}" to jump." |
 --- text ---
-| {1:1}"left"|
+| {1:1}"left" |
 --- choice ---
-=> | {}"Surprise choice! "|
+=> | {}"Surprise choice!" |
 --- text ---
-| {}"ok2"|
-| {}"Use " {}" joystick" {}" to move."|
+| {}"ok2" |
+| {}"Use " {}" joystick" {}" to move." |
 --- return ---
 ()
 --# saved #--

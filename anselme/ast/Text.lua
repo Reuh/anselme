@@ -25,7 +25,7 @@ return Runtime(AutoCall, Event) {
 		for _, e in ipairs(self.list) do
 			table.insert(t, ("%s%s"):format(e[2]:format(...), e[1]:format(...)))
 		end
-		return ("| %s|"):format(table.concat(t, " "))
+		return ("| %s |"):format(table.concat(t, " "))
 	end,
 
 	-- Text comes from TextInterpolation which already evals the contents

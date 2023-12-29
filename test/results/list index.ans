@@ -1,17 +1,17 @@
 --# run #--
 --- text ---
-| {}"" {}"[1, 2, 3]" {}""|
+| {}"" {}"[1, 2, 3]" {}"" |
 --- text ---
-| {}"" {}"1" {}" == " {}"1" {}""|
+| {}"" {}"1" {}" == " {}"1" {}"" |
 --- text ---
-| {}"" {}"2" {}" == " {}"2" {}""|
+| {}"" {}"2" {}" == " {}"2" {}"" |
 --- text ---
-| {}"" {}"3" {}" == " {}"3" {}""|
+| {}"" {}"3" {}" == " {}"3" {}"" |
 --- error ---
 [0m[31m[0m[31m[0m[31m[0m[31mtuple index out of bounds[0m
 	↳ from [4mtest/tests/list index.ans:11:4[0m in call: [2mx(-4)[0m[0m
-	↳ from [4mtest/tests/list index.ans:11:1[0m in text interpolation: [2m| {x(-4)}|[0m[0m
-	↳ from [4mtest/tests/list index.ans:11:1[0m in translatable: [2m| {x(-4)}|[0m[0m
+	↳ from [4mtest/tests/list index.ans:11:1[0m in text interpolation: [2m| {x(-4)} |[0m[0m
+	↳ from [4mtest/tests/list index.ans:11:1[0m in translatable: [2m| {x(-4)} |[0m[0m
 	↳ from [4m?[0m in block: [2m:x = [1, 2, 3]…[0m
 --# saved #--
 {}

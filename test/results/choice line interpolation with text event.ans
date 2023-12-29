@@ -1,18 +1,18 @@
 --# run #--
 --- choice ---
-=> | {}"Press " {1:1}"A" {}" to jump. "|
- > | {}"No "|
+=> | {}"Press " {1:1}"A" {}" to jump." |
+ > | {}"No" |
 --- text ---
-| {}"ok"|
+| {}"ok" |
 --- choice ---
-=> | {}"Other "|
+=> | {}"Other" |
 --- text ---
-| {}"ok"|
-| {1:1}"left"|
+| {}"ok" |
+| {1:1}"left" |
 --- choice ---
-=> | {}"Use " {}" joystick" {}" to move. "|
+=> | {}"Use " {}" joystick" {}" to move." |
 --- text ---
-| {}"ko"|
+| {}"ko" |
 --- return ---
 ()
 --# saved #--

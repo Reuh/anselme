@@ -1,15 +1,15 @@
 --# run #--
 --- text ---
-| {}"expression " {}"{" {}"a}"|
+| {}"expression " {}"{" {}"a}" |
 --- text ---
-| {}"quote " {}"\"" {}""|
+| {}"quote " {}"\"" {}"" |
 --- text ---
 | {}"other codes " {}"\
-" {}" " {}"\\" {}" " {}"\9" {}""|
+" {}" " {}"\\" {}" " {}"\9" {}"" |
 --- text ---
-| {}"decorators " {}"#" {}" tag " {}"~" {}" condition " {}"$" {}" fn"|
+| {}"decorators " {}"#" {}" tag " {}"~" {}" condition " {}"$" {}" fn" |
 --- text ---
-| {}"sub " {}"[" {}"text]"|
+| {}"sub " {}"[" {}"text]" |
 --- return ---
 ()
 --# saved #--

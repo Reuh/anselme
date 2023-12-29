@@ -1,10 +1,10 @@
 --# run #--
 --- text ---
-| {1:1}"A"|
+| {1:1}"A" |
 --- choice ---
-=> | {}"Suprise choice! "|
- > | {}"Press " {}"JOIN" {}" to jump. "|
- > | {}"No "|
+=> | {}"Suprise choice!" |
+ > | {}"Press " {}"JOIN" {}" to jump." |
+ > | {}"No" |
 --- return ---
 ()
 --# saved #--

@@ -1,11 +1,11 @@
 --# run #--
 --- text ---
-| {1:1}"a"|
+| {1:1}"a" |
 --- choice ---
-=> | {}"Press " {}"SPLIT" {}" to jump. "|
- > | {}"No "|
+=> | {}"Press " {}"SPLIT" {}" to jump." |
+ > | {}"No" |
 --- text ---
-| {}"ok"|
+| {}"ok" |
 --- return ---
 ()
 --# saved #--

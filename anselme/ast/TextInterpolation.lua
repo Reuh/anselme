@@ -31,7 +31,7 @@ local TextInterpolation = ast.abstract.Node {
 				table.insert(l, ("{%s}"):format(e:format(...)))
 			end
 		end
-		return ("| %s|"):format(table.concat(l))
+		return ("| %s |"):format(table.concat(l))
 	end,
 
 	_eval = function(self, state)

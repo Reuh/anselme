@@ -1,12 +1,12 @@
 --# run #--
 --- text ---
-| {1:1}"A"|
+| {1:1}"A" |
 --- text ---
-| {}"Press " {}"()" {}" to jump."|
+| {}"Press " {}"()" {}" to jump." |
 --- text ---
-| {1:1}"left"|
+| {1:1}"left" |
 --- text ---
-| {}"Use " {}" joystick" {}" to move."|
+| {}"Use " {}" joystick" {}" to move." |
 --- return ---
 ()
 --# saved #--

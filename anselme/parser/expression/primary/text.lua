@@ -20,6 +20,10 @@ return string {
 			source:increment(-1)
 		end
 
+		-- remove terminal space
+		local last = interpolation.list[#interpolation.list]
+		if ast.String:is(last) then last.string = last.string:gsub("%s$", "") end
+
 		return Translatable:new(interpolation):set_source(start_source), rem
 	end
 }
