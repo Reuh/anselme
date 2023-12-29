@@ -50,12 +50,9 @@ local Definition = ast.abstract.Node {
 		symbol:prepare(state)
 		val:prepare(state)
 
-		if self.symbol.alias then
-			state.scope:define(symbol:with{ alias = false }, val) -- disable alias to avoid call in Identifier:_prepare
-		elseif Overloadable:issub(val) then
-			state.scope:define_overloadable(symbol, val)
-		else
-			state.scope:define(symbol, val)
+		-- predefine exported variables
+		if symbol.exported then
+			self:eval(state)
 		end
 	end
 }

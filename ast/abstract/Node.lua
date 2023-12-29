@@ -165,7 +165,7 @@ Node = class {
 		local r = {}
 		for _, tr in ipairs(l) do
 			table.insert(r, "(("..tr.source.."))")
-			table.insert(r, Call:new(Identifier:new("_#_"), ArgumentTuple:new(tr.context, Identifier:new("_"))))
+			table.insert(r, Call:new(Identifier:new("_#_"), ArgumentTuple:new(tr.context, Identifier:new("_"))):format())
 			table.insert(r, "\t"..Call:new(Identifier:new("_->_"), ArgumentTuple:new(tr, tr)):format())
 			table.insert(r, "")
 		end

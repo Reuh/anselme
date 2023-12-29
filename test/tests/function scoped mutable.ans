@@ -1,0 +1,40 @@
+:n = 0
+
+:$ f(c=1)
+	:a = *[]
+
+	|start: {a}
+
+	a!insert(c)
+
+	n += 1
+
+	|before recursion {c}: {a}
+
+	n < 5 ~
+		f(c+1)
+
+		|after recursion {c}: {a}
+
+|new list each time:
+
+f!
+
+:$ g(c=1, a=*[])
+	|start: {a}
+
+	a!insert(c)
+
+	n += 1
+
+	|before recursion {c}: {a}
+
+	n < 5 ~
+		g(c+1, a)
+
+		|after recursion {c}: {a}
+
+|pass list:
+
+n = 0
+g!

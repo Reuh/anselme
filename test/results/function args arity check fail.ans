@@ -1,6 +1,6 @@
 --# run #--
 --- error ---
-./state/State.lua:145: [0m[31m[0m[31mcan't call closure ($(a, b) _): expected 2 arguments, received 1[0m
+[0m[31m[0m[31mcan't call closure ($(a, b) _): expected 2 arguments, received 1[0m
 	↳ from [4mtest/tests/function args arity check fail.ans:4:2[0m in call: [2mf("ok")[0m[0m
 	↳ from [4m?[0m in block: [2m:f = ($(a, b) _)…[0m
 --# saved #--

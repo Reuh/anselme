@@ -1,0 +1,7 @@
+:weigh::($(x)x!type=="kg") = type(5, "kg")
+
+|{weigh}
+
+:not weigh::($(x)x!type=="kg") = 12
+
+|{not weigh}

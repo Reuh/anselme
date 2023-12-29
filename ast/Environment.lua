@@ -28,7 +28,7 @@ local VariableMetadata = ast.abstract.Runtime {
 		end
 		if self.symbol.type_check then
 			local r = self.symbol.type_check:call(state, ArgumentTuple:new(value))
-			if not r:truthy() then error(("type check failure for %s; %s does not satisfy %s"):format(self.symbol.string, value, self.symbol.type_check)) end
+			if not r:truthy() then error(("type check failure for %s; %s does not satisfy %s"):format(self.symbol.string, value, self.symbol.type_check), 0) end
 		end
 		if self.symbol.alias then
 			local assign_args = ArgumentTuple:new()
@@ -185,14 +185,12 @@ local Environment = ast.abstract.Runtime {
 		return self:_get_variable(state, identifier):set(state, val)
 	end,
 
-	-- returns a list {[symbol]=val,...} of all exported variables in the current strict layer
+	-- returns a list {[symbol]=val,...} of all exported variables (evaluated) in the current strict layer
 	list_exported = function(self, state)
 		assert(self.export, "not an export scope layer")
 		local r = {}
 		for _, vm in self.variables:iter(state) do
-			if vm.symbol.exported then
-				r[vm.symbol] = vm:get(state)
-			end
+			r[vm.symbol] = vm:get(state)
 		end
 		return r
 	end,

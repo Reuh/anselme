@@ -1,0 +1,8 @@
+| Hello
+
+"source": "test/tests/translate context.ans:6:1" #
+	| Hello| -> | Bonjour
+
+| Hello
+
+| Hello

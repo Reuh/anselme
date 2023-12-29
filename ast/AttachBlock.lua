@@ -17,7 +17,9 @@ AttachBlock = ast.abstract.Node {
 	end,
 
 	_format = function(self, state, priority, indentation, ...)
-		return self.expression:format(state, priority, indentation, ...).."\n\t"..self.block:format(state, priority, indentation + 1, ...)
+		local exp = self.expression:format(state, priority, indentation, ...)
+		if exp:sub(-2) == " _" then exp = exp:sub(1, -3) end
+		return exp.."\n\t"..self.block:format(state, priority, indentation + 1, ...)
 	end,
 
 	traverse = function(self, fn, ...)

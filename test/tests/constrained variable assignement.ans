@@ -1,0 +1,11 @@
+:weigh::is("kg") = 5!type("kg")
+
+|{weigh}
+
+weigh = 12!type("kg")
+
+|{weigh}
+
+weigh = 32
+
+|{weigh}

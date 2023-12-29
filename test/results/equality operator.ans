@@ -1,0 +1,27 @@
+--# run #--
+--- text ---
+| {}"false = " {}"false" {}""|
+--- text ---
+| {}"false = " {}"false" {}""|
+--- text ---
+| {}"true = " {}"true" {}""|
+--- text ---
+| {}"false = " {}"false" {}""|
+--- text ---
+| {}"false = " {}"false" {}""|
+--- text ---
+| {}"false = " {}"false" {}""|
+--- text ---
+| {}"false = " {}"false" {}""|
+--- text ---
+| {}"true = " {}"true" {}""|
+--- text ---
+| {}"false = " {}"false" {}""|
+--- text ---
+| {}"true = " {}"true" {}""|
+--- text ---
+| {}"true = " {}"true" {}""|
+--- return ---
+()
+--# saved #--
+{}

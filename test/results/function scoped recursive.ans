@@ -1,0 +1,33 @@
+--# run #--
+--- text ---
+| {}"start: " {}"1" {}""|
+--- text ---
+| {}"before recursion " {}"1" {}": " {}"2" {}""|
+--- text ---
+| {}"start: " {}"1" {}""|
+--- text ---
+| {}"before recursion " {}"2" {}": " {}"2" {}""|
+--- text ---
+| {}"start: " {}"1" {}""|
+--- text ---
+| {}"before recursion " {}"3" {}": " {}"2" {}""|
+--- text ---
+| {}"start: " {}"1" {}""|
+--- text ---
+| {}"before recursion " {}"4" {}": " {}"2" {}""|
+--- text ---
+| {}"start: " {}"1" {}""|
+--- text ---
+| {}"before recursion " {}"5" {}": " {}"2" {}""|
+--- text ---
+| {}"after recursion " {}"4" {}": " {}"2" {}""|
+--- text ---
+| {}"after recursion " {}"3" {}": " {}"2" {}""|
+--- text ---
+| {}"after recursion " {}"2" {}": " {}"2" {}""|
+--- text ---
+| {}"after recursion " {}"1" {}": " {}"2" {}""|
+--- return ---
+()
+--# saved #--
+{}

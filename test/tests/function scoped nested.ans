@@ -1,0 +1,44 @@
+:$ f()
+	:a = 1
+
+	|{a}
+
+	a = a + 1
+
+	:$ g
+		:a = 1
+
+		|{a}
+
+		a = a + 1
+
+	:$ h()
+		:a = 1
+
+		|{a}
+
+		a = a + 1
+
+	|\> depth 2, unscoped:
+
+	g!
+
+	g!
+
+	g!
+
+	|\> depth 2, scoped:
+
+	h!
+
+	h!
+
+	h!
+
+|depth 1:
+
+f!
+
+f!
+
+f!

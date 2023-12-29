@@ -12,6 +12,15 @@ local parser = require("parser")
 local binser = require("lib.binser")
 local anselme
 
+-- same as assert, but do not add position information
+-- useful for errors raised from anselme (don't care about Lua error position)
+local function assert0(v, message, ...)
+	if not v then
+		error(message, 0)
+	end
+	return v, message, ...
+end
+
 local State
 State = class {
 	type = "anselme state",
@@ -142,7 +151,7 @@ State = class {
 	run = function(self, code, source)
 		assert(not self:active(), "a script is already active")
 		self._coroutine = coroutine.create(function()
-			local r = assert(self:eval_local(code, source))
+			local r = assert0(self:eval_local(code, source))
 			event_manager:final_flush(self)
 			return "return", r
 		end)
@@ -174,7 +183,7 @@ State = class {
 		assert(self:active(), "trying to interrupt but no script is currently active")
 		if code then
 			self._coroutine = coroutine.create(function()
-				local r = assert(self:eval_local(code, source))
+				local r = assert0(self:eval_local(code, source))
 				event_manager:final_flush(self)
 				self.scope:reset() -- scope stack is probably messed up after the switch
 				return "return", r
