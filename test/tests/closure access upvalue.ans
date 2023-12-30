@@ -1,0 +1,7 @@
+:f = ()
+_
+	:action = "dramatic explosion"
+	f = $
+		1 + 1
+
+f.action
