@@ -2,7 +2,7 @@ local ast = require("anselme.ast")
 
 local operator_priority = require("anselme.common").operator_priority
 
-local Branched, ArgumentTuple, Overload, Overloadable, Table
+local Branched, ArgumentTuple, Overload, Overloadable, Table, Call, ParameterTuple, Function, FunctionParameter, Identifier
 
 local VariableMetadata = ast.abstract.Runtime {
 	type = "variable metadata",
@@ -15,10 +15,11 @@ local VariableMetadata = ast.abstract.Runtime {
 		self.branched = Branched:new(state, value)
 	end,
 	get = function(self, state)
+		local v = self.branched:get(state)
 		if self.symbol.alias then
-			return self.branched:get(state):call(state, ArgumentTuple:new())
+			return v:call(state, ArgumentTuple:new())
 		else
-			return self.branched:get(state)
+			return v
 		end
 	end,
 	get_symbol = function(self)
@@ -126,21 +127,24 @@ local Environment = ast.abstract.Runtime {
 			self:define(state, symbol, exp)
 		end
 	end,
-	define_alias = function(self, state, symbol, call)
+	-- define new aliased variable in the environment
+	-- exp will be used as the function content
+	define_alias = function(self, state, symbol, exp)
 		assert(symbol.alias, "symbol is not an alias")
-		assert(call.type == "call", "alias expression must be a call")
 
-		local get = ast.Function:new(ast.ParameterTuple:new(), call):eval(state)
+		local get = Function:new(ParameterTuple:new(), exp):eval(state)
 
 		if symbol.constant then
 			self:define(state, symbol, get)
 		else
-			local set_param = ast.ParameterTuple:new()
-			set_param:insert_assignment(ast.FunctionParameter:new(ast.Identifier:new("value")))
-			local assign_expr = ast.Call:new(call.func, call.arguments:with_assignment(ast.Identifier:new("value")))
-			local set = ast.Function:new(set_param, assign_expr):eval(state)
+			assert(Call:is(exp), "non-constant alias expression must be a call")
 
-			self:define(state, symbol, ast.Overload:new(get, set))
+			local set_param = ParameterTuple:new()
+			set_param:insert_assignment(FunctionParameter:new(Identifier:new("value")))
+			local assign_expr = Call:new(exp.func, exp.arguments:with_assignment(Identifier:new("value")))
+			local set = Function:new(set_param, assign_expr):eval(state)
+
+			self:define(state, symbol, Overload:new(get, set))
 		end
 	end,
 
@@ -235,6 +239,6 @@ local Environment = ast.abstract.Runtime {
 }
 
 package.loaded[...] = Environment
-Branched, ArgumentTuple, Overload, Overloadable, Table = ast.Branched, ast.ArgumentTuple, ast.Overload, ast.abstract.Overloadable, ast.Table
+Branched, ArgumentTuple, Overload, Overloadable, Table, Call, ParameterTuple, Function, FunctionParameter, Identifier = ast.Branched, ast.ArgumentTuple, ast.Overload, ast.abstract.Overloadable, ast.Table, ast.Call, ast.ParameterTuple, ast.Function, ast.FunctionParameter, ast.Identifier
 
 return Environment

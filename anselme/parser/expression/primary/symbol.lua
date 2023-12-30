@@ -15,13 +15,13 @@ return primary {
 	end,
 
 	parse = function(self, source, str)
-		local mod_const, mod_export, rem = source:consume(str:match("^(%:(:?)([&@]?))(.-)$"))
+		local mod_const, mod_alias, mod_export, rem = source:consume(str:match("^(%:(:?)(&?)(@?))(.-)$"))
 		local constant, alias, type_check_exp, exported
 
 		-- get modifier
 		if mod_const == ":" then constant = true end
-		if mod_export == "&" then alias = true
-		elseif mod_export == "@" then exported = true end
+		if mod_alias == "&" then alias = true end
+		if mod_export == "@" then exported = true end
 
 		-- name
 		local ident

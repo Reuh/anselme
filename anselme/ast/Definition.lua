@@ -28,7 +28,7 @@ local Definition = ast.abstract.Node {
 
 	_eval = function(self, state)
 		if self.symbol.exported and state.scope:defined_in_current(self.symbol) then
-			return Nil:new() -- export vars: can reuse existing defining
+			return Nil:new() -- export vars: can reuse existing definition
 		end
 
 		local symbol = self.symbol:eval(state)
