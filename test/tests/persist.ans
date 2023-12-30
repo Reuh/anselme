@@ -1,6 +1,6 @@
 | pouet={persist("pouet", 7)} (7)
 
-:&d = persist("pouet", 12)
+:&d => persist("pouet", 12)
 
 | d={d} (7)
 

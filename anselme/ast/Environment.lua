@@ -127,26 +127,6 @@ local Environment = ast.abstract.Runtime {
 			self:define(state, symbol, exp)
 		end
 	end,
-	-- define new aliased variable in the environment
-	-- exp will be used as the function content
-	define_alias = function(self, state, symbol, exp)
-		assert(symbol.alias, "symbol is not an alias")
-
-		local get = Function:new(ParameterTuple:new(), exp):eval(state)
-
-		if symbol.constant then
-			self:define(state, symbol, get)
-		else
-			assert(Call:is(exp), "non-constant alias expression must be a call")
-
-			local set_param = ParameterTuple:new()
-			set_param:insert_assignment(FunctionParameter:new(Identifier:new("value")))
-			local assign_expr = Call:new(exp.func, exp.arguments:with_assignment(Identifier:new("value")))
-			local set = Function:new(set_param, assign_expr):eval(state)
-
-			self:define(state, symbol, Overload:new(get, set))
-		end
-	end,
 
 	-- returns bool if variable defined in current or parent environment
 	defined = function(self, state, identifier)

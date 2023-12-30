@@ -40,5 +40,23 @@ return {
 			state.scope:pop()
 			return r
 		end
+	},
+	{
+		">_", "(q::is(\"quote\"))",
+		function(state, q)
+			local exp = q.expression
+			local get = Function:new(ParameterTuple:new(), exp):eval(state)
+
+			if Call:is(exp) then
+				local set_param = ParameterTuple:new()
+				set_param:insert_assignment(FunctionParameter:new(Identifier:new("value")))
+				local assign_expr = Call:new(exp.func, exp.arguments:with_assignment(Identifier:new("value")))
+				local set = Function:new(set_param, assign_expr):eval(state)
+
+				return Overload:new(get, set)
+			end
+
+			return get
+		end
 	}
 }

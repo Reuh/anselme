@@ -30,6 +30,7 @@ local common = {
 	-- list of operators and their priority that are handled through regular function calls & can be overloaded/etc. by the user
 	regular_operators = {
 		prefixes = {
+			{ ">", 3.1 }, -- just above _=_
 			{ "~", 3.5 }, -- just below _~_ so else-if (~ condition ~ expression) parses as (~ (condition ~ expression))
 			{ "!", 11 },
 			{ "-", 11 },
