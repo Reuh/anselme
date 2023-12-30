@@ -13,10 +13,9 @@ Function = Overloadable {
 	parameters = nil, -- ParameterTuple
 	expression = nil,
 
-	init = function(self, parameters, expression, exports)
+	init = function(self, parameters, expression)
 		self.parameters = parameters
 		self.expression = ReturnBoundary:new(expression)
-		self.exports = exports or {}
 	end,
 
 	_format = function(self, ...)
@@ -33,10 +32,6 @@ Function = Overloadable {
 	traverse = function(self, fn, ...)
 		fn(self.parameters, ...)
 		fn(self.expression, ...)
-		for sym, val in pairs(self.exports) do
-			fn(sym, ...)
-			fn(val, ...)
-		end
 	end,
 
 	compatible_with_arguments = function(self, state, args)
@@ -61,7 +56,7 @@ Function = Overloadable {
 	end,
 
 	_eval = function(self, state)
-		return Closure:new(Function:new(self.parameters:eval(state), self.expression, self.exports), state)
+		return Closure:new(Function:new(self.parameters:eval(state), self.expression), state)
 	end,
 }
 

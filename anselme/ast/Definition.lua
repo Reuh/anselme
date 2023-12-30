@@ -3,7 +3,7 @@ local Nil, Overloadable
 
 local operator_priority = require("anselme.common").operator_priority
 
-local Definition = ast.abstract.ResumeTarget {
+local Definition = ast.abstract.Node {
 	type = "definition",
 
 	symbol = nil,
@@ -27,21 +27,13 @@ local Definition = ast.abstract.ResumeTarget {
 	end,
 
 	_eval = function(self, state)
-		if self.symbol.exported and state.scope:defined_in_current(self.symbol) then
-			return Nil:new() -- export vars: can reuse existing definition
-		end
-
 		local symbol = self.symbol:eval(state)
-		if symbol.alias then
-			state.scope:define_alias(symbol, self.expression)
-		else
-			local val = self.expression:eval(state)
+		local val = self.expression:eval(state)
 
-			if Overloadable:issub(val) then
-				state.scope:define_overloadable(symbol, val)
-			else
-				state.scope:define(symbol, val)
-			end
+		if Overloadable:issub(val) then
+			state.scope:define_overloadable(symbol, val)
+		else
+			state.scope:define(symbol, val)
 		end
 
 		return Nil:new()

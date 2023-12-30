@@ -21,6 +21,12 @@ local common = {
 			:gsub("N", math.random(0x8, 0xb)) -- variant 1
 			:gsub("x", function() return ("%x"):format(math.random(0x0, 0xf)) end) -- random hexadecimal digit
 	end,
+	-- same as assert, but do not add position information
+	-- useful for errors raised from anselme (don't care about Lua error position)
+	assert0 = function(v, message, ...)
+		if not v then error(message, 0) end
+		return v, message, ...
+	end,
 	-- list of operators and their priority that are handled through regular function calls & can be overloaded/etc. by the user
 	regular_operators = {
 		prefixes = {

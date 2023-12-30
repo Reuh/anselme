@@ -169,7 +169,7 @@ local Environment = ast.abstract.Runtime {
 		end
 		return false
 	end,
-	-- return bool if variable is defined in the current environment only - won't search in parent event for exported & partial names
+	-- return bool if variable is defined in the current environment only - won't search in parent env for exported & partial names
 	defined_in_current_strict = function(self, state, identifier)
 		return self.variables:has(state, identifier)
 	end,

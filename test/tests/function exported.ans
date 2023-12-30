@@ -6,11 +6,10 @@
 	a = a + 1
 
 :$ g
-	:@a = 1
-
 	|{a}
 
 	a = a + 1
+g.:a = 1
 
 |local:
 
@@ -20,7 +19,7 @@ f!
 
 f!
 
-|exported:
+|upvalue:
 
 g!
 

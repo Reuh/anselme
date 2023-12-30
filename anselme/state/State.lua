@@ -10,16 +10,8 @@ local persistent_manager = require("anselme.state.persistent_manager")
 local uuid = require("anselme.common").uuid
 local parser = require("anselme.parser")
 local binser = require("anselme.lib.binser")
+local assert0 = require("anselme.common").assert0
 local anselme
-
--- same as assert, but do not add position information
--- useful for errors raised from anselme (don't care about Lua error position)
-local function assert0(v, message, ...)
-	if not v then
-		error(message, 0)
-	end
-	return v, message, ...
-end
 
 local State
 State = class {

@@ -2,7 +2,6 @@
 
 local ast = require("anselme.ast")
 local Overloadable, Runtime = ast.abstract.Overloadable, ast.abstract.Runtime
-local Definition
 
 local resume_manager
 
@@ -12,27 +11,14 @@ Closure = Runtime(Overloadable) {
 
 	func = nil, -- Function
 	scope = nil, -- Environment
-	exported_scope = nil, -- Environment
 
 	init = function(self, func, state)
 		self.func = func
+
+		-- layer a new scope layer on top of captured/current scope
+		-- to allow future define in the function (fn.:var = "foo")
+		state.scope:push()
 		self.scope = state.scope:capture()
-
-		-- layer a new export layer on top of captured/current scope
-		state.scope:push_export()
-		self.exported_scope = state.scope:capture()
-
-		-- pre-define exports
-		for _, target in pairs(self:list_resume_targets()) do
-			if Definition:is(target) and target.symbol.exported then
-				resume_manager:push_no_continue(state, target)
-				state.scope:push() -- create temp func scope, in case non-export definitions are done in the resume
-				self.func.expression:eval(state)
-				state.scope:pop()
-				resume_manager:pop(state)
-			end
-		end
-
 		state.scope:pop()
 	end,
 
@@ -43,7 +29,6 @@ Closure = Runtime(Overloadable) {
 	traverse = function(self, fn, ...)
 		fn(self.func, ...)
 		fn(self.scope, ...)
-		fn(self.exported_scope, ...)
 	end,
 
 	compatible_with_arguments = function(self, state, args)
@@ -53,15 +38,23 @@ Closure = Runtime(Overloadable) {
 		return self.func.parameters:format(state)
 	end,
 	call_dispatched = function(self, state, args)
-		state.scope:push(self.exported_scope)
+		state.scope:push(self.scope)
 		local exp = self.func:call_dispatched(state, args)
+		state.scope:pop()
+		return exp
+	end,
+	resume = function(self, state, target)
+		if self.func.parameters.min_arity > 0 then error("can't resume function with parameters") end
+		state.scope:push(self.scope)
+		resume_manager:push(state, target)
+		local exp = self.func:call(state, ast.ArgumentTuple:new())
+		resume_manager:pop(state)
 		state.scope:pop()
 		return exp
 	end,
 }
 
 package.loaded[...] = Closure
-Definition = ast.Definition
 resume_manager = require("anselme.state.resume_manager")
 
 return Closure

@@ -1,11 +1,14 @@
 --# run #--
 --- text ---
+| {}"kk" |
+| {}"ko" |
+--- text ---
 | {}"" {}"42" {}"" |
 --- error ---
-[0m[31m[0m[31m[0m[31m[0m[31m./anselme/stdlib/closure.lua:15: no exported variable "y" defined in closure[0m
-	↳ from [4mtest/tests/exported variable nested.ans:10:4[0m in call: [2mf . "y"[0m[0m
-	↳ from [4mtest/tests/exported variable nested.ans:10:1[0m in text interpolation: [2m| {f . "y"} |[0m[0m
-	↳ from [4mtest/tests/exported variable nested.ans:10:1[0m in translatable: [2m| {f . "y"} |[0m[0m
+[0m[31m[0m[31m[0m[31m[0m[31midentifier "z" is undefined in branch 6843ee85-cea8-445d-10f21-9a8e54372094[0m
+	↳ from [4mtest/tests/exported variable nested.ans:12:3[0m in identifier: [2mz[0m[0m
+	↳ from [4mtest/tests/exported variable nested.ans:12:1[0m in text interpolation: [2m| {z} |[0m[0m
+	↳ from [4mtest/tests/exported variable nested.ans:12:1[0m in translatable: [2m| {z} |[0m[0m
 	↳ from [4m?[0m in block: [2m:f = ($() _)…[0m
 --# saved #--
 {}
