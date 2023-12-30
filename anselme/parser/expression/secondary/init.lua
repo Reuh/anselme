@@ -44,6 +44,7 @@ local secondaries = {
 	-- 12
 	r("infix.call"),
 	-- 14
+	r("infix.index_identifier"),
 	r("infix.index"),
 	-- 3
 	r("infix.assignment"), -- deported after equal
