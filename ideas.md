@@ -16,11 +16,6 @@ Write tests. Still missing:
 
 ---
 
-Make requires relative. Currently Anselme expect its directory to be properly somewhere in package.path.
-Also improve compatibility with Lua 5.3 and LuaJIT (I don't think we should support anything other than 5.4, 5.3 and LuaJIT).
-
----
-
 Translation.
 
 Translation model for stdlib: ?
@@ -40,10 +35,6 @@ Or just say closures probably shouldn't be persisted. Yeah, probably easier.
 
 ---
 
-Redesign the Node hierarchy to avoid cycles.
-
----
-
 Standard library.
 
 * Text manipulation would make sense, but that would require a full UTF-8/Unicode support library like https://github.com/starwing/luautf8.
@@ -51,6 +42,7 @@ Standard library.
 * Implement the useful functions from Anselme v1.
 * Checkpoint management.
 * Overloadable :format for custom types.
+* Text manipulation: concatenation, retag/add tags
 
 ---
 
@@ -61,6 +53,10 @@ To be able to use Anselme in another language, it would be nice to be able to ac
 No need to bother with networking I think. Just do some stdin/stdout handling, maybe use something like JSON-RPC: https://www.jsonrpc.org/specification (reminder: will need to add some metadata to specify content length, not aware of any streaming json lib in pure Lua - here's a rxi seal of quality library btw: https://github.com/rxi/json.lua). Or just make our own protocol around JSON.
 Issue: how to represent Anselme values? they will probably contain cycles, needs to access their methods, etc.
 Probably wise to look into how other do it. LSP: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+
+---
+
+Default arguments and initial variables values should pass the type check associated with the variable / parameter.
 
 ---
 
@@ -112,6 +108,10 @@ Performance:
 	Could also compile to Lua and let LuaJIT deal with it. Or WASM, that sounds trendy.
 
 Then again, performance has never been a goal of Anselme.
+
+---
+
+Redesign the Node hierarchy to avoid cycles.
 
 ---
 
