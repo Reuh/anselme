@@ -29,12 +29,6 @@ Identifier = ast.abstract.Node {
 	to_symbol = function(self, modifiers)
 		return Symbol:new(self.name, modifiers)
 	end,
-
-	_prepare = function(self, state)
-		if state.scope:defined(self) then
-			state.scope:get(self):prepare(state)
-		end
-	end
 }
 
 package.loaded[...] = Identifier

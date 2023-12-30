@@ -13,7 +13,7 @@ local utf8 = utf8 or require("lua-utf8")
 
 local uuid = require("anselme.common").uuid
 
-local State, Runtime, Call, Identifier, ArgumentTuple
+local Call, Identifier, ArgumentTuple
 local resume_manager
 
 local custom_call_identifier
@@ -37,9 +37,6 @@ traverse = {
 	set_source = function(self, source)
 		self:set_source(source)
 	end,
-	prepare = function(self, state)
-		self:prepare(state)
-	end,
 	merge = function(self, state, cache)
 		self:merge(state, cache)
 	end,
@@ -48,6 +45,11 @@ traverse = {
 	end,
 	list_translatable = function(self, t)
 		self:list_translatable(t)
+	end,
+	list_resume_targets = function(self, add_to_node)
+		for hash, target in pairs(self:list_resume_targets()) do
+			add_to_node._list_resume_targets_cache[hash] = target
+		end
 	end
 }
 
@@ -100,52 +102,29 @@ Node = class {
 		return self
 	end,
 
-	-- prepare the AST after parsing and before evaluation
-	-- this behave like a cached :traverse through the AST, except this keeps track of the scope stack and preserve evaluation order
-	-- i.e. when :prepare is called on a node, it should be in a similar scope stack context and order as will be when it will be evaluated
-	-- used to predefine exported variables and other compile-time variable handling
-	-- note: the state here is a temporary state only used during the prepare step
-	-- the actual preparation is done in _prepare
-	-- (this can mutate the node as needed and is automatically called after each parse)
-	prepare = function(self, state)
-		assert(not Runtime:issub(self), ("can't prepare a %s node that should only exist at runtime"):format(self.type))
-		state = state or State:new()
-		if self._prepared then return end
-		local s, r = pcall(self._prepare, self, state)
-		if s then
-			self._prepared = true
-		else
-			error(format_error(state, self, r), 0)
+	-- returns a reversed list { [target hash] = true, ... } of the resume targets contained in this node and its children
+	-- this is cached, redefine _list_resume_targets if needed, not this function
+	list_resume_targets = function(self)
+		if not self._list_resume_targets_cache then
+			self._list_resume_targets_cache = {}
+			self:_list_resume_targets()
 		end
+		return self._list_resume_targets_cache
 	end,
-	_prepared = false, -- indicate that the node was prepared and :prepare should nop
-	-- prepare this node. can mutate the node (considered to be part of construction).
-	_prepare = function(self, state)
-		self:traverse(traverse.prepare, state)
-	end,
-
-	-- returns a reversed list { [anchor] = true, ... } of the anchors contained in this node and its children
-	_list_anchors = function(self)
-		if not self._list_anchors_cache then
-			self._list_anchors_cache = {}
-			self:traverse(function(v)
-				for name in pairs(v:_list_anchors()) do
-					self._list_anchors_cache[name] = true
-				end
-			end)
-		end
-		return self._list_anchors_cache
-	end,
-	_list_anchors_cache = nil,
-
-	-- returns true if the node or its children contains the anchor
-	contains_anchor = function(self, anchor)
-		return not not self:_list_anchors()[anchor.name]
+	_list_resume_targets_cache = nil, -- list resume target cache { [target hash] = target, ... }
+	-- add resume targets to _list_resume_targets_cache
+	_list_resume_targets = function(self)
+		self:traverse(traverse.list_resume_targets, self)
 	end,
 
-	-- returns true if we are currently trying to resume to an anchor target contained in the current node
-	contains_resume_target = function(self, state)
-		return resume_manager:resuming(state) and self:contains_anchor(resume_manager:get(state))
+	-- returns true if the node or its children contains the resume target
+	contains_resume_target = function(self, target)
+		return not not self:list_resume_targets()[target:hash()]
+	end,
+
+	-- returns true if we are currently trying to resume to a resume target contained in the current node
+	contains_current_resume_target = function(self, state)
+		return resume_manager:resuming(state) and self:contains_resume_target(resume_manager:get(state))
 	end,
 
 	-- generate a list of translatable nodes that appear in this node
@@ -332,10 +311,9 @@ Node = class {
 	-- Thus, any require here that may require other Nodes shall be done here. This method is called in anselme.lua after everything else is required.
 	_i_hate_cycles = function(self)
 		local ast = require("anselme.ast")
-		Runtime, Call, Identifier, ArgumentTuple = ast.abstract.Runtime, ast.Call, ast.Identifier, ast.ArgumentTuple
+		Call, Identifier, ArgumentTuple = ast.Call, ast.Identifier, ast.ArgumentTuple
 		custom_call_identifier = Identifier:new("_!")
 
-		State = require("anselme.state.State")
 		resume_manager = require("anselme.state.resume_manager")
 	end,
 

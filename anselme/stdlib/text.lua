@@ -19,7 +19,7 @@ return {
 	{
 		"_|>_", "(txt::text, fn)",
 		function(state, text, func)
-			if func:contains_resume_target(state) then
+			if func:contains_current_resume_target(state) then
 				func:call(state, ArgumentTuple:new())
 				event_manager:write_and_discard_on_flush(state, Choice:new(text, func))
 			else

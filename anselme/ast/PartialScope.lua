@@ -56,13 +56,6 @@ PartialScope = ast.abstract.Node {
 		return exp
 	end,
 
-	_prepare = function(self, state)
-		state.scope:push_partial(unpack(self._identifiers))
-		for sym, val in pairs(self.definitions) do state.scope:define(sym, val) end
-		self.expression:prepare(state)
-		state.scope:pop()
-	end,
-
 	-- class method: if the identifier is currently defined, wrap node in an PartialScope so the identifier is still defined in this node
 	-- used to e.g. preserve the defined _ block without the need to build a full closure
 	-- used e.g. for -> translation, as we want to preserve _ while still executing the translation in the Translatable scope and not restore a different scope from a closure

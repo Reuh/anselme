@@ -8,8 +8,8 @@ local Nil = ast.Nil
 
 return primary {
 	match = function(self, str)
-		if str:match("^%::?[&@]?") then
-			return identifier:match(str:match("^%::?[&@]?(.-)$"))
+		if str:match("^%::?&?@?") then
+			return identifier:match(str:match("^%::?&?@?(.-)$"))
 		end
 		return false
 	end,

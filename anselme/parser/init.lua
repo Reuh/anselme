@@ -7,7 +7,5 @@ return function(code, source)
 	local tree = code_to_tree(code, source)
 	local block = tree_to_ast(tree)
 
-	block:prepare()
-
 	return block
 end

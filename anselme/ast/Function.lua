@@ -13,8 +13,6 @@ Function = Overloadable {
 	parameters = nil, -- ParameterTuple
 	expression = nil,
 
-	exports = nil, -- { [sym] = exp, ... }, exctracted from expression during :prepare
-
 	init = function(self, parameters, expression, exports)
 		self.parameters = parameters
 		self.expression = ReturnBoundary:new(expression)
@@ -55,7 +53,8 @@ Function = Overloadable {
 
 		state.scope:pop()
 
-		-- reminder: don't do any additionnal processing here as that won't be executed when resuming self.expression
+		-- reminder: don't do any additionnal processing here as that won't be executed when resuming self.expression directly
+		-- which is done in a few places, notably to predefine exports in Closure
 		-- instead wrap it in some additional node, like our friend ReturnBoundary
 
 		return exp
@@ -63,18 +62,6 @@ Function = Overloadable {
 
 	_eval = function(self, state)
 		return Closure:new(Function:new(self.parameters:eval(state), self.expression, self.exports), state)
-	end,
-
-	_prepare = function(self, state)
-		state.scope:push_export() -- recreate scope context that will be created by closure
-
-		state.scope:push()
-		self.parameters:prepare(state)
-		self.expression:prepare(state)
-		state.scope:pop()
-
-		self.exports = state.scope:capture():list_exported(state)
-		state.scope:pop()
 	end,
 }
 

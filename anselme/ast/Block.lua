@@ -36,17 +36,18 @@ local Block = ast.abstract.Node {
 	_eval = function(self, state)
 		local r
 		state.scope:push()
-		if self:contains_resume_target(state) then
-			local anchor = resume_manager:get(state)
+		if self:contains_current_resume_target(state) then
+			local target = resume_manager:get(state)
+			local no_continue = resume_manager:no_continue(state)
 			local resumed = false
 			for _, e in ipairs(self.expressions) do
-				if e:contains_anchor(anchor) then resumed = true end
+				if e:contains_resume_target(target) then resumed = true end
 				if resumed then
 					r = e:eval(state)
 					if AutoCall:issub(r) then
 						r = r:call(state, ArgumentTuple:new())
 					end
-					if Return:is(r) then
+					if Return:is(r) or no_continue then
 						break -- pass on to parent block until we reach a function boundary
 					end
 				end
@@ -65,14 +66,6 @@ local Block = ast.abstract.Node {
 		state.scope:pop()
 		return r or Nil:new()
 	end,
-
-	_prepare = function(self, state)
-		state.scope:push()
-		for _, e in ipairs(self.expressions) do
-			e:prepare(state)
-		end
-		state.scope:pop()
-	end
 }
 
 package.loaded[...] = Block

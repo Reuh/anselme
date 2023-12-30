@@ -3,7 +3,7 @@ local Nil, Overloadable
 
 local operator_priority = require("anselme.common").operator_priority
 
-local Definition = ast.abstract.Node {
+local Definition = ast.abstract.ResumeTarget {
 	type = "definition",
 
 	symbol = nil,
@@ -46,17 +46,6 @@ local Definition = ast.abstract.Node {
 
 		return Nil:new()
 	end,
-
-	_prepare = function(self, state)
-		local symbol, val = self.symbol, self.expression
-		symbol:prepare(state)
-		val:prepare(state)
-
-		-- predefine exported variables
-		if symbol.exported then
-			self:eval(state)
-		end
-	end
 }
 
 package.loaded[...] = Definition

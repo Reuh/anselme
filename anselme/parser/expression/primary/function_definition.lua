@@ -158,7 +158,7 @@ end
 
 return primary {
 	match = function(self, str)
-		return str:match("^%::?[&@]?%$")
+		return str:match("^%::?&?@?%$")
 	end,
 
 	parse = function(self, source, str, limit_pattern)

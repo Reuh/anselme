@@ -4,6 +4,8 @@ local ast = require("anselme.ast")
 local Overloadable, Runtime = ast.abstract.Overloadable, ast.abstract.Runtime
 local Definition
 
+local resume_manager
+
 local Closure
 Closure = Runtime(Overloadable) {
 	type = "closure",
@@ -21,8 +23,14 @@ Closure = Runtime(Overloadable) {
 		self.exported_scope = state.scope:capture()
 
 		-- pre-define exports
-		for sym, exp in pairs(self.func.exports) do
-			Definition:new(sym, exp):eval(state)
+		for _, target in pairs(self:list_resume_targets()) do
+			if Definition:is(target) and target.symbol.exported then
+				resume_manager:push_no_continue(state, target)
+				state.scope:push() -- create temp func scope, in case non-export definitions are done in the resume
+				self.func.expression:eval(state)
+				state.scope:pop()
+				resume_manager:pop(state)
+			end
 		end
 
 		state.scope:pop()
@@ -54,5 +62,6 @@ Closure = Runtime(Overloadable) {
 
 package.loaded[...] = Closure
 Definition = ast.Definition
+resume_manager = require("anselme.state.resume_manager")
 
 return Closure
