@@ -6,10 +6,17 @@ return {
 		"_==_", "(a, b)",
 		function(state, a, b)
 			if a.mutable ~= b.mutable then return Boolean:new(false)
-			elseif a.mutable then
-				return Boolean:new(a == b)
 			else
 				return Boolean:new(a:hash() == b:hash())
+			end
+		end
+	},
+	{
+		"_!=_", "(a, b)",
+		function(state, a, b)
+			if a.mutable ~= b.mutable then return Boolean:new(true)
+			else
+				return Boolean:new(a:hash() ~= b:hash())
 			end
 		end
 	},

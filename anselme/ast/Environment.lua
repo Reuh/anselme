@@ -2,7 +2,7 @@ local ast = require("anselme.ast")
 
 local operator_priority = require("anselme.common").operator_priority
 
-local Branched, ArgumentTuple, Overload, Overloadable, Table, Call, ParameterTuple, Function, FunctionParameter, Identifier
+local Branched, ArgumentTuple, Overload, Overloadable, Table
 
 local VariableMetadata = ast.abstract.Runtime {
 	type = "variable metadata",
@@ -180,6 +180,7 @@ local Environment = ast.abstract.Runtime {
 	end,
 
 	-- returns a list {[symbol]=val,...} of all exported variables (evaluated) in the current strict layer
+	-- TODO currently unused
 	list_exported = function(self, state)
 		assert(self.export, "not an export scope layer")
 		local r = {}
@@ -219,6 +220,6 @@ local Environment = ast.abstract.Runtime {
 }
 
 package.loaded[...] = Environment
-Branched, ArgumentTuple, Overload, Overloadable, Table, Call, ParameterTuple, Function, FunctionParameter, Identifier = ast.Branched, ast.ArgumentTuple, ast.Overload, ast.abstract.Overloadable, ast.Table, ast.Call, ast.ParameterTuple, ast.Function, ast.FunctionParameter, ast.Identifier
+Branched, ArgumentTuple, Overload, Overloadable, Table = ast.Branched, ast.ArgumentTuple, ast.Overload, ast.abstract.Overloadable, ast.Table
 
 return Environment

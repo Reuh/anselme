@@ -19,6 +19,7 @@ Closure = Runtime(Overloadable) {
 		-- to allow future define in the function (fn.:var = "foo")
 		state.scope:push()
 		self.scope = state.scope:capture()
+		state.scope:define(ast.Symbol:new("_calling_environment"), self.scope)
 		state.scope:pop()
 	end,
 
@@ -38,20 +39,33 @@ Closure = Runtime(Overloadable) {
 		return self.func.parameters:format(state)
 	end,
 	call_dispatched = function(self, state, args)
+		local calling_environment = state.scope:capture()
 		state.scope:push(self.scope)
+		state.scope:set(ast.Identifier:new("_calling_environment"), calling_environment)
 		local exp = self.func:call_dispatched(state, args)
 		state.scope:pop()
 		return exp
 	end,
 	resume = function(self, state, target)
 		if self.func.parameters.min_arity > 0 then error("can't resume function with parameters") end
+		local calling_environment = state.scope:capture()
 		state.scope:push(self.scope)
+		state.scope:set(ast.Identifier:new("_calling_environment"), calling_environment)
 		resume_manager:push(state, target)
 		local exp = self.func:call(state, ast.ArgumentTuple:new())
 		resume_manager:pop(state)
 		state.scope:pop()
 		return exp
 	end,
+	get_level = function(self, state, level) -- TODO make generic to all calls? only closures?
+		local env = state.scope:capture()
+		while level > 0 do
+			assert(env:defined(state, ast.Identifier:new("_calling_environment")))
+			env = env:get(state, ast.Identifier:new("_calling_environment"))
+			level = level - 1
+		end
+		return env
+	end
 }
 
 package.loaded[...] = Closure

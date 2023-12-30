@@ -20,8 +20,7 @@ return function(main_state)
 		"type_check"
 	})
 
-	local boot = parser(require("anselme.stdlib.boot_script"), "boot.ans")
-	boot:eval(main_state)
+	parser(require("anselme.stdlib.boot_script"), "boot.ans"):eval(main_state)
 
 	load(main_state, {
 		"number",
@@ -32,4 +31,6 @@ return function(main_state)
 		"checkpoint",
 		"persist",
 	})
+
+	parser(require("anselme.stdlib.script_script"), "script.ans"):eval(main_state)
 end
