@@ -7,7 +7,6 @@ local translation_manager
 
 local Translatable = ast.abstract.Node {
 	type = "translatable",
-	format_priority = operator_priority["%_"],
 
 	expression = nil,
 
@@ -15,9 +14,6 @@ local Translatable = ast.abstract.Node {
 		self.expression = expression
 		self.context = ast.Struct:new()
 		self.context:set(String:new("source"), String:new(self.expression.source))
-		if TextInterpolation:is(self.expression) then
-			self.format_priority = expression.format_priority
-		end
 	end,
 
 	_format = function(self, ...)
@@ -25,6 +21,13 @@ local Translatable = ast.abstract.Node {
 			return self.expression:format(...)
 		else
 			return "%"..self.expression:format_right(...)
+		end
+	end,
+	_format_priority = function(self)
+		if TextInterpolation:is(self.expression) then
+			return self.expression:format_priority()
+		else
+			return operator_priority["%_"]
 		end
 	end,
 

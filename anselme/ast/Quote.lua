@@ -15,11 +15,13 @@ Quote = ast.abstract.Node {
 
 	init = function(self, expression)
 		self.expression = expression
-		self.format_priority = expression.format_priority
 	end,
 
 	_format = function(self, ...)
 		return self.expression:format(...) -- Quote is generated transparently by operators
+	end,
+	_format_priority = function(self)
+		return self.expression:format_priority()
 	end,
 
 	traverse = function(self, fn, ...)

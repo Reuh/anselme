@@ -8,7 +8,6 @@ local Assignment = ast.abstract.Node {
 
 	identifier = nil,
 	expression = nil,
-	format_priority = operator_priority["_=_"],
 
 	init = function(self, identifier, expression)
 		self.identifier = identifier
@@ -17,6 +16,9 @@ local Assignment = ast.abstract.Node {
 
 	_format = function(self, ...)
 		return self.identifier:format(...).." = "..self.expression:format_right(...)
+	end,
+	_format_priority = function(self)
+		return operator_priority["_=_"]
 	end,
 
 	traverse = function(self, fn, ...)

@@ -9,7 +9,6 @@ local VariableMetadata = ast.abstract.Runtime {
 
 	symbol = nil,
 	branched = nil,
-	format_priority = operator_priority["_=_"],
 
 	init = function(self, state, symbol, value)
 		self.symbol = symbol
@@ -45,6 +44,10 @@ local VariableMetadata = ast.abstract.Runtime {
 	_format = function(self, ...)
 		return ("%s=%s"):format(self.symbol:format(...), self.branched:format(...))
 	end,
+	_format_priority = function(self)
+		return operator_priority["_=_"]
+	end,
+
 	traverse = function(self, fn, ...)
 		fn(self.symbol, ...)
 		fn(self.branched, ...)

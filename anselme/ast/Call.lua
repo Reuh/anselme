@@ -19,26 +19,10 @@ Call = ast.abstract.Node {
 
 	func = nil,
 	arguments = nil, -- ArgumentTuple
-	format_priority = infix["_!"], -- often overwritten in :init
 
 	init = function(self, func, arguments)
 		self.func = func
 		self.arguments = arguments
-
-		-- get priority: operators
-		if Identifier:is(self.func) then
-			local name, arity = self.func.name, self.arguments.arity
-			if infix[name] and arity == 2 then
-				self.format_priority = infix[name]
-			elseif prefix[name] and arity == 1 then
-				self.format_priority = prefix[name]
-			elseif suffix[name] and arity == 1 then
-				self.format_priority = suffix[name]
-			end
-		end
-		if self.arguments.assignment then
-			self.format_priority = operator_priority["_=_"]
-		end
 	end,
 
 	_format = function(self, ...)
@@ -65,6 +49,22 @@ Call = ast.abstract.Node {
 			end
 			return self.func:format(...)..self.arguments:format(...) -- no need for format_right, we already handle the assignment priority here
 		end
+	end,
+	_format_priority = function(self)
+		if Identifier:is(self.func) then
+			local name, arity = self.func.name, self.arguments.arity
+			if infix[name] and arity == 2 then
+				return infix[name]
+			elseif prefix[name] and arity == 1 then
+				return prefix[name]
+			elseif suffix[name] and arity == 1 then
+				return suffix[name]
+			end
+		end
+		if self.arguments.assignment then
+			return operator_priority["_=_"]
+		end
+		return operator_priority["_!"]
 	end,
 
 	traverse = function(self, fn, ...)

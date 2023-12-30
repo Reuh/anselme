@@ -24,9 +24,6 @@ Symbol = ast.abstract.Node {
 		self.alias = modifiers.alias
 		self.confined_to_branch = modifiers.confined_to_branch
 		self.exported = modifiers.exported
-		if self.type_check then
-			self.format_priority = operator_priority["_::_"]
-		end
 	end,
 
 	_eval = function(self, state)
@@ -65,6 +62,12 @@ Symbol = ast.abstract.Node {
 			s = s .. "::" .. self.type_check:format_right(state, operator_priority["_::_"], ...)
 		end
 		return s
+	end,
+	_format_priority = function(self)
+		if self.type_check then
+			return operator_priority["_::_"]
+		end
+		return math.huge
 	end,
 
 	to_lua = function(self, state)

@@ -8,7 +8,6 @@ local Definition = ast.abstract.Node {
 
 	symbol = nil,
 	expression = nil,
-	format_priority = operator_priority["_=_"],
 
 	init = function(self, symbol, expression)
 		self.symbol = symbol
@@ -17,6 +16,9 @@ local Definition = ast.abstract.Node {
 
 	_format = function(self, ...)
 		return self.symbol:format(...).." = "..self.expression:format_right(...)
+	end,
+	_format_priority = function(self)
+		return operator_priority["_=_"]
 	end,
 
 	traverse = function(self, fn, ...)

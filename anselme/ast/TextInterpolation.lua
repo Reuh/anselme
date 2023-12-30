@@ -21,14 +21,14 @@ local TextInterpolation = ast.abstract.Node {
 		end
 	end,
 
-	_format = function(self, ...)
+	_format = function(self, state, prio, ...)
 		local l = {}
 		for _, e in ipairs(self.list) do
 			if String:is(e) then
 				local t = e.string:gsub("\\", "\\\\"):gsub("\n", "\\n"):gsub("\t", "\\t"):gsub("\"", "\\\"")
 				table.insert(l, t)
 			else
-				table.insert(l, ("{%s}"):format(e:format(...)))
+				table.insert(l, ("{%s}"):format(e:format(state, 0, ...)))
 			end
 		end
 		return ("| %s |"):format(table.concat(l))

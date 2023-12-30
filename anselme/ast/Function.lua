@@ -12,7 +12,6 @@ Function = Overloadable {
 
 	parameters = nil, -- ParameterTuple
 	expression = nil,
-	format_priority = operator_priority["$_"],
 
 	exports = nil, -- { [sym] = exp, ... }, exctracted from expression during :prepare
 
@@ -28,6 +27,9 @@ Function = Overloadable {
 		else
 			return "$"..self.parameters:format(...).." "..self.expression:format_right(...)
 		end
+	end,
+	_format_priority = function(self)
+		return operator_priority["$_"]
 	end,
 
 	traverse = function(self, fn, ...)

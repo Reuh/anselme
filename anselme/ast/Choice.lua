@@ -9,7 +9,6 @@ Choice = ast.abstract.Runtime {
 
 	text = nil,
 	func = nil,
-	format_priority = operator_priority["_|>_"],
 
 	init = function(self, text, func)
 		self.text = text
@@ -23,6 +22,9 @@ Choice = ast.abstract.Runtime {
 
 	_format = function(self, ...)
 		return ("%s |> %s"):format(self.text:format(...), self.func:format_right(...))
+	end,
+	_format_priority = function(self)
+		return operator_priority["_|>_"]
 	end,
 
 	build_event_data = function(self, state, event_buffer)

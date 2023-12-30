@@ -7,8 +7,6 @@ local List
 List = ast.abstract.Runtime {
 	type = "list",
 
-	format_priority = operator_priority["*_"],
-
 	-- note: yeah technically this isn't mutable, only .branched is
 
 	-- note: this a Branched of Tuple, and we *will* forcefully mutate the tuples, so make sure to not disseminate any reference to them outside the List
@@ -22,6 +20,9 @@ List = ast.abstract.Runtime {
 
 	_format = function(self, ...)
 		return "*"..self.branched:format_right(...)
+	end,
+	_format_priority = function(self)
+		return operator_priority["*_"]
 	end,
 
 	traverse = function(self, fn, ...)

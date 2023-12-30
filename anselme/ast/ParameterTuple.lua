@@ -27,7 +27,6 @@ ParameterTuple = ast.abstract.Node {
 	insert_assignment = function(self, val) -- only for construction
 		self:insert(val)
 		self.assignment = true
-		self.format_priority = operator_priority["_=_"]
 	end,
 
 	_format = function(self, state, prio, ...)
@@ -42,6 +41,12 @@ ParameterTuple = ast.abstract.Node {
 			s = s .. (" = %s"):format(self.list[#self.list]:format_right(state, operator_priority["_=_"], ...))
 		end
 		return s
+	end,
+	_format_priority = function(self)
+		if self.assignment then
+			return operator_priority["_=_"]
+		end
+		return math.huge
 	end,
 
 	traverse = function(self, fn, ...)

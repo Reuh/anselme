@@ -257,9 +257,9 @@ Node = class {
 		indentation_level = indentation_level or 0
 		parent_priority = parent_priority or 0
 
-		local s = self:_format(state, self.format_priority, indentation_level)
+		local s = self:_format(state, self:format_priority(), indentation_level)
 
-		if self.format_priority < parent_priority then
+		if self:format_priority() < parent_priority then
 			s = ("(%s)"):format(s)
 		end
 
@@ -273,9 +273,9 @@ Node = class {
 		indentation_level = indentation_level or 0
 		parent_priority = parent_priority or 0
 
-		local s = self:_format(state, self.format_priority, indentation_level)
+		local s = self:_format(state, self:format_priority(), indentation_level)
 
-		if self.format_priority <= parent_priority then
+		if self:format_priority() <= parent_priority then
 			s = ("(%s)"):format(s)
 		end
 
@@ -288,9 +288,20 @@ Node = class {
 	_format = function(self, state, self_priority, identation)
 		error("format not implemented for "..self.type)
 	end,
-	-- priority of the node that will be used in :format to add eventually needed parentheses.
-	-- should not be modified after object construction!
-	format_priority = math.huge, -- by default, assumes primary node, i.e. never wrap in parentheses
+	-- compute the priority of the node that will be used in :format to add eventually needed parentheses.
+	-- should alwaus return the same value after object construction (will be cached anyway)
+	-- redefine _format_priority, not this function
+	format_priority = function(self)
+		if not self._format_priority_cache then
+			self._format_priority_cache = self:_format_priority()
+		end
+		return self._format_priority_cache
+	end,
+	-- redefine this to compute the priority, see :format_priority
+	_format_priority = function(self)
+		return math.huge -- by default, assumes primary node, i.e. never wrap in parentheses
+	end,
+	_format_priority_cache = nil, -- cached priority
 
 	-- return Lua value
 	-- this should probably be only called on a Node that is already evaluated

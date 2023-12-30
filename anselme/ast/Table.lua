@@ -7,8 +7,6 @@ local Table
 Table = ast.abstract.Runtime {
 	type = "table",
 
-	format_priority = operator_priority["*_"],
-
 	-- note: technically this isn't mutable, only .branched is
 
 	-- note: this a Branched of Struct, and we *will* forcefully mutate the tuples, so make sure to not disseminate any reference to them outside the Table
@@ -22,6 +20,9 @@ Table = ast.abstract.Runtime {
 
 	_format = function(self, ...)
 		return "*"..self.branched:format_right(...)
+	end,
+	_format_priority = function(self)
+		return operator_priority["*_"]
 	end,
 
 	traverse = function(self, fn, ...)

@@ -7,7 +7,6 @@ return ast.abstract.Runtime {
 
 	name = nil,
 	value = nil,
-	format_priority = operator_priority["_:_"],
 
 	init = function(self, name, value)
 		self.name = name
@@ -21,5 +20,8 @@ return ast.abstract.Runtime {
 
 	_format = function(self, ...)
 		return ("%s:%s"):format(self.name:format(...), self.value:format(...))
+	end,
+	_format_priority = function(self)
+		return operator_priority["_:_"]
 	end,
 }

@@ -7,7 +7,6 @@ Return = ast.abstract.Node {
 	type = "return",
 
 	expression = nil,
-	format_priority = operator_priority["@_"],
 
 	init = function(self, expression)
 		self.expression = expression
@@ -15,6 +14,9 @@ Return = ast.abstract.Node {
 
 	_format = function(self, ...)
 		return ("@%s"):format(self.expression:format_right(...))
+	end,
+	_format_priority = function(self)
+		return operator_priority["@_"]
 	end,
 
 	traverse = function(self, fn, ...)

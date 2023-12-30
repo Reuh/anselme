@@ -13,11 +13,6 @@ FunctionParameter = ast.abstract.Node {
 		self.identifier = identifier
 		self.default = default
 		self.type_check = type_check
-		if default then
-			self.format_priority = operator_priority["_=_"]
-		elseif type_check then -- type_check has higher prio than assignment in any case
-			self.format_priority = operator_priority["_::_"]
-		end
 	end,
 
 	_format = function(self, state, prio, ...)
@@ -29,6 +24,15 @@ FunctionParameter = ast.abstract.Node {
 			s = s .. "=" .. self.default:format_right(state, operator_priority["_=_"], ...)
 		end
 		return s
+	end,
+	_format_priority = function(self)
+		if self.default then
+			return operator_priority["_=_"]
+		elseif self.type_check then -- type_check has higher prio than assignment in any case
+			return operator_priority["_::_"]
+		else
+			return math.huge
+		end
 	end,
 
 	traverse = function(self, fn, ...)

@@ -35,7 +35,6 @@ ArgumentTuple = ast.abstract.Node {
 		assert(not self.assignment)
 		self.arity = self.arity + 1
 		self.assignment = val
-		self.format_priority = operator_priority["_=_"]
 	end,
 
 	_format = function(self, state, priority, ...)
@@ -55,6 +54,13 @@ ArgumentTuple = ast.abstract.Node {
 			s = s .. (" = %s"):format(self.assignment:format_right(state, operator_priority["_=_"], ...))
 		end
 		return s
+	end,
+	_format_priority = function(self)
+		if self.assignment then
+			return operator_priority["_=_"]
+		else
+			return math.huge
+		end
 	end,
 
 	traverse = function(self, fn, ...)

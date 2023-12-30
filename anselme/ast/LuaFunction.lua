@@ -10,7 +10,6 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 
 	parameters = nil, -- ParameterTuple
 	func = nil, -- lua function
-	format_priority = operator_priority["$_"],
 
 	init = function(self, parameters, func)
 		self.parameters = parameters
@@ -27,6 +26,9 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 		else
 			return "$"..self.parameters:format(...).." <lua function>"
 		end
+	end,
+	_format_priority = function(self)
+		return operator_priority["$_"]
 	end,
 
 	compatible_with_arguments = function(self, state, args)

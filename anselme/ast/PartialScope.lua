@@ -18,7 +18,6 @@ PartialScope = ast.abstract.Node {
 		self.expression = expression
 		self.definitions = {}
 		self._identifiers = {}
-		self.format_priority = self.expression.format_priority
 	end,
 	define = function(self, symbol, value) -- for construction only
 		assert(not self.definitions[symbol], ("%s already defined in partial layer"):format(symbol))
@@ -35,6 +34,9 @@ PartialScope = ast.abstract.Node {
 		else
 			return self.expression:format(state, priority, indentation, ...)
 		end
+	end,
+	_format_priority = function(self)
+		return self.expression:format_priority()
 	end,
 
 	traverse = function(self, fn, ...)
