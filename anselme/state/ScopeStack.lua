@@ -65,7 +65,7 @@ local ScopeStack = class {
 				end
 			end
 			self:define_overloadable(sym, LuaFunction:new(parameters, func):eval(self.state))
-		elseif Node:is(value) then
+		elseif Node:issub(value) then
 			self:define(sym, value)
 		else
 			self:define(sym, to_anselme(value))

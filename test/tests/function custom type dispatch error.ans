@@ -1,0 +1,14 @@
+:french name="french name"
+:esperanto name="esperanto name"
+
+:$ a(name::is(esperanto name))
+	|{name!value} is esperanto
+
+:$ a(name::is(french name))
+	|{name!value} is french
+
+a("pierre"!type(french name))
+
+a("idk"!type(esperanto name))
+
+a(5!type("nope"))

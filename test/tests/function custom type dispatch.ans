@@ -1,0 +1,14 @@
+:french name="french name"
+:esperanto name="esperanto name"
+
+:$ a(name)
+	|{name!value} is english or generic
+
+:$ a(name::is(french name))
+	|{name!value} is french
+
+a("bob")
+
+a("pierre"!type(french name))
+
+a("idk"!type(esperanto name))

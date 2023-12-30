@@ -1,0 +1,36 @@
+| numbers:
+| {0}
+| {12}
+| {.87}
+| {39.12}
+
+| strings:
+| {"foo"}
+
+| tuple:
+| {[4,8,9]}
+
+| struct:
+| {{7:4,2:8,1:9}}
+
+| symbols:
+| {:ab}
+
+| anchor:
+| {#jdfe}
+| {#foo bar}
+
+| boolean:
+| {false}
+| {true}
+
+| nil:
+| {()}
+
+| pair:
+| {6:8}
+| {("d"):([])}
+
+| function:
+| {$12}
+| {$(x)x}
