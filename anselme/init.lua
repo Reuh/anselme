@@ -54,16 +54,16 @@ local parser, State
 
 local anselme = {
 	--- Global version string. Follow semver.
-	version = "2.0.0-alpha",
+	version = "2.0.0-beta",
 
 	--- Table containing per-category version numbers. Incremented by one for any change that may break compatibility.
 	versions = {
 		--- Version number for languages and standard library changes.
-		language = 27,
+		language = 28,
 		--- Version number for save/AST format changes.
-		save = 4,
+		save = 5,
 		--- Version number for Lua API changes.
-		api = 8
+		api = 9
 	},
 
 	--- Parse a `code` string and return the generated AST.
