@@ -1,0 +1,21 @@
+:f = "f"!script($_)
+	1 ~
+		#p!checkpoint
+		|x
+	~
+		|y
+
+f!
+
+f!from(#p)
+
+:g = "g"!script($_)
+	() ~
+		#p!checkpoint
+		|x
+	~
+		|y
+
+g!
+
+g!from(#p)

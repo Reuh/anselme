@@ -1,6 +1,8 @@
 local ast = require("anselme.ast")
 local ArgumentTuple, Nil, Boolean, Identifier, Return = ast.ArgumentTuple, ast.Nil, ast.Boolean, ast.Identifier, ast.Return
 
+local resume_manager = require("anselme.state.resume_manager")
+
 local if_identifier = Identifier:new("_if_status")
 local if_symbol = if_identifier:to_symbol()
 
@@ -20,7 +22,7 @@ return {
 	{
 		"_~_", "(condition, expression)", function(state, condition, expression)
 			ensure_if_variable(state)
-			if condition:truthy() then
+			if condition:truthy() or resume_manager:resuming(state) then--expression:contains_current_resume_target(state) then TODO fix
 				set_if_variable(state, true)
 				return expression:call(state, ArgumentTuple:new())
 			else
@@ -33,11 +35,11 @@ return {
 		"~_", "(expression)",
 		function(state, expression)
 			ensure_if_variable(state)
-			if last_if_success(state) then
-				return Nil:new()
-			else
+			if not last_if_success(state) or resume_manager:resuming(state) then--expression:contains_current_resume_target(state) then TODO fix
 				set_if_variable(state, true)
 				return expression:call(state, ArgumentTuple:new())
+			else
+				return Nil:new()
 			end
 		end
 	},

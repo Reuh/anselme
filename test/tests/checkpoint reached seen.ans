@@ -1,0 +1,11 @@
+:f = "f"!script($_)
+	#p!checkpoint
+	#s!check
+
+f!
+
+f!
+
+|Seen: {f.reached(#s)}
+
+|Reached: {f.reached(#p)}

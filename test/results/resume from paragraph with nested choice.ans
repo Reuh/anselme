@@ -1,0 +1,85 @@
+--# run #--
+--- text ---
+| {}"f:" |
+--- choice ---
+ > | {}"a" |
+=> | {}"b" |
+--- text ---
+| {}"-> b" |
+--- choice ---
+=> | {}"c" |
+--- text ---
+| {}"-> c" |
+| {}"f from #p:" |
+--- choice ---
+ > | {}"aa" |
+=> | {}"ab" |
+--- text ---
+| {}"-> ab" |
+--- text ---
+| {}"g:" |
+--- choice ---
+ > | {}"a" |
+=> | {}"b" |
+--- text ---
+| {}"-> b" |
+| {}"autoflush" |
+--- choice ---
+=> | {}"c" |
+--- text ---
+| {}"-> c" |
+| {}"g from #p:" |
+--- choice ---
+ > | {}"aa" |
+=> | {}"ab" |
+--- text ---
+| {}"-> ab" |
+| {}"autoflush" |
+--- choice ---
+=> | {}"c" |
+--- text ---
+| {}"-> c" |
+--- text ---
+| {}"h:" |
+--- choice ---
+=> | {}"a" |
+ > | {}"b" |
+ > | {}"c" |
+--- text ---
+| {}"-> a" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+--- text ---
+| {}"-> aa" |
+| {}"h from #p:" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+ > | {}"c" |
+--- text ---
+| {}"-> aa" |
+--- text ---
+| {}"i:" |
+--- choice ---
+=> | {}"a" |
+ > | {}"b" |
+ > | {}"c" |
+--- text ---
+| {}"-> a" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+--- text ---
+| {}"-> aa" |
+| {}"i from #p:" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+ > | {}"c" |
+--- text ---
+| {}"-> aa" |
+--- return ---
+()
+--# saved #--
+{"f.checkpoint":#p, "f.run":2, "g.checkpoint":#p, "g.run":2, "h.checkpoint":#p, "h.reached":*{#p:1}, "h.run":2, "i.checkpoint":#p, "i.reached":*{#p:1}, "i.run":2}

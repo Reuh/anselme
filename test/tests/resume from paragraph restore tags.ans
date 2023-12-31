@@ -1,0 +1,17 @@
+:f = "f"!script($_)
+	"a":"a" #
+		|a
+		1 ~ "x":"x" #
+			"b":"b" #
+				#p!checkpoint($_)
+					"c":"c"# |b
+
+				|c
+
+		|d
+
+	|e
+
+f!
+
+f!

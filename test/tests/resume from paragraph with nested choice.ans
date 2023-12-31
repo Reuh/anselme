@@ -1,0 +1,87 @@
+:@choice = 2
+
+:f = "f"!script($_)
+	| a |>
+		|-> a
+		#p!checkpoint
+		| aa |>
+			|-> aa
+		| ab |>
+			|-> ab
+	| b |>
+		|-> b
+	choice = 2
+
+	| c |>
+		|-> c
+	choice=1
+
+| f:
+f!
+
+| f from #p:
+f!from(#p)
+
+:g = "g"!script($_)
+	| a |>
+		|-> a
+		#p!checkpoint
+		| aa |>
+			|-> aa
+		| ab |>
+			|-> ab
+	| b |>
+		|-> b
+	choice = 2
+	|autoflush
+	| c |>
+		|-> c
+	choice = 1
+
+| g:
+g!
+
+| g from #p:
+g!from(#p)
+
+:h = "h"!script($_)
+	1 ~
+		| a |>
+			|-> a
+			#p!checkpoint
+			| aa |>
+				|-> aa
+			| ab |>
+				|-> ab
+			choice = 1
+		| b |>
+			|-> b
+	| c |>
+		|-> c
+	choice = 1
+
+| h:
+h!
+
+| h from #p:
+h!from(#p)
+
+:i = "i"!script($_)
+	| a |>
+		|-> a
+		#p!checkpoint
+		| aa |>
+			|-> aa
+		| ab |>
+			|-> ab
+	| b |>
+		|-> b
+	1 ~
+		| c |>
+			|-> c
+
+| i:
+i!
+
+| i from #p:
+i!from(#p)

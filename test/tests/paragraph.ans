@@ -1,0 +1,4 @@
+:f = "g"!script($_)
+	#p!checkpoint($_)
+		|a
+|b

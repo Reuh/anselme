@@ -1,0 +1,14 @@
+: f = "f"!script($_)
+	|x
+	#p!checkpoint($_)
+		|a
+	|b
+
+|No checkpoint:
+f!
+
+|From checkpoint:
+f!
+
+|Force no checkpoint:
+f!from()

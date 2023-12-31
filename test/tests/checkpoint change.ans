@@ -1,0 +1,30 @@
+:f = "f"!script($_)
+	|x
+	#p!checkpoint($_)
+		|a
+
+		#q!checkpoint($_)
+			|b
+
+		|c
+
+	|d
+
+|From start:
+f!
+
+|From p checkpoint:
+f!
+
+|From q checkpoint:
+f!
+
+|From q checkpoint again:
+f!
+
+|Go to p again by setting checkpoint manually:
+f.current checkpoint = #p
+f!
+
+|From q again:
+f!

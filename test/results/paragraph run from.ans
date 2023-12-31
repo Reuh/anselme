@@ -1,0 +1,17 @@
+--# run #--
+--- text ---
+| {}"Force run from checkpoint:" |
+| {}"a" |
+| {}"b" |
+--- text ---
+| {}"From checkpoint:" |
+| {}"a" |
+| {}"b" |
+--- text ---
+| {}"Force no checkpoint:" |
+| {}"x" |
+| {}"b" |
+--- return ---
+()
+--# saved #--
+{"f.checkpoint":#p, "f.reached":*{#p:1}, "f.run":3}

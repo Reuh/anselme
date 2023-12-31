@@ -1,0 +1,38 @@
+--# run #--
+--- text ---
+| {}"From start:" |
+| {}"x" |
+--- text ---
+| {}"d" |
+--- text ---
+| {}"From p checkpoint:" |
+| {}"a" |
+--- text ---
+| {}"c" |
+--- text ---
+| {}"d" |
+--- text ---
+| {}"From q checkpoint:" |
+| {}"b" |
+--- text ---
+| {}"c" |
+--- text ---
+| {}"d" |
+--- text ---
+| {}"From q checkpoint again:" |
+| {}"b" |
+--- text ---
+| {}"c" |
+--- text ---
+| {}"d" |
+--- text ---
+| {}"Force p checkpoint:" |
+| {}"a" |
+--- text ---
+| {}"c" |
+--- text ---
+| {}"d" |
+--- return ---
+()
+--# saved #--
+{"f.checkpoint":#q, "f.reached":*{#p:1, #q:2}, "f.run":5}
