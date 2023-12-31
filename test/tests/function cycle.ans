@@ -1,0 +1,18 @@
+:$ f
+	:a = "a"!script($_)
+		| a
+	:b = "b"!script($_)
+		| b
+	:c = "c"!script($_)
+		| c
+	cycle([a,b,c])
+
+f!
+
+f!
+
+f!
+
+f!
+
+f!

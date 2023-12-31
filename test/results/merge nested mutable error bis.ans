@@ -1,0 +1,31 @@
+--# run #--
+--- error ---
+[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31mabort[0m
+	↳ from [4mtest/tests/merge nested mutable error bis.ans:14:7[0m in call: [2merror("abort")[0m[0m
+	↳ from [4mtest/tests/merge nested mutable error bis.ans:3:1[0m in block: [2minsert(a, b)…[0m[0m
+	↳ from [4mtest/tests/merge nested mutable error bis.ans:3:18[0m in call: [2m_[0m[0m
+	↳ from [4mtest/tests/merge nested mutable error bis.ans:3:17[0m in return boundary: [2m_[0m[0m
+	↳ from [4mtest/tests/merge nested mutable error bis.ans:3:17[0m in return boundary: [2m_[0m[0m
+	↳ from [4mscript.ans:29:6[0m in call: [2mfn![0m[0m
+	↳ from [4mscript.ans:27:3[0m in block: [2mresumed from = ()…[0m[0m
+	↳ from [4mscript.ans:27:5[0m in call: [2m_[0m[0m
+	↳ from [4mscript.ans:27:3[0m in call: [2m~_[0m[0m
+	↳ from [4mscript.ans:27:3[0m in partial scope: [2m~_…[0m[0m
+	↳ from [4mscript.ans:23:2[0m in block: [2mfn . "current checkpoint" ~…[0m[0m
+	↳ from [4mscript.ans:23:9[0m in call: [2m_[0m[0m
+	↳ from [4mscript.ans:23:7[0m in return boundary: [2m_[0m[0m
+	↳ from [4mscript.ans:23:7[0m in return boundary: [2m_[0m[0m
+	↳ from [4mscript.ans:37:9[0m in call: [2mvalue(s)![0m[0m
+	↳ from [4mscript.ans:36:1[0m in block: [2mvalue(s)![0m[0m
+	↳ from [4mscript.ans:36:20[0m in call: [2m_[0m[0m
+	↳ from [4mscript.ans:36:1[0m in return boundary: [2m_[0m[0m
+	↳ from [4mscript.ans:36:1[0m in return boundary: [2m_[0m[0m
+	↳ from [4mtest/tests/merge nested mutable error bis.ans:19:2[0m in call: [2mf![0m[0m
+	↳ from [4m?[0m in block: [2m:a = *[1]…[0m
+--# post run check #--
+--- text ---
+| {}"[1,[2,3]]: " {}"*[1, *[2, 3]]" {}"" |
+--- return ---
+()
+--# saved #--
+{"f.checkpoint":#d, "f.reached":*{#c:1, #d:1}}

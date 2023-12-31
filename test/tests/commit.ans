@@ -1,0 +1,21 @@
+:bar = "bar"!script($_)
+	var = 2
+
+	|before: {var}
+
+	run in new branch("parallel!")
+
+	#foo!checkpoint($_)
+		|checkpoint
+
+	|after: {var}
+
+	run in new branch("parallel!")
+bar.:var = 5
+
+:@$ parallel
+	|parallel: {bar.var}
+
+merge branch!
+
+bar!

@@ -1,0 +1,19 @@
+:a = *[1]
+:b = *[2]
+:f = "f"!script($_)
+	a!insert(b)
+
+	#c!checkpoint
+
+	b!insert(3)
+
+	#d!checkpoint
+
+	b!insert(4)
+
+	error("abort")
+
+:@$ post run check
+	|[1,[2,3]]: {a}
+
+f!

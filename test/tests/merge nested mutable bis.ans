@@ -1,0 +1,17 @@
+:a = *[1]
+:b = *[2]
+:f = "f"!script($_)
+	a!insert(b)
+
+	#c!checkpoint
+
+	b!insert(3)
+
+	#d!checkpoint
+
+	b!insert(4)
+
+:@$ post run check
+	|[1,[2,3,4]]: {a}
+
+f!

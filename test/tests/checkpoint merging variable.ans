@@ -1,0 +1,24 @@
+:l = 1
+
+:@$ post run check
+	|3: {l}
+
+|1: {l}
+
+l = 2
+
+|2: {l}
+
+merge branch!
+
+l = 3
+
+|3: {l}
+
+merge branch!
+
+l = 4
+
+|4: {l}
+
+error("cancel merge")

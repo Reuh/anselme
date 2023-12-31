@@ -1,0 +1,49 @@
+:x = *[99]
+
+:l = *[1,x]
+
+:n = 0
+
+:$ f(t)
+	t!insert(len(l)+1)
+
+	|f1: {l} {t}
+
+	|CHECK
+	merge branch!
+
+	n < 1 ~
+		|REC
+
+		n += 1
+		f(t)
+
+		|END REC
+
+	x!insert(12)
+
+	|f2: {l}
+
+	|CHECK 2
+	merge branch!
+
+	t!insert(len(t)+1)
+
+	t(2)!insert(len(l)+1)
+
+	error("t")
+
+	|f3: {l} {t}
+
+:@$ post run check
+	|AFTER ERROR
+
+	|l: {l}
+
+f(l)
+
+|FINAL
+
+|l: {l}
+
+|x: {x}

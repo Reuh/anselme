@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local ArgumentTuple, Boolean = ast.ArgumentTuple, ast.Boolean
+local ArgumentTuple, Boolean, Nil = ast.ArgumentTuple, ast.Boolean, ast.Nil
 
 local resume_manager = require("anselme.state.resume_manager")
 
@@ -47,4 +47,11 @@ return {
 			return resume_manager:get(state)
 		end
 	},
+	{
+		"merge branch", "()",
+		function(state)
+			state:merge()
+			return Nil:new()
+		end
+	}
 }

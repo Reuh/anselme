@@ -1,0 +1,10 @@
+--# run #--
+--- return ---
+()
+--# post run check #--
+--- text ---
+| {}"[1,[2,3],4]: " {}"*[1, *[2, 3], 4]" {}"" |
+--- return ---
+()
+--# saved #--
+{"f.checkpoint":#d, "f.reached":*{#c:1, #d:1}, "f.run":1}

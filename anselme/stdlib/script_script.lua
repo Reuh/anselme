@@ -1,31 +1,34 @@
 return [[
 :@script = $(name, fn)
-	:&current checkpoint => "{name}.checkpoint"!persist(false)
-	:&reached => "{name}.reached"!persist(*{})
+	fn.:&current checkpoint => "{name}.checkpoint"!persist(false)
+	fn.:&reached => "{name}.reached"!persist(*{})
+	fn.:&run => "{name}.run"!persist(0)
+
 	:resumed from = ()
 
 	fn.:check = $(anchor::anchor)
-		reached(anchor) = (reached(anchor) | 0) + 1
+		fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 	fn.:checkpoint = $(anchor::anchor)
-		current checkpoint = anchor
+		fn.current checkpoint = anchor
 		resumed from != anchor ~
-			reached(anchor) = (reached(anchor) | 0) + 1
+			fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
+			merge branch!
 	fn.:checkpoint = $(anchor::anchor, on resume::function)
-		current checkpoint = anchor
+		fn.current checkpoint = anchor
 		resumed from == anchor | resuming(1) ~
 			on resume!
 		~
-			reached(anchor) = (reached(anchor) | 0) + 1
+			fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
+			merge branch!
 
 	:f = $
-		current checkpoint ~
-			resumed from = current checkpoint
-			fn!resume(current checkpoint)
+		fn.current checkpoint ~
+			resumed from = fn.current checkpoint
+			fn!resume(fn.current checkpoint)
 		~
 			resumed from = ()
 			fn!
-		run += 1
-	f.:&run => "{name}.run"!persist(0)
+		fn.run += 1
 
 	f!type("script")
 
@@ -35,18 +38,11 @@ return [[
 	s!value!
 
 :@$_._(s::is script, k::string)
-	:v = s!value
-	v.fn!has upvalue(k) ~
-		@v.fn.(k)
-	~
-		@v.(k)
-
+	@(s!value).fn.(k)
 :@$_._(s::is script, k::string) = val
-	:v = s!value
-	v.fn!has upvalue(k) ~
-		v.fn.(k) = val
-	~
-		v.(k) = val
+	(s!value).fn.(k) = val
+:@$_._(s::is script, k::symbol) = val
+	(s!value).fn.(k) = val
 
 :@$from(s::is script, a::anchor)
 	s.current checkpoint = a
@@ -54,4 +50,24 @@ return [[
 :@$from(s::is script)
 	s.current checkpoint = ()
 	@s!
+
+((Additionnal helpers))
+:@$ cycle(l::tuple)
+	:i = 2
+	i <= l!len ~?
+		l(i).run < l(1).run ~
+			@l(i)!
+		i += 1
+	l(1)!
+
+:@$ next(l::tuple)
+	:i = 1
+	i <= l!len ~?
+		l(i).run == 0 ~
+			@l(i)!
+		i += 1
+	l(i-1)!
+
+:@$ random(l::tuple)
+	l(rand(1, l!len))!
 ]]

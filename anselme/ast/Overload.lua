@@ -1,17 +1,25 @@
 local ast = require("anselme.ast")
+local assert0 = require("anselme.common").assert0
 
 local Overload
 Overload = ast.abstract.Node {
 	type = "overload",
 	_evaluated = true,
 
-	list = nil,
+	list = nil, -- list of Overloadable
+	_signatures = nil, -- map {[parameter hash]=true} of call signatures already registered in this overload
 
 	init = function(self, ...)
-		self.list = { ... }
+		self.list = {}
+		self._signatures = {}
+		for _, fn in ipairs{...} do
+			self:insert(fn)
+		end
 	end,
 	insert = function(self, val) -- only for construction
+		assert0(not self._signatures[val:hash_parameters()], ("a function with parameters %s is already defined in the overload"):format(val:format_parameters()))
 		table.insert(self.list, val)
+		self._signatures[val:hash_parameters()] = true
 	end,
 
 	_format = function(self, ...)

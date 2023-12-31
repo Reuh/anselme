@@ -1,0 +1,20 @@
+--# run #--
+--- text ---
+| {}"1,2: " {}"*[1, 2]" {}"" |
+--- text ---
+| {}"1,2,3: " {}"*[1, 2, 3]" {}"" |
+--- text ---
+| {}"1,2,3,4: " {}"*[1, 2, 3, 4]" {}"" |
+--- text ---
+| {}"1,2,3,4,5: " {}"*[1, 2, 3, 4, 5]" {}"" |
+--- error ---
+[0m[31m[0m[31mcancel merge[0m
+	↳ from [4mtest/tests/checkpoint merging mutable value.ans:24:6[0m in call: [2merror("cancel merge")[0m[0m
+	↳ from [4m?[0m in block: [2m:l = *[1, 2]…[0m
+--# post run check #--
+--- text ---
+| {}"1,2,3,4: " {}"*[1, 2, 3, 4]" {}"" |
+--- return ---
+()
+--# saved #--
+{}

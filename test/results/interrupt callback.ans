@@ -1,0 +1,11 @@
+--# run #--
+--- text ---
+| {}"before: " {}"2" {}"" |
+--- interrupt ---
+nil
+--- text ---
+| {}"in interrupt: " {}"2" {}"" |
+--- return ---
+()
+--# saved #--
+{"bar.checkpoint":false}

@@ -60,6 +60,9 @@ Tuple = ast.abstract.Node {
 		if index < 0 then index = #self.list + 1 + index end
 		if index > #self.list or index == 0 then error("tuple index out of bounds", 0) end
 		return self.list[index]
+	end,
+	len =  function(self)
+		return #self.list
 	end
 }
 

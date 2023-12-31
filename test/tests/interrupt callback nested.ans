@@ -1,0 +1,20 @@
+:$ leave
+	|in interrupt: {oh.bar.var}
+
+:$ oh
+	|no
+
+oh.:bar = "bar"!script($_)
+	var = 2
+
+	|before: {var}
+
+	interrupt("leave!")
+
+	#foo!checkpoint($_)
+		|checkpoint
+
+	|after: {var}
+oh.bar.:var = 5
+
+oh.bar!

@@ -16,6 +16,10 @@ return ast.abstract.Node {
 	format_parameters = function(self, state)
 		return self:format(state)
 	end,
+	-- return string
+	hash_parameters = function(self)
+		return self:hash()
+	end,
 
 	-- can be called either after a successful :dispatch or :compatible_with_arguments
 	call_dispatched = function(self, state, args)

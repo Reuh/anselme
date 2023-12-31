@@ -40,6 +40,9 @@ Function = Overloadable {
 	format_parameters = function(self, state)
 		return self.parameters:format(state)
 	end,
+	hash_parameters = function(self)
+		return self.parameters:hash()
+	end,
 	call_dispatched = function(self, state, args)
 		state.scope:push()
 		args:bind_parameter_tuple(state, self.parameters)

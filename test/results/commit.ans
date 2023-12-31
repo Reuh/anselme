@@ -1,0 +1,21 @@
+--# run #--
+--- text ---
+| {}"before: " {}"2" {}"" |
+--# parallel script #--
+--- text ---
+| {}"parallel: " {}"5" {}"" |
+--- return ---
+()
+--# main script #--
+--- text ---
+| {}"after: " {}"2" {}"" |
+--# parallel script #--
+--- text ---
+| {}"parallel: " {}"2" {}"" |
+--- return ---
+()
+--# main script #--
+--- return ---
+()
+--# saved #--
+{"bar.checkpoint":#foo, "bar.reached":*{#foo:1}, "bar.run":1}

@@ -15,6 +15,12 @@ return {
 			return l:get(i.number)
 		end
 	},
+	{
+		"len", "(l::tuple)",
+		function(state, l)
+			return Number:new(l:len())
+		end
+	},
 
 	-- list
 	{

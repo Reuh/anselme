@@ -1,0 +1,12 @@
+: fn = "fn"!script($_)
+	|{run}
+
+	#a!checkpoint
+
+	|a: {run}
+
+fn!from(#a)
+
+fn!from(#a)
+
+fn!from(#a)

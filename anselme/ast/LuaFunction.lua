@@ -20,6 +20,10 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 		fn(self.parameters, ...)
 	end,
 
+	_hash = function(self)
+		return ("%s<%s;%s>"):format(self.type, self.parameters:hash(), tostring(self.func))
+	end,
+
 	_format = function(self, ...)
 		if self.parameters.assignment then
 			return "$"..self.parameters:format(...).."; <lua function>"
@@ -36,6 +40,9 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 	end,
 	format_parameters = function(self, state)
 		return self.parameters:format(state)
+	end,
+	hash_parameters = function(self)
+		return self.parameters:hash()
 	end,
 	call_dispatched = function(self, state, args)
 		local lua_args = { state }

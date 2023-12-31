@@ -5,6 +5,7 @@ local lfs = require("lfs")
 package.path = "./?/init.lua;./?.lua;" .. package.path
 local anselme = require("anselme")
 local persistent_manager = require("anselme.state.persistent_manager")
+local ast = require("anselme.ast")
 
 -- simple random to get the same result across lua versions
 local prev = 0
@@ -22,25 +23,7 @@ function math.random(a, b)
 	end
 end
 
--- run a test file and return the result
-local function run(path)
-	local state = anselme:new()
-	state:load_stdlib()
-
-	local run_state = state:branch()
-
-	local f = assert(io.open(path, "r"))
-	local s, block = pcall(anselme.parse, f:read("*a"), path)
-	f:close()
-
-	if not s then
-		return "--# parse error #--\n"..tostring(block)
-	end
-
-	run_state:run(block)
-
-	local out = { "--# run #--" }
-
+local function run_loop(run_state, out)
 	while run_state:active() do
 		local e, data = run_state:step()
 		table.insert(out, "--- "..e.." ---")
@@ -65,9 +48,51 @@ local function run(path)
 			table.insert(out, tostring(data))
 		end
 	end
+end
+
+-- run a test file and return the result
+local function run(path)
+	local out = { "--# run #--" }
+
+	local state = anselme:new()
+	state:load_stdlib()
+
+	state:define("error", "(message=\"error\")", function(message) error(message, 0) end)
+	state:define("interrupt", "(code::string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
+	state:define("interrupt", "()", function(state) state:interrupt() return ast.Nil:new() end, true)
+	state:define("wait", "(duration::number)", function(duration) coroutine.yield("wait", duration) end)
+	state:define("run in new branch", "(code)", function(code)
+		local parallel_state = state:branch()
+		table.insert(out, "--# parallel script #--")
+		parallel_state:run(code, "parallel")
+		run_loop(parallel_state, out)
+		table.insert(out, "--# main script #--")
+	end)
+
+	local run_state = state:branch()
+
+	local f = assert(io.open(path, "r"))
+	local s, block = pcall(anselme.parse, f:read("*a"), path)
+	f:close()
+
+	if not s then
+		return "--# parse error #--\n"..tostring(block)
+	end
+
+	run_state:run(block)
+
+	run_loop(run_state, out)
+
+	if state:defined("post run check") then
+		local post_run_state = state:branch()
+		post_run_state:run("post run check!")
+
+		table.insert(out, "--# post run check #--")
+		run_loop(post_run_state, out)
+	end
 
 	table.insert(out, "--# saved #--")
-	table.insert(out, persistent_manager:capture(run_state):format(run_state))
+	table.insert(out, persistent_manager:capture(state):format(state))
 
 	return table.concat(out, "\n")
 end

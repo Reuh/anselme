@@ -12,6 +12,7 @@ local parser = require("anselme.parser")
 local binser = require("anselme.lib.binser")
 local assert0 = require("anselme.common").assert0
 local anselme
+local Identifier
 
 local State
 State = class {
@@ -90,6 +91,18 @@ State = class {
 	define_local = function(self, name, value, func, raw_mode)
 		self.scope:define_lua(name, value, func, raw_mode)
 	end,
+	--- Returns true if `name` (string) is defined in the global scope.
+	--- Returns false otherwise.
+	defined = function(self, name)
+		self.scope:push_global()
+		local r = self:defined_local(name)
+		self.scope:pop()
+		return r
+	end,
+	--- Same as `:defined`, but check if the variable is defined in the current scope.
+	defined_local = function(self, name)
+		return self.scope:defined(Identifier:new(name))
+	end,
 
 	--- For anything more advanced, you can directly access the current scope stack stored in `state.scope`.
 	-- See [state/ScopeStack.lua](../state/ScopeStack.lua) for details; the documentation is not as polished as this file but you should still be able to find your way around.
@@ -160,7 +173,7 @@ State = class {
 			self.scope:reset()
 			type, data = "error", type
 		end
-		if coroutine.status(self._coroutine) == "dead" then
+		if self._coroutine and coroutine.status(self._coroutine) == "dead" then
 			self._coroutine = nil
 		end
 		return type, data
@@ -171,8 +184,11 @@ State = class {
 	--
 	-- If `code` is given, the script will not be disabled but instead will be immediately replaced with this new script.
 	-- The new script will then be started on the next `:step` and will preserve the current scope. This can be used to trigger an exit function or similar in the active script.
+	--
+	-- If this is called from within a running script, this will raise an `interrupt` event in order to stop the current script execution.
 	interrupt = function(self, code, source)
 		assert(self:active(), "trying to interrupt but no script is currently active")
+		local called_from_script = self:state() == "running"
 		if code then
 			self._coroutine = coroutine.create(function()
 				local r = assert0(self:eval_local(code, source))
@@ -184,6 +200,7 @@ State = class {
 			self.scope:reset()
 			self._coroutine = nil
 		end
+		if called_from_script then coroutine.yield("interrupt") end
 	end,
 
 	--- Evaluate an expression in the global scope.
@@ -221,5 +238,7 @@ State = class {
 
 package.loaded[...] = State
 anselme = require("anselme")
+local ast = require("anselme.ast")
+Identifier = ast.Identifier
 
 return State

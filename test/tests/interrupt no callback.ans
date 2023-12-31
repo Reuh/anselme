@@ -1,0 +1,18 @@
+:bar = "bar"!script($_)
+	:var = 5
+
+	var = 2
+
+	:$ leave
+		|in interrupt: {var}
+
+	|before: {var}
+
+	interrupt()
+
+	#foo!checkpoint($_)
+		|checkpoint
+
+	|after: {var}
+
+bar!

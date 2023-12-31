@@ -38,6 +38,9 @@ Closure = Runtime(Overloadable) {
 	format_parameters = function(self, state)
 		return self.func.parameters:format(state)
 	end,
+	hash_parameters = function(self)
+		return self.func.parameters:hash()
+	end,
 	call_dispatched = function(self, state, args)
 		local calling_environment = state.scope:capture()
 		state.scope:push(self.scope)

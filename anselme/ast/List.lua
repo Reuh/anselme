@@ -42,7 +42,7 @@ List = ast.abstract.Runtime {
 	end,
 
 	len = function(self, state)
-		return #self.branched:get(state).list
+		return self.branched:get(state):len()
 	end,
 	iter = function(self, state)
 		return ipairs(self.branched:get(state).list)
