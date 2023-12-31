@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Boolean, Definition, Call, Function, ParameterTuple, FunctionParameter, Identifier, Overload = ast.Nil, ast.Boolean, ast.Definition, ast.Call, ast.Function, ast.ParameterTuple, ast.FunctionParameter, ast.Identifier, ast.Overload
+local Nil, Boolean, Definition, Call, Function, ParameterTuple, FunctionParameter, Identifier, Overload, Assignment = ast.Nil, ast.Boolean, ast.Definition, ast.Call, ast.Function, ast.ParameterTuple, ast.FunctionParameter, ast.Identifier, ast.Overload, ast.Assignment
 local assert0 = require("anselme.common").assert0
 
 return {
@@ -47,16 +47,21 @@ return {
 			local exp = q.expression
 			local get = Function:new(ParameterTuple:new(), exp):eval(state)
 
+			local set_exp
 			if Call:is(exp) then
-				local set_param = ParameterTuple:new()
-				set_param:insert_assignment(FunctionParameter:new(Identifier:new("value")))
-				local assign_expr = Call:new(exp.func, exp.arguments:with_assignment(Identifier:new("value")))
-				local set = Function:new(set_param, assign_expr):eval(state)
-
-				return Overload:new(get, set)
+				set_exp = Call:new(exp.func, exp.arguments:with_assignment(Identifier:new("value")))
+			elseif Identifier:is(exp) then
+				set_exp = Assignment:new(exp, Identifier:new("value"))
 			end
 
-			return get
+			if set_exp then
+				local set_param = ParameterTuple:new()
+				set_param:insert_assignment(FunctionParameter:new(Identifier:new("value")))
+				local set = Function:new(set_param, set_exp):eval(state)
+				return Overload:new(get, set)
+			else
+				return get
+			end
 		end
 	}
 }
