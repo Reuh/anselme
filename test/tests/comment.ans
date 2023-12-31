@@ -1,9 +1,9 @@
-((hey couic + 5))
+/*hey couic + 5*/
 
-((nested ((comments)) d))
+/*nested /*comments*/ d*/
 
-2 ((end of line))
+2 /*end of line*/
 
-((start of line)) 3
+/*start of line*/ 3
 
-5 + ((middle)) 3
+5 + /*middle*/ 3

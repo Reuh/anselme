@@ -51,7 +51,7 @@ return [[
 	s.current checkpoint = ()
 	@s!
 
-((Additionnal helpers))
+/*Additionnal helpers*/
 :@$ cycle(l::tuple)
 	:i = 2
 	i <= l!len ~?
