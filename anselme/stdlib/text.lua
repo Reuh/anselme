@@ -21,7 +21,7 @@ return {
 		function(state, text, func)
 			if func:contains_current_resume_target(state) then
 				func:call(state, ArgumentTuple:new())
-				event_manager:write_and_discard_on_flush(state, Choice:new(text, func))
+				event_manager:write_and_discard_following(state, Choice:new(text, func))
 			else
 				event_manager:write(state, Choice:new(text, func))
 			end
