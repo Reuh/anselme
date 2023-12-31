@@ -10,12 +10,6 @@ Documentation:
 
 ---
 
-Write tests. Still missing:
-* some tests from anselme v1
-* tests for anselme v2 features
-
----
-
 Translation.
 
 Translation model for stdlib: ?
@@ -38,7 +32,7 @@ Or just say closures probably shouldn't be persisted. Yeah, probably easier.
 Standard library.
 
 * Text manipulation would make sense, but that would require a full UTF-8/Unicode support library like https://github.com/starwing/luautf8.
-* Something to load other files. Maybe not load it by default to let the calling game sandbox Anselme.
+* Something to load other files. Maybe not load it by default to let the calling game sandbox Anselme. Probably create an export scope per file to perform some nice module loading.
 * Implement the useful functions from Anselme v1.
 * Checkpoint management.
 * Overloadable :format for custom types.
