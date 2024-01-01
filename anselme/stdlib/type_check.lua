@@ -16,7 +16,7 @@ return {
 	{ "struct", "(x)", function(state, x) return Boolean:new(x.type == "struct") end },
 	{ "table", "(x)", function(state, x) return Boolean:new(x.type == "table") end },
 
-	{ "closure", "(x)", function(state, x) return Boolean:new(x.type == "closure") end },
+	{ "function", "(x)", function(state, x) return Boolean:new(x.type == "function") end },
 	{ "overload", "(x)", function(state, x) return Boolean:new(x.type == "overload") end },
-	{ "function", "(x)", function(state, x) return Boolean:new(x.type == "overload" or x.type == "closure" or x.type == "funciton" or x.type == "lua function") end },
+	{ "callable", "(x)", function(state, x) return Boolean:new(x.type == "overload" or x.type == "function" or x.type == "lua function" or x.type == "quote") end },
 }

@@ -197,7 +197,7 @@ return primary {
 			if not s then error(("invalid expression in function definition: %s"):format(right), 0) end
 
 			-- return function
-			local fn = Function:new(parameters, right):set_source(source_start)
+			local fn = Function:with_return_boundary(parameters, right):set_source(source_start)
 			return Definition:new(symbol, fn):set_source(source_start), rem
 		end
 	end

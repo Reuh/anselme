@@ -4,6 +4,8 @@ local Overloadable = ast.abstract.Overloadable
 local operator_priority = require("anselme.common").operator_priority
 local unpack = table.unpack or unpack
 
+local calling_environment_manager
+
 local LuaFunction
 LuaFunction = ast.abstract.Runtime(Overloadable) {
 	type = "lua function",
@@ -45,6 +47,9 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 		return self.parameters:hash()
 	end,
 	call_dispatched = function(self, state, args)
+		local calling_environment = state.scope:capture()
+		calling_environment_manager:push(state, calling_environment)
+
 		local lua_args = { state }
 
 		state.scope:push()
@@ -58,6 +63,8 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 
 		local r = self.func(unpack(lua_args))
 		assert(r, "lua function returned no value")
+
+		calling_environment_manager:pop(state)
 		return r
 	end,
 
@@ -69,5 +76,8 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 		return self.func
 	end,
 }
+
+package.loaded[...] = LuaFunction
+calling_environment_manager = require("anselme.state.calling_environment_manager")
 
 return LuaFunction

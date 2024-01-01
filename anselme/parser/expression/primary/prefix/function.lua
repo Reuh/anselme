@@ -30,6 +30,6 @@ return prefix {
 		s, right, rem = pcall(expression_to_ast, source, rem, limit_pattern, self.priority)
 		if not s then error(("invalid expression after unop %q: %s"):format(self.operator, right), 0) end
 
-		return Function:new(parameters, right):set_source(source_start), rem
+		return Function:with_return_boundary(parameters, right):set_source(source_start), rem
 	end
 }

@@ -2,20 +2,27 @@
 
 local ast = require("anselme.ast")
 local Overloadable = ast.abstract.Overloadable
-local Closure, ReturnBoundary
+local ReturnBoundary
 
 local operator_priority = require("anselme.common").operator_priority
+
+local resume_manager, calling_environment_manager
 
 local Function
 Function = Overloadable {
 	type = "function",
 
 	parameters = nil, -- ParameterTuple
-	expression = nil,
+	expression = nil, -- function content
+	scope = nil, -- Environment; captured scope for closure (evaluated functions); not set when not evaluated
 
-	init = function(self, parameters, expression)
+	init = function(self, parameters, expression, scope)
 		self.parameters = parameters
-		self.expression = ReturnBoundary:new(expression)
+		self.expression = expression
+		self.scope = scope
+	end,
+	with_return_boundary = function(self, parameters, expression)
+		return Function:new(parameters, ReturnBoundary:new(expression))
 	end,
 
 	_format = function(self, ...)
@@ -32,6 +39,19 @@ Function = Overloadable {
 	traverse = function(self, fn, ...)
 		fn(self.parameters, ...)
 		fn(self.expression, ...)
+		if self.scope then
+			fn(self.scope, ...)
+		end
+	end,
+
+	_eval = function(self, state)
+		-- layer a new scope layer on top of captured/current scope
+		-- to allow future define in the function (fn.:var = "foo")
+		state.scope:push()
+		local scope = state.scope:capture() -- capture current scope to build closure
+		state.scope:pop()
+
+		return Function:new(self.parameters:eval(state), self.expression, scope)
 	end,
 
 	compatible_with_arguments = function(self, state, args)
@@ -44,26 +64,51 @@ Function = Overloadable {
 		return self.parameters:hash()
 	end,
 	call_dispatched = function(self, state, args)
+		assert(self.scope, "can't call unevaluated function")
+
+		-- push captured closure scope
+		local calling_environment = state.scope:capture()
+		state.scope:push(self.scope)
+		calling_environment_manager:push(state, calling_environment)
+
+		-- push function scope
 		state.scope:push()
 		args:bind_parameter_tuple(state, self.parameters)
-
 		local exp = self.expression:eval(state)
-
 		state.scope:pop()
 
-		-- reminder: don't do any additionnal processing here as that won't be executed when resuming self.expression directly
-		-- which is done in a few places, notably to predefine exports in Closure
-		-- instead wrap it in some additional node, like our friend ReturnBoundary
-
+		calling_environment_manager:pop(state)
+		state.scope:pop()
 		return exp
 	end,
+	resume = function(self, state, target)
+		if self.parameters.min_arity > 0 then error("can't resume function with parameters") end
+		assert(self.scope, "can't resume unevaluated function")
 
-	_eval = function(self, state)
-		return Closure:new(Function:new(self.parameters:eval(state), self.expression), state)
+		-- push captured closure scope
+		local calling_environment = state.scope:capture()
+		state.scope:push(self.scope)
+		calling_environment_manager:push(state, calling_environment)
+
+		resume_manager:push(state, target)
+
+		-- push function scope
+		state.scope:push()
+		local exp = self.expression:eval(state)
+		state.scope:pop()
+
+		resume_manager:pop(state)
+
+		calling_environment_manager:pop(state)
+		state.scope:pop()
+		return exp
 	end,
 }
 
 package.loaded[...] = Function
-Closure, ReturnBoundary = ast.Closure, ast.ReturnBoundary
+ReturnBoundary = ast.ReturnBoundary
+
+resume_manager = require("anselme.state.resume_manager")
+calling_environment_manager = require("anselme.state.calling_environment_manager")
 
 return Function
