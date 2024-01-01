@@ -80,7 +80,15 @@ return {
 			end
 			while cond:truthy() do
 				r = expression:call(state, ArgumentTuple:new())
-				if Return:is(r) then break end
+				if Return:is(r) then
+					if r.subtype == "continue" then
+						r = r.expression -- consume return & pass
+					elseif r.subtype == "break" then
+						return r.expression -- consume return & break
+					else
+						return r
+					end
+				end
 				cond = condition:call(state, ArgumentTuple:new())
 			end
 			return r

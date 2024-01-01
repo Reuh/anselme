@@ -74,6 +74,20 @@ return {
 		end
 	},
 	{
+		"break", "(value=())",
+		function(state, val)
+			if Return:is(val) then val = val.expression end
+			return Return:new(val, "break")
+		end
+	},
+	{
+		"continue", "(value=())",
+		function(state, val)
+			if Return:is(val) then val = val.expression end
+			return Return:new(val, "continue")
+		end
+	},
+	{
 		"attached block", "(level::number=1)",
 		function(state, level)
 			-- level 2: env of the function that called the function that called attached block

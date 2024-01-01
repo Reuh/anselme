@@ -1,30 +1,27 @@
 local ast = require("anselme.ast")
 
-local operator_priority = require("anselme.common").operator_priority
-
 local Return
-Return = ast.abstract.Node {
+Return = ast.abstract.Runtime {
 	type = "return",
 
 	expression = nil,
+	subtype = nil, -- string; "break" or "continue"
 
-	init = function(self, expression)
+	init = function(self, expression, subtype)
 		self.expression = expression
+		self.subtype = subtype
 	end,
 
 	_format = function(self, ...)
-		return ("@%s"):format(self.expression:format_right(...))
-	end,
-	_format_priority = function(self)
-		return operator_priority["@_"]
+		if self.subtype then
+			return ("return(%s, %s)"):format(self.expression:format(...), self.subtype)
+		else
+			return ("return(%s)"):format(self.expression:format(...))
+		end
 	end,
 
 	traverse = function(self, fn, ...)
 		fn(self.expression, ...)
-	end,
-
-	_eval = function(self, state)
-		return Return:new(self.expression:eval(state))
 	end,
 
 	to_lua = function(self, state)
