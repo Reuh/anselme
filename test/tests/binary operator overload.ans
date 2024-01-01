@@ -1,8 +1,8 @@
 :$ a - b
-	@"generic minus"
+	return("generic minus")
 
 :$ a::string - b::string
-	@a + " minus " + b
+	return(a + " minus " + b)
 
 | {2-5}
 

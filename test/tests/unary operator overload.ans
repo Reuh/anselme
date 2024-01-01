@@ -1,8 +1,8 @@
 :$ -f
-	@"generic minus"
+	return("generic minus")
 
 :$ -f::string
-	@"minus "+f
+	return("minus "+f)
 
 |{-5}
 

@@ -1,7 +1,7 @@
 :a = 5
 
 :$ f(p)
-	@a
+	return(a)
 
 :$ f(p) = v
 	|v={v}

@@ -1,6 +1,6 @@
 :$ f
-	@|b
+	return(|b)
 
-|a {5 ~ f!} c
+|a {if(5, f)} c
 
-|a {() ~ f!} c
+|a {if((), f)} c

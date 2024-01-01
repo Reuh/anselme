@@ -1,8 +1,8 @@
 :f = "f"!script($_)
-	1 ~
+	if(1)
 		#p!checkpoint
 		|x
-	~
+	else!
 		|y
 
 f!
@@ -10,10 +10,10 @@ f!
 f!from(#p)
 
 :g = "g"!script($_)
-	() ~
+	if(())
 		#p!checkpoint
 		|x
-	~
+	else!
 		|y
 
 g!

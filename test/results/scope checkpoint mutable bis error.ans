@@ -14,20 +14,17 @@
 --- text ---
 | {}"CHECK 2" |
 --- error ---
-[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31mt[0m
+[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31mt[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:32:7[0m in call: [2merror("t")[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:1[0m in block: [2minsert(t, len(l) + 1)…[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:8[0m in call: [2m_[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:1[0m in return boundary: [2m_[0m[0m
-	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:1[0m in return boundary: [2m_[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:19:4[0m in call: [2mf(t)[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:15:2[0m in block: [2m| REC |…[0m[0m
-	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:15:10[0m in call: [2m_[0m[0m
-	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:15:8[0m in call: [2mn < 1 ~ _[0m[0m
-	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:15:2[0m in partial scope: [2mn < 1 ~…[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:15:4[0m in call: [2mif(n < 1)[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:15:2[0m in partial scope: [2mif(n < 1)…[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:1[0m in block: [2minsert(t, len(l) + 1)…[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:8[0m in call: [2m_[0m[0m
-	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:1[0m in return boundary: [2m_[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:7:1[0m in return boundary: [2m_[0m[0m
 	↳ from [4mtest/tests/scope checkpoint mutable bis error.ans:41:2[0m in call: [2mf(l)[0m[0m
 	↳ from [4m?[0m in block: [2m:x = *[99]…[0m

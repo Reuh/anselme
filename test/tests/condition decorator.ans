@@ -1,3 +1,3 @@
-() ~ |ko
-1 ~ |ok
-1 ~ |ok bis
+if((), $|ko)
+if(1, $|ok)
+if(1, $|ok bis)

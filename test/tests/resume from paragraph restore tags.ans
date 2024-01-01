@@ -1,7 +1,7 @@
-:f = "f"!script($_)
+:f = "f"!script
 	"a":"a" #
 		|a
-		1 ~ "x":"x" #
+		if(1, $()("x":"x" # _))
 			"b":"b" #
 				#p!checkpoint($_)
 					"c":"c"# |b

@@ -11,10 +11,10 @@ fn(5)
 fn()
 
 :$ g(n="s", a::number=5)
-	@"gn"
+	return("gn")
 
 :$ g(n="s", a::string="lol")
-	@"gs"
+	return("gs")
 
 |{g(n="k", a="l")}
 |{g(n="k", a=1)}

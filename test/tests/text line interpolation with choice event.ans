@@ -9,7 +9,7 @@
 	1 # | left
 	| Surprise choice! |>
 		| ok2
-	@" joystick"
+	return(" joystick")
 
 | Press {jump button!} to jump.
 

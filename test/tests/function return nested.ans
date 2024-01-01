@@ -1,7 +1,7 @@
 :$ hey
 	:@$ foo
-		@2
-	@5
+		return(2)
+	return(5)
 
 |{hey!}
 |{hey.foo!}

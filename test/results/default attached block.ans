@@ -1,7 +1,7 @@
 --# run #--
 --- text ---
-| {}"lol" |
+| {}"ok" |
 --- return ---
-| {}"a " {}"d" {}" b" |
+()
 --# saved #--
-{}
+{"fn.checkpoint":false, "fn.run":1}

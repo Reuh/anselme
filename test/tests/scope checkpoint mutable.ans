@@ -10,7 +10,7 @@
 	|CHECK
 	merge branch!
 
-	n < 1 ~
+	if(n < 1)
 		|REC
 
 		n += 1

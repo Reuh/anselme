@@ -1,12 +1,12 @@
 :$ jump button
 	1 # | A
 
-	@
+	return!
 
 :$ move axis
 	1 # | left
 
-	@" joystick"
+	return(" joystick")
 
 | Press {jump button!} to jump.
 

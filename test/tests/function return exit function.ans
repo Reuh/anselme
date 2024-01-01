@@ -1,6 +1,6 @@
 :$ hey
-	@5
+	return(5)
 	|a
-	@2
+	return(2)
 
 |{hey!}

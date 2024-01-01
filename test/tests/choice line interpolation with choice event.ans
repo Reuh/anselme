@@ -3,7 +3,7 @@
 :$ jump button
 	1 # |A
 	| Suprise choice! |> ()
-	@"JOIN"
+	return("JOIN")
 
 | Press {jump button!} to jump. |>
 	|ok

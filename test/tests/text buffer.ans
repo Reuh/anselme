@@ -1,8 +1,8 @@
 :$ f
 	|lol
 
-	@|d
+	return(|d)
 
 :a = |a {f!} b
 
-@a
+return(a)

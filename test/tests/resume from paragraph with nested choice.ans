@@ -45,7 +45,7 @@ g!
 g!from(#p)
 
 :h = "h"!script($_)
-	1 ~
+	if(1)
 		| a |>
 			|-> a
 			#p!checkpoint
@@ -76,7 +76,7 @@ h!from(#p)
 			|-> ab
 	| b |>
 		|-> b
-	1 ~
+	if(1)
 		| c |>
 			|-> c
 

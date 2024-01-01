@@ -11,7 +11,7 @@
 
 	|before recursion {c}: {a}
 
-	n < 5 ~
+	if(n < 5)
 		f(c+1)
 
 		|after recursion {c}: {a}
@@ -29,7 +29,7 @@ f!
 
 	|before recursion {c}: {a}
 
-	n < 5 ~
+	if(n < 5)
 		g(c+1, a)
 
 		|after recursion {c}: {a}
