@@ -13,6 +13,9 @@ local function badrandom(a, b)
 	prev = (4241 * prev + 11) % 6997
 	return a + prev % (b-a+1)
 end
+function math.randomseed()
+	prev = 0
+end
 function math.random(a, b)
 	if not a and not b then
 		return badrandom(0, 999) / 1000
@@ -53,6 +56,7 @@ end
 -- run a test file and return the result
 local function run(path)
 	local out = { "--# run #--" }
+	math.randomseed()
 
 	local state = anselme:new()
 	state:load_stdlib()
@@ -107,7 +111,7 @@ local loading = {
 	write = function(self, message)
 		self:clear()
 		local str = self.loop[self.loop_pos].." "..message
-		self.erase_code = ("\b"):rep(#str)
+		self.erase_code = ("\b \b"):rep(#str)
 		io.write(str)
 	end,
 	clear = function(self)
@@ -132,6 +136,10 @@ if not arg[1] or arg[1] == "update" then
 	local total, failure, errored, notfound = #tests, 0, 0, 0
 
 	for i, test in ipairs(tests) do
+		-- status
+		loading:write(("%s/%s tests ran; running %s"):format(i, #tests, test))
+		if i % 10 == 0 then loading:update() end
+
 		repeat
 			local rerun = false
 
@@ -192,10 +200,6 @@ if not arg[1] or arg[1] == "update" then
 				print("")
 			end
 		until not rerun
-
-		-- status
-		loading:write(("%s/%s tests ran"):format(i, #tests))
-		if i % 10 == 0 then loading:update() end
 	end
 
 	loading:clear()
