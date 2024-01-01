@@ -68,6 +68,8 @@ Syntax modifications:
 		Could interpret the left operand as a string when it is an identifier, like how _._ works.
 		Would feel good to have less nodes. But because we can doesn't mean we should. Also Assignment is reused in a few other places.
 
+	- remove operators if possible, i'd like to avoid the code looking like a bunch of sigils
+
 ---
 
 Reduce the number of AST node types ; try to merge similar node and make simpler individuals nodes if possible by composing them.

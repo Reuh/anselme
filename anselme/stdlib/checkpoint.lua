@@ -5,24 +5,15 @@ local resume_manager = require("anselme.state.resume_manager")
 
 return {
 	{
-		"_~>_", "(anchor::anchor, quote)",
-		function(state, anchor, quote)
-			resume_manager:push(state, anchor)
-			local r = quote:call(state, ArgumentTuple:new())
-			resume_manager:pop(state)
-			return r
-		end
-	},
-	{
-		"_~>_", "(anchor::nil, quote)",
-		function(state, anchor, quote)
-			return quote:call(state, ArgumentTuple:new())
-		end
-	},
-	{
 		"resume", "(function::closure, anchor::anchor)",
 		function(state, func, anchor)
 			return func:resume(state, anchor)
+		end
+	},
+	{
+		"resume", "(function::closure, anchor::nil)",
+		function(state, func)
+			return func:call(state, ArgumentTuple:new())
 		end
 	},
 	{

@@ -12,7 +12,6 @@ local secondaries = {
 	r("infix.tuple"),
 	r("infix.tag"),
 	r("infix.translate"),
-	r("infix.resume"),
 	-- 4
 	r("infix.while"),
 	r("infix.if"),
