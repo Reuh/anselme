@@ -1,5 +1,5 @@
 return [[
-:@script = $(name, fn)
+:@script = $(name, fn=attached block!)
 	fn.:&current checkpoint => "{name}.checkpoint"!persist(false)
 	fn.:&reached => "{name}.reached"!persist(*{})
 	fn.:&run => "{name}.run"!persist(0)
@@ -10,22 +10,22 @@ return [[
 		fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 	fn.:checkpoint = $(anchor::anchor)
 		fn.current checkpoint = anchor
-		resumed from != anchor ~
+		if(resumed from != anchor)
 			fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 			merge branch!
 	fn.:checkpoint = $(anchor::anchor, on resume::function)
 		fn.current checkpoint = anchor
-		resumed from == anchor | resuming(1) ~
+		if(resumed from == anchor | resuming(2))
 			on resume!
-		~
+		else!
 			fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 			merge branch!
 
 	:f = $
-		fn.current checkpoint ~
+		if(fn.current checkpoint)
 			resumed from = fn.current checkpoint
 			fn!resume(fn.current checkpoint)
-		~
+		else!
 			resumed from = ()
 			fn!
 		fn.run += 1
@@ -38,7 +38,7 @@ return [[
 	s!value!
 
 :@$_._(s::is script, k::string)
-	@(s!value).fn.(k)
+	(s!value).fn.(k)
 :@$_._(s::is script, k::string) = val
 	(s!value).fn.(k) = val
 :@$_._(s::is script, k::symbol) = val
@@ -46,25 +46,25 @@ return [[
 
 :@$from(s::is script, a::anchor)
 	s.current checkpoint = a
-	@s!
+	return(s!)
 :@$from(s::is script)
 	s.current checkpoint = ()
-	@s!
+	return(s!)
 
 /*Additionnal helpers*/
 :@$ cycle(l::tuple)
 	:i = 2
-	i <= l!len ~?
-		l(i).run < l(1).run ~
-			@l(i)!
+	while($i <= l!len)
+		if(l(i).run < l(1).run)
+			return(l(i)!)
 		i += 1
 	l(1)!
 
 :@$ next(l::tuple)
 	:i = 1
-	i <= l!len ~?
-		l(i).run == 0 ~
-			@l(i)!
+	while($i <= l!len)
+		if(l(i).run == 0)
+			return(l(i)!)
 		i += 1
 	l(i-1)!
 

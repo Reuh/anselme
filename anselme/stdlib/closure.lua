@@ -65,7 +65,14 @@ return {
 				return get
 			end
 		end
-	}
+	},
+	{
+		"return", "(value=())",
+		function(state, val)
+			if Return:is(val) then val = val.expression end
+			return Return:new(val)
+		end
+	},
 	{
 		"attached block", "(level::number=1)",
 		function(state, level)

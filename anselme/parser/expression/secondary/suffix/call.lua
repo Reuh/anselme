@@ -22,7 +22,11 @@ return secondary {
 		local exp, rem = parenthesis:parse(source, str, limit_pattern)
 
 		if Nil:is(exp) then
-			exp = Tuple:new()
+			if str:match("^%(%s*%(%s*%)%s*%)") then -- special case: single nil argument
+				exp = Tuple:new(Nil:new())
+			else -- no arguments
+				exp = Tuple:new()
+			end
 		elseif not Tuple:is(exp) or exp.explicit then -- single argument
 			exp = Tuple:new(exp)
 		end

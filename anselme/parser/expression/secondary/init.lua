@@ -6,58 +6,39 @@ end
 
 local secondaries = {
 	-- binary infix operators
-	-- 1
 	r("infix.semicolon"),
-	-- 2
 	r("infix.tuple"),
 	r("infix.tag"),
 	r("infix.translate"),
-	-- 4
-	r("infix.while"),
-	r("infix.if"),
-	-- 6
 	r("infix.choice"),
 	r("infix.and"),
 	r("infix.or"),
-	-- 7
 	r("infix.equal"),
 	r("infix.different"),
 	r("infix.greater_equal"),
 	r("infix.lower_equal"),
 	r("infix.greater"),
 	r("infix.lower"),
-	-- 8
 	r("infix.addition"),
 	r("infix.substraction"),
-	-- 9
 	r("infix.multiplication"),
 	r("infix.integer_division"),
 	r("infix.division"),
 	r("infix.modulo"),
-	-- 9.5
 	r("infix.implicit_multiplication"),
-	-- 10
 	r("infix.exponent"),
-	-- 11
 	r("infix.type_check"),
-	-- 12
 	r("infix.call"),
-	-- 14
 	r("infix.index_identifier"),
 	r("infix.index"),
-	-- 3
 	r("infix.assignment"), -- deported after equal
 	r("infix.assignment_call"),
 	r("infix.definition"),
-	-- 5
 	r("infix.pair"), -- deported after type_check
 
 	-- unary suffix operators
-	-- 1
 	r("suffix.semicolon"),
-	-- 12
 	r("suffix.exclamation_call"),
-	-- 13
 	r("suffix.call"),
 }
 

@@ -18,15 +18,9 @@ local primaries = {
 	r("struct"),
 
 	-- prefixes
-	-- 1
 	r("prefix.semicolon"),
 	r("prefix.function"),
-	r("prefix.return"),
-	-- 3.1
 	r("prefix.wrap"),
-	-- 3.5
-	r("prefix.else"),
-	-- 11
 	r("prefix.negation"),
 	r("prefix.not"),
 	r("prefix.mutable"),

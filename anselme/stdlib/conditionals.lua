@@ -1,8 +1,6 @@
 local ast = require("anselme.ast")
 local ArgumentTuple, Nil, Boolean, Identifier, Return = ast.ArgumentTuple, ast.Nil, ast.Boolean, ast.Identifier, ast.Return
 
-local resume_manager = require("anselme.state.resume_manager")
-
 local if_identifier = Identifier:new("_if_status")
 local if_symbol = if_identifier:to_symbol()
 
@@ -20,9 +18,9 @@ end
 
 return {
 	{
-		"_~_", "(condition, expression)", function(state, condition, expression)
+		"if", "(condition, expression=attached block keep return!)", function(state, condition, expression)
 			ensure_if_variable(state)
-			if condition:truthy() or resume_manager:resuming(state) then--expression:contains_current_resume_target(state) then TODO fix
+			if condition:truthy() or expression:contains_current_resume_target(state) then
 				set_if_variable(state, true)
 				return expression:call(state, ArgumentTuple:new())
 			else
@@ -32,10 +30,35 @@ return {
 		end
 	},
 	{
-		"~_", "(expression)",
+		"if", "(condition, true, false)", function(state, condition, if_true, if_false)
+			ensure_if_variable(state)
+			if condition:truthy() or if_true:contains_current_resume_target(state) then
+				set_if_variable(state, true)
+				return if_true:call(state, ArgumentTuple:new())
+			else
+				set_if_variable(state, false)
+				return if_false:call(state, ArgumentTuple:new())
+			end
+		end
+	},
+	{
+		"else if", "(condition, expression=attached block keep return!)",
+		function(state, condition, expression)
+			ensure_if_variable(state)
+			if (not last_if_success(state) and condition:truthy()) or expression:contains_current_resume_target(state) then
+				set_if_variable(state, true)
+				return expression:call(state, ArgumentTuple:new())
+			else
+				set_if_variable(state, false)
+				return Nil:new()
+			end
+		end
+	},
+	{
+		"else", "(expression=attached block keep return!)",
 		function(state, expression)
 			ensure_if_variable(state)
-			if not last_if_success(state) or resume_manager:resuming(state) then--expression:contains_current_resume_target(state) then TODO fix
+			if not last_if_success(state) or expression:contains_current_resume_target(state) then
 				set_if_variable(state, true)
 				return expression:call(state, ArgumentTuple:new())
 			else
@@ -43,9 +66,8 @@ return {
 			end
 		end
 	},
-
 	{
-		"_~?_", "(condition, expression)",
+		"while", "(condition, expression=attached block keep return!)",
 		function(state, condition, expression)
 			ensure_if_variable(state)
 			local cond = condition:call(state, ArgumentTuple:new())

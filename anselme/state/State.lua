@@ -12,7 +12,7 @@ local parser = require("anselme.parser")
 local binser = require("anselme.lib.binser")
 local assert0 = require("anselme.common").assert0
 local anselme
-local Identifier
+local Identifier, Return
 
 local State
 State = class {
@@ -158,6 +158,7 @@ State = class {
 		self._coroutine = coroutine.create(function()
 			local r = assert0(self:eval_local(code, source))
 			event_manager:final_flush(self)
+			if Return:is(r) then r = r.expression end
 			return "return", r
 		end)
 	end,
@@ -194,6 +195,7 @@ State = class {
 				local r = assert0(self:eval_local(code, source))
 				event_manager:final_flush(self)
 				self.scope:reset() -- scope stack is probably messed up after the switch
+				if Return:is(r) then r = r.expression end
 				return "return", r
 			end)
 		else
@@ -239,6 +241,6 @@ State = class {
 package.loaded[...] = State
 anselme = require("anselme")
 local ast = require("anselme.ast")
-Identifier = ast.Identifier
+Identifier, Return = ast.Identifier, ast.Return
 
 return State

@@ -31,7 +31,6 @@ local common = {
 	regular_operators = {
 		prefixes = {
 			{ ">", 3.1 }, -- just above _=_
-			{ "~", 3.5 }, -- just below _~_ so else-if (~ condition ~ expression) parses as (~ (condition ~ expression))
 			{ "!", 11 },
 			{ "-", 11 },
 			{ "*", 11 },
@@ -44,7 +43,6 @@ local common = {
 		infixes = {
 			{ ";", 1 },
 			{ "#", 2 }, { "->", 2 },
-			{ "~", 4 }, { "~?", 4 },
 			{ "|>", 5 }, { "&", 5 }, { "|", 5 },
 			{ "==", 7 }, { "!=", 7 }, { ">=", 7 }, { "<=", 7 }, { "<", 7 }, { ">", 7 },
 			{ "+", 8 }, { "-", 8 },
@@ -58,8 +56,7 @@ local common = {
 	-- list of all operators and their priority
 	operator_priority = {
 		[";_"] = 1,
-		["$_"] = 1,
-		["@_"] = 1,
+		["$_"] = 2,
 		["_,_"] = 2,
 		["_=_"] = 3,
 		["_!_"] = 12,
