@@ -18,7 +18,7 @@ end
 
 return {
 	{
-		"if", "(condition, expression=attached block keep return!)", function(state, condition, expression)
+		"if", "(condition, expression=attached block(keep return=true))", function(state, condition, expression)
 			ensure_if_variable(state)
 			if condition:truthy() or expression:contains_current_resume_target(state) then
 				set_if_variable(state, true)
@@ -42,7 +42,7 @@ return {
 		end
 	},
 	{
-		"else if", "(condition, expression=attached block keep return!)",
+		"else if", "(condition, expression=attached block(keep return=true))",
 		function(state, condition, expression)
 			ensure_if_variable(state)
 			if (not last_if_success(state) and condition:truthy()) or expression:contains_current_resume_target(state) then
@@ -55,7 +55,7 @@ return {
 		end
 	},
 	{
-		"else", "(expression=attached block keep return!)",
+		"else", "(expression=attached block(keep return=true))",
 		function(state, expression)
 			ensure_if_variable(state)
 			if not last_if_success(state) or expression:contains_current_resume_target(state) then
@@ -67,7 +67,7 @@ return {
 		end
 	},
 	{
-		"while", "(condition, expression=attached block keep return!)",
+		"while", "(condition, expression=attached block(keep return=true))",
 		function(state, condition, expression)
 			ensure_if_variable(state)
 			local cond = condition:call(state, ArgumentTuple:new())

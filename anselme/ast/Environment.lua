@@ -68,6 +68,7 @@ local Environment = ast.abstract.Runtime {
 	variables = nil, -- Table of { {identifier} = variable metadata, ... }
 
 	partial = nil, -- { [name string] = true, ... }
+	undefine = nil, -- { [name string] = true, ... }
 	export = nil, -- bool
 
 	init = function(self, state, parent, partial_names, is_export)
@@ -75,6 +76,7 @@ local Environment = ast.abstract.Runtime {
 		self.parent = parent
 		self.partial = partial_names
 		self.export = is_export
+		self.undefine = {}
 	end,
 
 	traverse = function(self, fn, ...)
@@ -97,7 +99,11 @@ local Environment = ast.abstract.Runtime {
 			or (self.export ~= symbol.exported) then
 			return self.parent:define(state, symbol, exp)
 		end
-		self.variables:set(state, symbol:to_identifier(), VariableMetadata:new(state, symbol, exp))
+		if symbol.undefine then
+			self.undefine[name] = true
+		else
+			self.variables:set(state, symbol:to_identifier(), VariableMetadata:new(state, symbol, exp))
+		end
 	end,
 	-- define or redefine new overloadable variable in current environment, inheriting existing overload variants from (parent) scopes
 	define_overloadable = function(self, state, symbol, exp)
@@ -132,7 +138,7 @@ local Environment = ast.abstract.Runtime {
 	defined = function(self, state, identifier)
 		if self.variables:has(state, identifier) then
 			return true
-		elseif self.parent then
+		elseif self.parent and not self.undefine[identifier.name] then
 			return self.parent:defined(state, identifier)
 		end
 		return false
@@ -143,9 +149,10 @@ local Environment = ast.abstract.Runtime {
 		local name = symbol.string
 		if self.variables:has(state, symbol:to_identifier()) then
 			return true
-		elseif (self.partial and not self.partial[name])
-			or (self.export ~= symbol.exported) then
-			return self.parent:defined_in_current(state, symbol)
+		elseif self.parent and not self.undefine[name] then
+			if (self.partial and not self.partial[name]) or (self.export ~= symbol.exported) then
+				return self.parent:defined_in_current(state, symbol)
+			end
 		end
 		return false
 	end,
@@ -159,7 +166,7 @@ local Environment = ast.abstract.Runtime {
 		if self:defined(state, identifier) then
 			if self.variables:has(state, identifier) then
 				return self.variables:get(state, identifier)
-			elseif self.parent then
+			elseif self.parent and not self.undefine[identifier.name] then
 				return self.parent:_get_variable(state, identifier)
 			end
 		else

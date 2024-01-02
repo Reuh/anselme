@@ -11,7 +11,5 @@
 | {}"" {}"*[3, 12, 99]" {}"" |
 --- error ---
 [0m[31m[0m[31mlist index out of bounds[0m
-	↳ from [4mtest/tests/list assignement.ans:21:6[0m in call: [2mx(5) = 0[0m[0m
-	↳ from [4m?[0m in block: [2m:x = *[1, 2]…[0m
 --# saved #--
 {}

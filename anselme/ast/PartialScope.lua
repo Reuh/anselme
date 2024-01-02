@@ -1,7 +1,7 @@
 -- create a partial layer to define temporary variables
 
 local ast = require("anselme.ast")
-local Identifier, Quote
+local Identifier, Quote, Nil
 
 local attached_block_identifier, attached_block_symbol
 local unpack = table.unpack or unpack
@@ -11,7 +11,7 @@ PartialScope = ast.abstract.Node {
 	type = "partial scope",
 
 	expression = nil,
-	definitions = nil, -- {[sym]=value,...} where values are already evaluated!
+	definitions = nil, -- {[sym]=value,...}
 	_identifiers = nil, -- {identifier,...} - just a cache so we don't rebuild it on every eval
 
 	init = function(self, expression)
@@ -49,7 +49,7 @@ PartialScope = ast.abstract.Node {
 
 	_eval = function(self, state)
 		state.scope:push_partial(unpack(self._identifiers))
-		for sym, val in pairs(self.definitions) do state.scope:define(sym, val) end
+		for sym, val in pairs(self.definitions) do state.scope:define(sym:eval(state), val:eval(state)) end
 		local exp = self.expression:eval(state)
 		state.scope:pop()
 
@@ -71,14 +71,16 @@ PartialScope = ast.abstract.Node {
 	end,
 	-- class method: return a PartialScope that define the block identifier _ to a Quote of `block`
 	attach_block = function(self, expression, block)
-		local partial = ast.PartialScope:new(expression)
-		partial:define(attached_block_symbol, Quote:new(block))
+		local partial = PartialScope:new(expression)
+		local unpartial = PartialScope:new(block)
+		unpartial:define(attached_block_symbol:with{undefine=true}, Nil:new())
+		partial:define(attached_block_symbol, Quote:new(unpartial))
 		return partial
 	end
 }
 
 package.loaded[...] = PartialScope
-Identifier, Quote = ast.Identifier, ast.Quote
+Identifier, Quote, Nil = ast.Identifier, ast.Quote, ast.Nil
 
 attached_block_identifier = Identifier:new("_")
 attached_block_symbol = attached_block_identifier:to_symbol()

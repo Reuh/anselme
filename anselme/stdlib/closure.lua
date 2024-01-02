@@ -4,6 +4,8 @@ local assert0 = require("anselme.common").assert0
 
 local calling_environment_manager = require("anselme.state.calling_environment_manager")
 
+local block_identifier = Identifier:new("_")
+
 return {
 	{
 		"defined", "(c::function, s::string)",
@@ -88,21 +90,33 @@ return {
 		end
 	},
 	{
-		"attached block", "(level::number=1)",
-		function(state, level)
+		"attached block", "(level::number=1, keep return=false)",
+		function(state, level, keep_return)
 			-- level 2: env of the function that called the function that called attached block
 			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
-			local r = env:get(state, Identifier:new("_"))
-			return Function:with_return_boundary(ParameterTuple:new(), r.expression):eval(state)
+			local r = env:get(state, block_identifier)
+			if keep_return:truthy() then
+				return Function:new(ParameterTuple:new(), r.expression):eval(state)
+			else
+				return Function:with_return_boundary(ParameterTuple:new(), r.expression):eval(state)
+			end
 		end
 	},
 	{
-		"attached block keep return", "(level::number=1)",
-		function(state, level)
+		"attached block", "(level::number=1, keep return=false, default)",
+		function(state, level, keep_return, default)
 			-- level 2: env of the function that called the function that called attached block
 			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
-			local r = env:get(state, Identifier:new("_"))
-			return Function:new(ParameterTuple:new(), r.expression):eval(state)
+			if env:defined(state, block_identifier) then
+				local r = env:get(state, block_identifier)
+				if keep_return:truthy() then
+					return Function:new(ParameterTuple:new(), r.expression):eval(state)
+				else
+					return Function:with_return_boundary(ParameterTuple:new(), r.expression):eval(state)
+				end
+			else
+				return default
+			end
 		end
 	},
 }

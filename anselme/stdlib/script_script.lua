@@ -8,18 +8,19 @@ return [[
 
 	fn.:check = $(anchor::anchor)
 		fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
-	fn.:checkpoint = $(anchor::anchor)
-		fn.current checkpoint = anchor
-		if(resumed from != anchor)
-			fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
-			merge branch!
-	fn.:checkpoint = $(anchor::anchor, on resume::function)
-		fn.current checkpoint = anchor
-		if(resumed from == anchor | resuming(2))
-			on resume!
+	fn.:checkpoint = $(anchor::anchor, on resume=attached block(default=()))
+		if(on resume)
+			fn.current checkpoint = anchor
+			if(resumed from == anchor | resuming(4))
+				on resume!
+			else!
+				fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
+				merge branch!
 		else!
-			fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
-			merge branch!
+			fn.current checkpoint = anchor
+			if(resumed from != anchor)
+				fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
+				merge branch!
 
 	:f = $
 		if(fn.current checkpoint)

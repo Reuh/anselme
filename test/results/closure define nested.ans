@@ -3,9 +3,5 @@
 | {}"" {}"42" {}"" |
 --- error ---
 [0m[31m[0m[31m[0m[31m[0m[31mno variable "y" defined in closure[0m
-	↳ from [4mtest/tests/closure define nested.ans:12:4[0m in call: [2mf . "y"[0m[0m
-	↳ from [4mtest/tests/closure define nested.ans:12:1[0m in text interpolation: [2m| {f . "y"} |[0m[0m
-	↳ from [4mtest/tests/closure define nested.ans:12:1[0m in translatable: [2m| {f . "y"} |[0m[0m
-	↳ from [4m?[0m in block: [2m:f = ($() _)…[0m
 --# saved #--
 {}

@@ -6,7 +6,5 @@
 | {}"d=" {}"2" {}" (2)" |
 --- error ---
 [0m[31m[0m[31mtrying to change the value of constant d[0m
-	↳ from [4mtest/tests/symbol alias constant.ans:12:3[0m in assignment: [2md = 5[0m[0m
-	↳ from [4m?[0m in block: [2m:l = *[1, 2, 3]…[0m
 --# saved #--
 {}

@@ -7,7 +7,5 @@
 [0m[31m[0m[31mcan't call overload overload<($(name::($(x) type(x) == t)) _), ($(name::($(x) type(x) == t)) _)>: no function match (type("nope", 5)), possible functions were:
 	• (name::($(x) type(x) == t)): type check failure for parameter name in function (name::($(x) type(x) == t))
 	• (name::($(x) type(x) == t)): type check failure for parameter name in function (name::($(x) type(x) == t))[0m
-	↳ from [4mtest/tests/function custom type dispatch error.ans:14:2[0m in call: [2ma(type(5, "nope"))[0m[0m
-	↳ from [4m?[0m in block: [2m:french name = "french name"…[0m
 --# saved #--
 {}
