@@ -8,10 +8,6 @@ local Flush = ast.abstract.Node {
 
 	init = function(self) end,
 
-	_hash = function(self)
-		return "flush"
-	end,
-
 	_format = function(self)
 		return "\n"
 	end,
