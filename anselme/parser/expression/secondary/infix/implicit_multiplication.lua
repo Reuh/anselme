@@ -9,7 +9,7 @@ local Call, Identifier, ArgumentTuple = ast.Call, ast.Identifier, ast.ArgumentTu
 return infix {
 	operator = "*",
 	identifier = "_*_",
-	priority = operator_priority["_*_"]+.1, -- just above / so 1/2x gives 1/(2x)
+	priority = operator_priority["_implicit*_"],
 
 	match = function(self, str, current_priority, primary)
 		return self.priority > current_priority and identifier:match(str)

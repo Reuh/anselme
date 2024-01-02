@@ -50,6 +50,7 @@ Probably wise to look into how other do it. LSP: https://microsoft.github.io/lan
 ---
 
 Default arguments and initial variables values should pass the type check associated with the variable / parameter.
+Issue: dispatch is decided before evaluating default values.
 
 ---
 
@@ -67,7 +68,7 @@ Syntax modifications:
 		Could interpret the left operand as a string when it is an identifier, like how _._ works.
 		Would feel good to have less nodes. But because we can doesn't mean we should. Also Assignment is reused in a few other places.
 
-	- remove operators if possible, i'd like to avoid the code looking like a bunch of sigils
+	- remove operators if possible, i'd like to avoid the code looking like a bunch of sigils. Could be replaced by functions: _|>_, _::_
 
 ---
 

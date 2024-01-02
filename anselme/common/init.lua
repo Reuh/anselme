@@ -30,7 +30,7 @@ local common = {
 	-- list of operators and their priority that are handled through regular function calls & can be overloaded/etc. by the user
 	regular_operators = {
 		prefixes = {
-			{ ">", 3.1 }, -- just above _=_
+			{ ">", 4 }, -- just above _=_
 			{ "!", 11 },
 			{ "-", 11 },
 			{ "*", 11 },
@@ -44,9 +44,9 @@ local common = {
 			{ ";", 1 },
 			{ "#", 2 }, { "->", 2 },
 			{ "|>", 5 }, { "&", 5 }, { "|", 5 },
-			{ "==", 7 }, { "!=", 7 }, { ">=", 7 }, { "<=", 7 }, { "<", 7 }, { ">", 7 },
-			{ "+", 8 }, { "-", 8 },
-			{ "//", 9 }, { "/", 9 }, { "*", 9 }, { "%", 9 },
+			{ "==", 6 }, { "!=", 6 }, { ">=", 6 }, { "<=", 6 }, { "<", 6 }, { ">", 6 },
+			{ "+", 7 }, { "-", 7 },
+			{ "//", 8 }, { "/", 8 }, { "*", 8 }, { "%", 8 },
 			{ "^", 10 },
 			{ "::", 11 },
 			{ ".", 14 },
@@ -59,8 +59,9 @@ local common = {
 		["$_"] = 2,
 		["_,_"] = 2,
 		["_=_"] = 3,
+		["_implicit*_"] = 9, -- just aboce _*_
 		["_!_"] = 12,
-		["_()"] = 13
+		["_()"] = 13 -- just above _!
 		-- generated at run-time for regular operators
 	}
 }
