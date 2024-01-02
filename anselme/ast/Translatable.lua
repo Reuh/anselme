@@ -7,6 +7,7 @@ local translation_manager
 
 local Translatable = ast.abstract.Node {
 	type = "translatable",
+	hide_in_stacktrace = true,
 
 	expression = nil,
 

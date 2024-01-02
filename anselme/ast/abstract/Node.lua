@@ -27,8 +27,12 @@ local function cutoff_text(str)
 	return str
 end
 local function format_error(state, node, message)
-	local ctx = cutoff_text(node:format(state)) -- get some context code around error
-	return fmt("%{red}%s%{reset}\n\t↳ from %{underline}%s%{reset} in %s: %{dim}%s", message, node.source, node.type, ctx)
+	if node.hide_in_stacktrace then
+		return message
+	else
+		local ctx = cutoff_text(node:format(state)) -- get some context code around error
+		return fmt("%{red}%s%{reset}\n\t↳ from %{underline}%s%{reset} in %s: %{dim}%s", message, node.source, node.type, ctx)
+	end
 end
 
 -- traverse helpers
@@ -58,6 +62,7 @@ Node = class {
 	type = "node",
 	source = "?",
 	mutable = false,
+	hide_in_stacktrace = false,
 
 	-- abstract class
 	-- must be redefined

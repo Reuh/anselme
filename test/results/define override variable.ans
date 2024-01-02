@@ -1,5 +1,7 @@
 --# run #--
 --- error ---
-[0m[31m[0m[31m[0m[31mcan't add an overload variant to non-overloadable variable a defined in the same scope[0m
+[0m[31m[0m[31mcan't add an overload variant to non-overloadable variable a defined in the same scope[0m
+	↳ from [4mtest/tests/define override variable.ans:3:1[0m in definition: [2m:a = ($() _)[0m[0m
+	↳ from [4m?[0m in block: [2m:a = 2…[0m
 --# saved #--
 {}

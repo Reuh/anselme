@@ -10,7 +10,17 @@
 --- text ---
 | {}"CHECK" |
 --- error ---
-[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31mt[0m
+[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31mt[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:23:7[0m in call: [2merror("t")[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:5:1[0m in block: [2minsert(t, len(l) + 1)…[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:5:8[0m in call: [2m_[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:17:4[0m in call: [2mf(t)[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:13:2[0m in block: [2m| REC |…[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:13:4[0m in call: [2mif(n < 1)[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:5:1[0m in block: [2minsert(t, len(l) + 1)…[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:5:8[0m in call: [2m_[0m[0m
+	↳ from [4mtest/tests/scope checkpoint mutable error.ans:32:2[0m in call: [2mf(l)[0m[0m
+	↳ from [4m?[0m in block: [2m:l = *[1]…[0m
 --# post run check #--
 --- text ---
 | {}"AFTER ERROR" |

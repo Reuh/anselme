@@ -9,6 +9,7 @@ local unpack = table.unpack or unpack
 local PartialScope
 PartialScope = ast.abstract.Node {
 	type = "partial scope",
+	hide_in_stacktrace = true,
 
 	expression = nil,
 	definitions = nil, -- {[sym]=value,...}

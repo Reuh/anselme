@@ -9,6 +9,8 @@
 | {}"4: " {}"4" {}"" |
 --- error ---
 [0m[31m[0m[31mcancel merge[0m
+	↳ from [4mtest/tests/checkpoint merging variable.ans:24:6[0m in call: [2merror("cancel merge")[0m[0m
+	↳ from [4m?[0m in block: [2m:l = 1…[0m
 --# post run check #--
 --- text ---
 | {}"3: " {}"3" {}"" |

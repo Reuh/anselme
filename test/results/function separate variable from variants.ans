@@ -1,11 +1,14 @@
 --# run #--
 --- error ---
-[0m[31m[0m[31m[0m[31m[0m[31mcan't call overload overload<($(s::($(x) type(x) == t), k::($(x) <lua function>)) = val; _), ($(s::($(x) type(x) == t), k::($(x) <lua function>)) = val; _), ($(s::($(x) type(x) == t), k::($(x) <lua function>)) _), ($(c::($(x) <lua function>), s::($(x) <lua function>)) = v; <lua function>), ($(c::($(x) <lua function>), s::($(x) <lua function>)) = v; <lua function>), ($(c::($(x) <lua function>), s::($(x) <lua function>)) <lua function>)>: no function match (overload<($(b) _), ($(x) _), ($() _)>, "a"), possible functions were:
+[0m[31m[0m[31m[0m[31mcan't call overload overload<($(s::($(x) type(x) == t), k::($(x) <lua function>)) = val; _), ($(s::($(x) type(x) == t), k::($(x) <lua function>)) = val; _), ($(s::($(x) type(x) == t), k::($(x) <lua function>)) _), ($(c::($(x) <lua function>), s::($(x) <lua function>)) = v; <lua function>), ($(c::($(x) <lua function>), s::($(x) <lua function>)) = v; <lua function>), ($(c::($(x) <lua function>), s::($(x) <lua function>)) <lua function>)>: no function match (overload<($(b) _), ($(x) _), ($() _)>, "a"), possible functions were:
 	• (s::($(x) type(x) == t), k::($(x) <lua function>)) = val: expected 3 arguments, received 2
 	• (s::($(x) type(x) == t), k::($(x) <lua function>)) = val: expected 3 arguments, received 2
 	• (s::($(x) type(x) == t), k::($(x) <lua function>)): type check failure for parameter s in function (s::($(x) type(x) == t), k::($(x) <lua function>))
 	• (c::($(x) <lua function>), s::($(x) <lua function>)) = v: expected 3 arguments, received 2
 	• (c::($(x) <lua function>), s::($(x) <lua function>)) = v: expected 3 arguments, received 2
 	• (c::($(x) <lua function>), s::($(x) <lua function>)): type check failure for parameter c in function (c::($(x) <lua function>), s::($(x) <lua function>))[0m
+	↳ from [4mtest/tests/function separate variable from variants.ans:10:4[0m in call: [2mf . "a"[0m[0m
+	↳ from [4mtest/tests/function separate variable from variants.ans:10:1[0m in text interpolation: [2m| {f . "a"} = 2 |[0m[0m
+	↳ from [4m?[0m in block: [2m:f = ($() _)…[0m
 --# saved #--
 {}

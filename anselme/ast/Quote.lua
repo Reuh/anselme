@@ -10,6 +10,7 @@ local ast = require("anselme.ast")
 local Quote
 Quote = ast.abstract.Node {
 	type = "quote",
+	hide_in_stacktrace = true,
 
 	expression = nil,
 

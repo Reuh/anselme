@@ -5,6 +5,7 @@ local Return
 
 local ReturnBoundary = ast.abstract.Node {
 	type = "return boundary",
+	hide_in_stacktrace = true,
 
 	expression = nil,
 

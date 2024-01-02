@@ -47,8 +47,6 @@ local function run_loop(run_state, out)
 		elseif e == "return" then
 			table.insert(out, data:format(run_state))
 			run_state:merge()
-		elseif e == "error" then
-			table.insert(out, (tostring(data):gsub("\n%s*↳[^\n]*", ""))) -- traceback change every day and a half due to AST changes. TODO: only keep ast layers relevant for the user
 		else
 			table.insert(out, tostring(data))
 		end

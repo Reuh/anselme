@@ -68,7 +68,7 @@ local Environment = ast.abstract.Runtime {
 	variables = nil, -- Table of { {identifier} = variable metadata, ... }
 
 	partial = nil, -- { [name string] = true, ... }
-	undefine = nil, -- { [name string] = true, ... }
+	undefine = nil, -- { [name string] = true, ... } - variable present here will not be looked up in parent env
 	export = nil, -- bool
 
 	init = function(self, state, parent, partial_names, is_export)
@@ -186,16 +186,6 @@ local Environment = ast.abstract.Runtime {
 		return self:_get_variable(state, identifier):set(state, val)
 	end,
 
-	-- returns a list {[symbol]=val,...} of all exported variables (evaluated) in the current strict layer
-	-- TODO currently unused
-	list_exported = function(self, state)
-		assert(self.export, "not an export scope layer")
-		local r = {}
-		for _, vm in self.variables:iter(state) do
-			r[vm.symbol] = vm:get(state)
-		end
-		return r
-	end,
 	-- return the depth of the environmenet, i.e. the number of parents
 	depth = function(self)
 		local d = 0
