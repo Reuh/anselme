@@ -85,6 +85,14 @@ local Environment = ast.abstract.Runtime {
 		self._lookup_cache = {}
 		self._lookup_cache_current = {}
 	end,
+	-- precache variable
+	-- when cached, if a variable is defined in a parent scope after it has been cached here from a higher parent, it will not be used in this env
+	-- most of the time scopes are discarded after a pop so there's no possibility for this anyway, except for closures as they restore an old environment
+	-- in which case we may want to precache variables that appear in the function so future definitions don't affect the closure
+	precache = function(self, state, identifier)
+		self:_lookup(state, identifier)
+		self:_lookup_in_current(state, identifier:to_symbol())
+	end,
 
 	traverse = function(self, fn, ...)
 		if self.parent then

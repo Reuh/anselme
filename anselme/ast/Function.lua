@@ -8,6 +8,15 @@ local operator_priority = require("anselme.common").operator_priority
 
 local resume_manager, calling_environment_manager
 
+local function list_upvalues(v, l)
+	if ast.Identifier:is(v) then
+		table.insert(l, v)
+	elseif ast.Symbol:is(v) then
+		table.insert(l, v:to_identifier())
+	end
+	v:traverse(list_upvalues, l)
+end
+
 local Function
 Function = Overloadable {
 	type = "function",
@@ -15,11 +24,13 @@ Function = Overloadable {
 	parameters = nil, -- ParameterTuple
 	expression = nil, -- function content
 	scope = nil, -- Environment; captured scope for closure (evaluated functions); not set when not evaluated
+	upvalues = nil, -- list of identifiers; not set when not evaluated. Contain _at least_ all the upvalues explicitely defined in the function code.
 
-	init = function(self, parameters, expression, scope)
+	init = function(self, parameters, expression, scope, upvalues)
 		self.parameters = parameters
 		self.expression = expression
 		self.scope = scope
+		self.upvalues = upvalues
 	end,
 	with_return_boundary = function(self, parameters, expression)
 		return Function:new(parameters, ReturnBoundary:new(expression))
@@ -51,7 +62,19 @@ Function = Overloadable {
 		local scope = state.scope:capture() -- capture current scope to build closure
 		state.scope:pop()
 
-		return Function:new(self.parameters:eval(state), self.expression, scope)
+		-- get upvalues
+		local upvalues = {}
+		self.expression:traverse(list_upvalues, upvalues)
+		if scope:defined(state, ast.Identifier:new("_")) then
+			scope:get(state, ast.Identifier:new("_")):traverse(list_upvalues)
+		end
+
+		-- cache upvalues so they aren't affected by future redefinition in a parent scope
+		for _, ident in ipairs(upvalues) do
+			scope:precache(state, ident)
+		end
+
+		return Function:new(self.parameters:eval(state), self.expression, scope, upvalues)
 	end,
 
 	compatible_with_arguments = function(self, state, args)
