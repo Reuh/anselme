@@ -1,7 +1,7 @@
 -- create a partial layer to define temporary variables
 
 local ast = require("anselme.ast")
-local Identifier, Quote, Nil
+local Identifier, Quote, Undefined
 
 local attached_block_identifier, attached_block_symbol
 local unpack = table.unpack or unpack
@@ -74,14 +74,14 @@ PartialScope = ast.abstract.Node {
 	attach_block = function(self, expression, block)
 		local partial = PartialScope:new(expression)
 		local unpartial = PartialScope:new(block)
-		unpartial:define(attached_block_symbol:with{undefine=true}, Nil:new())
+		unpartial:define(attached_block_symbol, Undefined:new())
 		partial:define(attached_block_symbol, Quote:new(unpartial))
 		return partial
 	end
 }
 
 package.loaded[...] = PartialScope
-Identifier, Quote, Nil = ast.Identifier, ast.Quote, ast.Nil
+Identifier, Quote, Undefined = ast.Identifier, ast.Quote, ast.Undefined
 
 attached_block_identifier = Identifier:new("_")
 attached_block_symbol = attached_block_identifier:to_symbol()

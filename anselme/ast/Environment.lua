@@ -2,7 +2,7 @@ local ast = require("anselme.ast")
 
 local operator_priority = require("anselme.common").operator_priority
 
-local Branched, ArgumentTuple, Overload, Overloadable, Table
+local Branched, ArgumentTuple, Overload, Overloadable, Table, Undefined
 
 local VariableMetadata = ast.abstract.Runtime {
 	type = "variable metadata",
@@ -21,6 +21,10 @@ local VariableMetadata = ast.abstract.Runtime {
 		else
 			return v
 		end
+	end,
+	undefined = function(self, state)
+		local v = self.branched:get(state)
+		return Undefined:is(v)
 	end,
 	get_symbol = function(self)
 		return self.symbol
@@ -68,21 +72,16 @@ local Environment = ast.abstract.Runtime {
 	variables = nil, -- Table of { {identifier} = variable metadata, ... }
 
 	partial = nil, -- { [name string] = true, ... }
-	undefine = nil, -- { [name string] = true, ... } - variable present here will not be looked up in parent env
 	export = nil, -- bool
 
 	_lookup_cache = nil, -- { [name string] = variable metadata, ... }
-	_lookup_cache_current = nil, -- { [name string] = true, ... }
+	_lookup_cache_current = nil, -- { [name string] = variable metadata, ... }
 
 	init = function(self, state, parent, partial_names, is_export)
 		self.variables = Table:new(state)
 		self.parent = parent
 		self.partial = partial_names
 		self.export = is_export
-		self.undefine = {}
-		-- TODO: something defined in a parent scope after caching here will not be reflected
-		-- 99% of the time a scope is not reused after popping it off the stack, except when captured in closures
-		-- so we might want to make accessing variable defined after environment capture illegal or precache all upvalues
 		self._lookup_cache = {}
 		self._lookup_cache_current = {}
 	end,
@@ -107,14 +106,10 @@ local Environment = ast.abstract.Runtime {
 			or (self.export ~= symbol.exported) then
 			return self.parent:define(state, symbol, exp)
 		end
-		if symbol.undefine then
-			self.undefine[name] = true
-		else
-			local variable = VariableMetadata:new(state, symbol, exp)
-			self.variables:set(state, symbol:to_identifier(), variable)
-			self._lookup_cache[name] = variable
-			self._lookup_cache_current[name] = true
-		end
+		local variable = VariableMetadata:new(state, symbol, exp)
+		self.variables:set(state, symbol:to_identifier(), variable)
+		self._lookup_cache[name] = variable
+		self._lookup_cache_current[name] = variable
 	end,
 	-- define or redefine new overloadable variable in current environment, inheriting existing overload variants from (parent) scopes
 	define_overloadable = function(self, state, symbol, exp)
@@ -152,11 +147,34 @@ local Environment = ast.abstract.Runtime {
 		if _cache[name] == nil then
 			if self.variables:has(state, identifier) then
 				_cache[name] = self.variables:get(state, identifier)
-			elseif self.parent and not self.undefine[identifier.name] then
+			elseif self.parent then
 				_cache[name] = self.parent:_lookup(state, identifier)
 			end
 		end
-		return _cache[name]
+		local var = _cache[name]
+		if var and not var:undefined(state) then
+			return var
+		end
+		return nil
+	end,
+	_lookup_in_current = function(self, state, symbol)
+		local name = symbol.string
+		local _cache = self._lookup_cache_current
+		if _cache[name] == nil then
+			local identifier = symbol:to_identifier()
+			if self.variables:has(state, identifier) then
+				_cache[name] = self.variables:get(state, identifier)
+			elseif self.parent then
+				if (self.partial and not self.partial[name]) or (self.export ~= symbol.exported) then
+					_cache[name] = self.parent:_lookup_in_current(state, symbol)
+				end
+			end
+		end
+		local var = _cache[name]
+		if var and not var:undefined(state) then
+			return var
+		end
+		return nil
 	end,
 
 	-- returns bool if variable defined in current or parent environment
@@ -166,22 +184,11 @@ local Environment = ast.abstract.Runtime {
 	-- returns bool if variable defined in current environment layer
 	-- (note: by current layer, we mean the closest one where the variable is able to exist - if it is exported, the closest export layer, etc.)
 	defined_in_current = function(self, state, symbol)
-		local name = symbol.string
-		local _cache = self._lookup_cache_current
-		if _cache[name] == nil then
-			if self.variables:has(state, symbol:to_identifier()) then
-				_cache[name] = true
-			elseif self.parent and not self.undefine[name] then
-				if (self.partial and not self.partial[name]) or (self.export ~= symbol.exported) then
-					_cache[name] = self.parent:defined_in_current(state, symbol)
-				end
-			end
-		end
-		return _cache[name]
+		return self:_lookup_in_current(state, symbol) ~= nil
 	end,
 	-- return bool if variable is defined in the current environment only - won't search in parent env for exported & partial names
 	defined_in_current_strict = function(self, state, identifier)
-		return self.variables:has(state, identifier)
+		return self.variables:has(state, identifier) and not self.variables:get(state, identifier):undefined(state)
 	end,
 
 	-- get variable in current or parent scope, with metadata
@@ -236,6 +243,6 @@ local Environment = ast.abstract.Runtime {
 }
 
 package.loaded[...] = Environment
-Branched, ArgumentTuple, Overload, Overloadable, Table = ast.Branched, ast.ArgumentTuple, ast.Overload, ast.abstract.Overloadable, ast.Table
+Branched, ArgumentTuple, Overload, Overloadable, Table, Undefined = ast.Branched, ast.ArgumentTuple, ast.Overload, ast.abstract.Overloadable, ast.Table, ast.Undefined
 
 return Environment

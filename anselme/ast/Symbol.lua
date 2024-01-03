@@ -15,7 +15,6 @@ Symbol = ast.abstract.Node {
 	exported = nil, -- bool
 
 	confined_to_branch = nil, -- bool
-	undefine = nil, -- bool
 
 	init = function(self, str, modifiers)
 		modifiers = modifiers or {}
@@ -25,7 +24,6 @@ Symbol = ast.abstract.Node {
 		self.alias = modifiers.alias
 		self.confined_to_branch = modifiers.confined_to_branch
 		self.exported = modifiers.exported
-		self.undefine = modifiers.undefine
 	end,
 
 	_eval = function(self, state)
@@ -36,7 +34,7 @@ Symbol = ast.abstract.Node {
 
 	with = function(self, modifiers)
 		modifiers = modifiers or {}
-		for _, k in ipairs{"constant", "type_check", "alias", "exported", "confined_to_branch", "undefine"} do
+		for _, k in ipairs{"constant", "type_check", "alias", "exported", "confined_to_branch"} do
 			if modifiers[k] == nil then
 				modifiers[k] = self[k]
 			end
