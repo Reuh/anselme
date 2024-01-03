@@ -1,3 +1,5 @@
+-- TODO: upstream
+
 -- binser.lua
 
 --[[
@@ -39,6 +41,8 @@ local floor = math.floor
 local frexp = math.frexp
 local unpack = unpack or table.unpack
 local huge = math.huge
+local getupvalue = debug.getupvalue
+local setupvalue = debug.setupvalue
 
 -- Lua 5.3 frexp polyfill
 -- From https://github.com/excessive/cpml/blob/master/modules/utils.lua
@@ -220,6 +224,7 @@ local function newbinser()
     -- RESOURCE = 211
     -- INT64 = 212
     -- TABLE WITH META = 213
+    -- FUNCTION WITH UPVALUES = 214
 
     local mts = {}
     local ids = {}
@@ -342,9 +347,19 @@ local function newbinser()
             visited[x] = visited[NEXT]
             visited[NEXT] =  visited[NEXT] + 1
             local str = dump(x)
-            accum[#accum + 1] = "\210"
+            accum[#accum + 1] = "\214"
             accum[#accum + 1] = number_to_str(#str)
             accum[#accum + 1] = str
+            local upvalues = {}
+            local i = 1
+            repeat
+                local name, value = getupvalue(x, i)
+                if name and name ~= "_ENV" then
+                    upvalues[name] = value
+                end
+                i = i + 1
+            until not name
+            types.table(upvalues, visited, accum)
         end
     end
 
@@ -433,13 +448,26 @@ local function newbinser()
             local ret = deserializers[name](unpack(args))
             visited[#visited + 1] = ret
             return ret, nextindex
-        elseif t == 210 then
+        elseif t == 210 or t == 214 then
             local length, dataindex = number_from_str(str, index + 1)
             local nextindex = dataindex + length
             if not (length >= 0) then error("Bad string length") end
             if #str < nextindex - 1 then error("Expected more bytes of string") end
             local ret = loadstring(sub(str, dataindex, nextindex - 1))
             visited[#visited + 1] = ret
+            if t == 214 then
+                local upvalues
+                upvalues, nextindex = deserialize_value(str, nextindex, visited)
+                if type(upvalues) ~= "table" then error("Expected function upvalues") end
+                local i = 1
+                repeat
+                    local name = getupvalue(ret, i)
+                    if name and upvalues[name] ~= nil then
+                        setupvalue(ret, i, upvalues[name])
+                    end
+                    i = i + 1
+                until not name
+            end
             return ret, nextindex
         elseif t == 211 then
             local resname, nextindex = deserialize_value(str, index + 1, visited)

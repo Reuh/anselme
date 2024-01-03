@@ -75,14 +75,6 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 	to_lua = function(self, state)
 		return self.func
 	end,
-
-	-- TODO: binser does not serialize lua function upvalues!
-	_serialize = function(self)
-		error("LuaFunction can not be serialized")
-	end,
-	_deserialize = function(self)
-		error("LuaFunction can not be serialized")
-	end
 }
 
 package.loaded[...] = LuaFunction

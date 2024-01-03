@@ -306,6 +306,22 @@ Node = class {
 			binser.register(self, self.type)
 		end
 	end,
+	-- return a serialized representation of the node
+	-- can redefine _serialize and _deserialize to customize the serialization, see binser docs
+	serialize = function(self, state)
+		package.loaded["anselme.serializer_state"] = state
+		local r = binser.serialize(self)
+		package.loaded["anselme.serializer_state"] = nil
+		return r
+	end,
+	-- return the deserialized Node
+	-- class method
+	deserialize = function(self, state, str, index)
+		package.loaded["anselme.serializer_state"] = state
+		local r = binser.deserializeN(str, 1, index)
+		package.loaded["anselme.serializer_state"] = nil
+		return r
+	end,
 
 	__tostring = function(self) return self:format() end,
 

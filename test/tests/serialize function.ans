@@ -1,0 +1,10 @@
+:f = ()
+_
+	:$_+_(a::string, b)
+		"{a}{b}"
+
+	:a=1
+	f = $(x)
+		x+a
+
+|{(f!serialize!deserialize)("bar")}

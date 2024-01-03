@@ -88,6 +88,8 @@ local function run(path, interactive)
 		run_loop(parallel_state, write_output, interactive)
 		write_output("--# main script #--")
 	end)
+	state:define("serialize", "(value)", function(state, value) return ast.String:new(value:serialize(state)) end, true)
+	state:define("deserialize", "(str::string)", function(state, str) return ast.abstract.Node:deserialize(state, str.string) end, true)
 
 	local run_state = state:branch()
 

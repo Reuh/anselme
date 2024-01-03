@@ -1,0 +1,13 @@
+:x = 43
+
+|{x!serialize!deserialize}
+
+:l = [2, "", 5]
+
+|{l!serialize!deserialize}
+
+:t = *{2, "", 5}
+t(3) = "ok"
+t("f") = "b"
+
+|{t!serialize!deserialize}
