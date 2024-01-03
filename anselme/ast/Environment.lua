@@ -85,13 +85,14 @@ local Environment = ast.abstract.Runtime {
 		self._lookup_cache = {}
 		self._lookup_cache_current = {}
 	end,
-	-- precache variable
+	-- precache variable and return its variable metadata
 	-- when cached, if a variable is defined in a parent scope after it has been cached here from a higher parent, it will not be used in this env
 	-- most of the time scopes are discarded after a pop so there's no possibility for this anyway, except for closures as they restore an old environment
 	-- in which case we may want to precache variables that appear in the function so future definitions don't affect the closure
 	precache = function(self, state, identifier)
 		self:_lookup(state, identifier)
 		self:_lookup_in_current(state, identifier:to_symbol())
+		return self:_lookup(state, identifier)
 	end,
 
 	traverse = function(self, fn, ...)
@@ -193,10 +194,6 @@ local Environment = ast.abstract.Runtime {
 	-- (note: by current layer, we mean the closest one where the variable is able to exist - if it is exported, the closest export layer, etc.)
 	defined_in_current = function(self, state, symbol)
 		return self:_lookup_in_current(state, symbol) ~= nil
-	end,
-	-- return bool if variable is defined in the current environment only - won't search in parent env for exported & partial names
-	defined_in_current_strict = function(self, state, identifier)
-		return self.variables:has(state, identifier) and not self.variables:get(state, identifier):undefined(state)
 	end,
 
 	-- get variable in current or parent scope, with metadata

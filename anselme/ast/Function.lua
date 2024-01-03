@@ -2,19 +2,19 @@
 
 local ast = require("anselme.ast")
 local Overloadable = ast.abstract.Overloadable
-local ReturnBoundary
+local ReturnBoundary, Environment
 
 local operator_priority = require("anselme.common").operator_priority
 
 local resume_manager, calling_environment_manager
 
-local function list_upvalues(v, l)
+local function list_cache_upvalues(v, state, list, scope)
 	if ast.Identifier:is(v) then
-		table.insert(l, v)
+		list[v.name] = scope:precache(state, v)
 	elseif ast.Symbol:is(v) then
-		table.insert(l, v:to_identifier())
+		list[v.string] = scope:precache(state, v:to_identifier())
 	end
-	v:traverse(list_upvalues, l)
+	v:traverse(list_cache_upvalues, state, list, scope)
 end
 
 local Function
@@ -24,13 +24,14 @@ Function = Overloadable {
 	parameters = nil, -- ParameterTuple
 	expression = nil, -- function content
 	scope = nil, -- Environment; captured scope for closure (evaluated functions); not set when not evaluated
-	upvalues = nil, -- list of identifiers; not set when not evaluated. Contain _at least_ all the upvalues explicitely defined in the function code.
+	upvalues = nil, -- {[name]=variable metadata}; not set when not evaluated. Contain _at least_ all the upvalues explicitely defined in the function code.
 
 	init = function(self, parameters, expression, scope, upvalues)
 		self.parameters = parameters
 		self.expression = expression
 		self.scope = scope
 		self.upvalues = upvalues
+		if self.scope then self._evaluated = true end
 	end,
 	with_return_boundary = function(self, parameters, expression)
 		return Function:new(parameters, ReturnBoundary:new(expression))
@@ -62,16 +63,11 @@ Function = Overloadable {
 		local scope = state.scope:capture() -- capture current scope to build closure
 		state.scope:pop()
 
-		-- get upvalues
+		-- list & cache upvalues so they aren't affected by future redefinition in a parent scope
 		local upvalues = {}
-		self.expression:traverse(list_upvalues, upvalues)
+		self.expression:traverse(list_cache_upvalues, state, upvalues, scope)
 		if scope:defined(state, ast.Identifier:new("_")) then
-			scope:get(state, ast.Identifier:new("_")):traverse(list_upvalues, upvalues)
-		end
-
-		-- cache upvalues so they aren't affected by future redefinition in a parent scope
-		for _, ident in ipairs(upvalues) do
-			scope:precache(state, ident)
+			scope:get(state, ast.Identifier:new("_")):traverse(list_cache_upvalues, state, upvalues, scope)
 		end
 
 		return Function:new(self.parameters:eval(state), self.expression, scope, upvalues)
@@ -124,10 +120,30 @@ Function = Overloadable {
 		state.scope:pop()
 		return exp
 	end,
+
+	-- Note: when serializing and reloading a function, its upvalues will not be linked anymore to their original definition.
+	-- The reloaded function will not be able to affect variables defined outside its body.
+	-- Only the upvalues that explicitely appear in the function body will be saved, so we don't have to keep a copy of the whole environment.
+	_serialize = function(self)
+		return { parameters = self.parameters, expression = self.expression, upvalues = self.upvalues }
+	end,
+	_deserialize = function(self)
+		local state = require("anselme.serializer_state")
+		local scope
+		if self.upvalues then
+			-- rebuild scope: exported + normal layer so any upvalue that happen to be exported stay there
+			-- (and link again to current scope to allow internal vars that are not considered explicit upvalues to still work, like _translations)
+			scope = Environment:new(state, Environment:new(state, state.scope:capture(), nil, true))
+			for _, var in pairs(self.upvalues) do
+				scope:define(state, var:get_symbol(), var:get(state))
+			end
+		end
+		return Function:new(self.parameters, self.expression, Environment:new(state, scope), self.upvalues)
+	end
 }
 
 package.loaded[...] = Function
-ReturnBoundary = ast.ReturnBoundary
+ReturnBoundary, Environment = ast.ReturnBoundary, ast.Environment
 
 resume_manager = require("anselme.state.resume_manager")
 calling_environment_manager = require("anselme.state.calling_environment_manager")

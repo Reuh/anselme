@@ -22,13 +22,6 @@ Do some more fancy scope work to allow the translation to access variables defin
 
 ---
 
-Persistence "issue": Storing a closure stores it whole environment, which includes all the stdlib. Technically it works, but that's a lot of useless information. Would need to track which variable is used (should be doable in prepare) and prune the closure (list identifiers and symbols used in children and regroup in a single exported+normal layer). The closure would also captures things like _translations that should not be persisted and prevent any update to it or its upvalues (the captured scope in the closure will not be able to be linked with the real scope in the reloaded script)...
-Or register all functions as ressources in binser - that makes kinda sense, they're immutable, and their signature should be unique. Would need to track which functions are safe to skip / can be reloaded from somewhere on load. Would need to distinguish anonymous from non anonymous functions...
-
-Or just say closures probably shouldn't be persisted. Yeah, probably easier.
-
----
-
 Standard library.
 
 * Text manipulation would make sense, but that would require a full UTF-8/Unicode support library like https://github.com/starwing/luautf8.
