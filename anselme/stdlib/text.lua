@@ -4,6 +4,7 @@ local Nil, Choice, PartialScope, ArgumentTuple = ast.Nil, ast.Choice, ast.Partia
 local event_manager = require("anselme.state.event_manager")
 local translation_manager = require("anselme.state.translation_manager")
 local tag_manager = require("anselme.state.tag_manager")
+local resume_manager = require("anselme.state.resume_manager")
 
 return {
 	-- text
@@ -21,7 +22,7 @@ return {
 		function(state, text, func)
 			if func:contains_current_resume_target(state) then
 				func:call(state, ArgumentTuple:new())
-				event_manager:write_and_discard_following(state, Choice:new(text, func))
+				event_manager:write_and_discard_following(state, Choice:new(text, func), resume_manager:resuming_environment(state))
 			else
 				event_manager:write(state, Choice:new(text, func))
 			end

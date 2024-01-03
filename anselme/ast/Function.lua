@@ -66,7 +66,7 @@ Function = Overloadable {
 		local upvalues = {}
 		self.expression:traverse(list_upvalues, upvalues)
 		if scope:defined(state, ast.Identifier:new("_")) then
-			scope:get(state, ast.Identifier:new("_")):traverse(list_upvalues)
+			scope:get(state, ast.Identifier:new("_")):traverse(list_upvalues, upvalues)
 		end
 
 		-- cache upvalues so they aren't affected by future redefinition in a parent scope
@@ -113,14 +113,12 @@ Function = Overloadable {
 		state.scope:push(self.scope)
 		calling_environment_manager:push(state, calling_environment)
 
-		resume_manager:push(state, target)
-
 		-- push function scope
 		state.scope:push()
+		resume_manager:push(state, target)
 		local exp = self.expression:eval(state)
-		state.scope:pop()
-
 		resume_manager:pop(state)
+		state.scope:pop()
 
 		calling_environment_manager:pop(state)
 		state.scope:pop()
