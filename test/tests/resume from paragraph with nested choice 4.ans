@@ -1,0 +1,20 @@
+:@choice = 1
+:i = "i"!script($_)
+	| a |>
+		|-> a
+		#p!checkpoint
+		| aa |>
+			|-> aa
+		| ab |>
+			|-> ab
+	| b |>
+		|-> b
+	if(1)
+		| c |>
+			|-> c
+
+| i:
+i!
+
+| i from #p:
+i!from(#p)

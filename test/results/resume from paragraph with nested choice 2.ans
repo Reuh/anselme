@@ -1,21 +1,23 @@
 --# run #--
 --- text ---
-| {}"f:" |
+| {}"g:" |
 --- choice ---
  > | {}"a" |
 => | {}"b" |
 --- text ---
 | {}"-> b" |
+| {}"autoflush" |
 --- choice ---
 => | {}"c" |
 --- text ---
 | {}"-> c" |
-| {}"f from #p:" |
+| {}"g from #p:" |
 --- choice ---
  > | {}"aa" |
 => | {}"ab" |
 --- text ---
 | {}"-> ab" |
+| {}"autoflush" |
 --- choice ---
 => | {}"c" |
 --- text ---
@@ -23,4 +25,4 @@
 --- return ---
 ()
 --# saved #--
-{"f.checkpoint":#p, "f.run":2}
+{"g.checkpoint":#p, "g.run":2}

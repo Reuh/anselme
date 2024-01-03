@@ -1,6 +1,5 @@
-:@choice = 2
-
-:f = "f"!script($_)
+:@choice=1
+:g = "g"!script($_)
 	| a |>
 		|-> a
 		#p!checkpoint
@@ -11,13 +10,13 @@
 	| b |>
 		|-> b
 	choice = 2
-
+	|autoflush
 	| c |>
 		|-> c
-	choice=1
+	choice = 1
 
-| f:
-f!
+| g:
+g!
 
-| f from #p:
-f!from(#p)
+| g from #p:
+g!from(#p)

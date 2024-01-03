@@ -1,0 +1,24 @@
+--# run #--
+--- text ---
+| {}"i:" |
+--- choice ---
+=> | {}"a" |
+ > | {}"b" |
+ > | {}"c" |
+--- text ---
+| {}"-> a" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+--- text ---
+| {}"-> aa" |
+| {}"i from #p:" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+--- text ---
+| {}"-> aa" |
+--- return ---
+()
+--# saved #--
+{"i.checkpoint":#p, "i.reached":*{#p:1}, "i.run":2}

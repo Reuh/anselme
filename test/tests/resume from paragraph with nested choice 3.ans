@@ -1,0 +1,22 @@
+:@choice = 1
+:h = "h"!script($_)
+	if(1)
+		| a |>
+			|-> a
+			#p!checkpoint
+			| aa |>
+				|-> aa
+			| ab |>
+				|-> ab
+			choice = 1
+		| b |>
+			|-> b
+	| c |>
+		|-> c
+	choice = 1
+
+| h:
+h!
+
+| h from #p:
+h!from(#p)

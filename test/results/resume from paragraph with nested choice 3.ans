@@ -1,0 +1,24 @@
+--# run #--
+--- text ---
+| {}"h:" |
+--- choice ---
+=> | {}"a" |
+ > | {}"b" |
+ > | {}"c" |
+--- text ---
+| {}"-> a" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+--- text ---
+| {}"-> aa" |
+| {}"h from #p:" |
+--- choice ---
+=> | {}"aa" |
+ > | {}"ab" |
+--- text ---
+| {}"-> aa" |
+--- return ---
+()
+--# saved #--
+{"h.checkpoint":#p, "h.reached":*{#p:1}, "h.run":2}
