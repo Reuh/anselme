@@ -35,7 +35,7 @@ end
 local function process(content)
 	return content:gsub("{{(.-)}}", function(lua_file)
 		local f = io.open(lua_file, "r")
-		local c = f:read("*a")
+		local c = f:read("a")
 		f:close()
 
 		local output = {}
@@ -74,7 +74,7 @@ end
 
 local function generate_file(input, output)
 	local f = io.open(input, "r")
-	local content = f:read("*a")
+	local content = f:read("a")
 	f:close()
 
 	local out = process(content, output)

@@ -32,7 +32,7 @@ local persistent_manager = class {
 	end,
 
 	-- returns a struct of the current persisted variables
-	capture = function(self, state)
+	get_struct = function(self, state)
 		local persistent = state.scope:get(persistent_identifier)
 		return persistent:to_struct(state)
 	end

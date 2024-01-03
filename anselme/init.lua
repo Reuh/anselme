@@ -15,7 +15,7 @@
 --
 -- -- read an anselme script file
 -- local f = assert(io.open("script.ans"))
--- local script = anselme.parse(f:read("*a"), "script.ans")
+-- local script = anselme.parse(f:read("a"), "script.ans")
 -- f:close()
 --
 -- -- load the script in a new branch
@@ -33,7 +33,7 @@
 -- 		for i, l in ipairs(data) do
 -- 			print(("%s> %s"):format(i, l:format(run_state)))
 -- 		end
--- 		local choice = tonumber(io.read("*l"))
+-- 		local choice = tonumber(io.read("l"))
 -- 		data:choose(choice)
 -- 	elseif e == "return" then
 -- 		run_state:merge()
