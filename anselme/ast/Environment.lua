@@ -71,12 +71,20 @@ local Environment = ast.abstract.Runtime {
 	undefine = nil, -- { [name string] = true, ... } - variable present here will not be looked up in parent env
 	export = nil, -- bool
 
+	_lookup_cache = nil, -- { [name string] = variable metadata, ... }
+	_lookup_cache_current = nil, -- { [name string] = true, ... }
+
 	init = function(self, state, parent, partial_names, is_export)
 		self.variables = Table:new(state)
 		self.parent = parent
 		self.partial = partial_names
 		self.export = is_export
 		self.undefine = {}
+		-- TODO: something defined in a parent scope after caching here will not be reflected
+		-- 99% of the time a scope is not reused after popping it off the stack, except when captured in closures
+		-- so we might want to make accessing variable defined after environment capture illegal or precache all upvalues
+		self._lookup_cache = {}
+		self._lookup_cache_current = {}
 	end,
 
 	traverse = function(self, fn, ...)
@@ -102,7 +110,10 @@ local Environment = ast.abstract.Runtime {
 		if symbol.undefine then
 			self.undefine[name] = true
 		else
-			self.variables:set(state, symbol:to_identifier(), VariableMetadata:new(state, symbol, exp))
+			local variable = VariableMetadata:new(state, symbol, exp)
+			self.variables:set(state, symbol:to_identifier(), variable)
+			self._lookup_cache[name] = variable
+			self._lookup_cache_current[name] = true
 		end
 	end,
 	-- define or redefine new overloadable variable in current environment, inheriting existing overload variants from (parent) scopes
@@ -134,27 +145,39 @@ local Environment = ast.abstract.Runtime {
 		end
 	end,
 
+	-- lookup variable in current or parent scope, cache the result
+	_lookup = function(self, state, identifier)
+		local name = identifier.name
+		local _cache = self._lookup_cache
+		if _cache[name] == nil then
+			if self.variables:has(state, identifier) then
+				_cache[name] = self.variables:get(state, identifier)
+			elseif self.parent and not self.undefine[identifier.name] then
+				_cache[name] = self.parent:_lookup(state, identifier)
+			end
+		end
+		return _cache[name]
+	end,
+
 	-- returns bool if variable defined in current or parent environment
 	defined = function(self, state, identifier)
-		if self.variables:has(state, identifier) then
-			return true
-		elseif self.parent and not self.undefine[identifier.name] then
-			return self.parent:defined(state, identifier)
-		end
-		return false
+		return self:_lookup(state, identifier) ~= nil
 	end,
 	-- returns bool if variable defined in current environment layer
 	-- (note: by current layer, we mean the closest one where the variable is able to exist - if it is exported, the closest export layer, etc.)
 	defined_in_current = function(self, state, symbol)
 		local name = symbol.string
-		if self.variables:has(state, symbol:to_identifier()) then
-			return true
-		elseif self.parent and not self.undefine[name] then
-			if (self.partial and not self.partial[name]) or (self.export ~= symbol.exported) then
-				return self.parent:defined_in_current(state, symbol)
+		local _cache = self._lookup_cache_current
+		if _cache[name] == nil then
+			if self.variables:has(state, symbol:to_identifier()) then
+				_cache[name] = true
+			elseif self.parent and not self.undefine[name] then
+				if (self.partial and not self.partial[name]) or (self.export ~= symbol.exported) then
+					_cache[name] = self.parent:defined_in_current(state, symbol)
+				end
 			end
 		end
-		return false
+		return _cache[name]
 	end,
 	-- return bool if variable is defined in the current environment only - won't search in parent env for exported & partial names
 	defined_in_current_strict = function(self, state, identifier)
@@ -164,11 +187,7 @@ local Environment = ast.abstract.Runtime {
 	-- get variable in current or parent scope, with metadata
 	_get_variable = function(self, state, identifier)
 		if self:defined(state, identifier) then
-			if self.variables:has(state, identifier) then
-				return self.variables:get(state, identifier)
-			elseif self.parent and not self.undefine[identifier.name] then
-				return self.parent:_get_variable(state, identifier)
-			end
+			return self:_lookup(state, identifier)
 		else
 			error(("identifier %q is undefined in branch %s"):format(identifier.name, state.branch_id), 0)
 		end
