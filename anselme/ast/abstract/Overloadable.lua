@@ -13,12 +13,12 @@ return ast.abstract.Node {
 	end,
 
 	-- return string
-	format_parameters = function(self, state)
-		return self:format(state)
+	format_signature = function(self, state)
+		error("not implemented for "..self.type)
 	end,
 	-- return string
-	hash_parameters = function(self)
-		return self:hash()
+	hash_signature = function(self)
+		error("not implemented for "..self.type)
 	end,
 
 	-- can be called either after a successful :dispatch or :compatible_with_arguments

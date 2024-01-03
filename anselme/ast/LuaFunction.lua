@@ -40,10 +40,10 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 	compatible_with_arguments = function(self, state, args)
 		return args:match_parameter_tuple(state, self.parameters)
 	end,
-	format_parameters = function(self, state)
+	format_signature = function(self, state)
 		return self.parameters:format(state)
 	end,
-	hash_parameters = function(self)
+	hash_signature = function(self)
 		return self.parameters:hash()
 	end,
 	call_dispatched = function(self, state, args)

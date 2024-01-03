@@ -17,9 +17,9 @@ Overload = ast.abstract.Node {
 		end
 	end,
 	insert = function(self, val) -- only for construction
-		assert0(not self._signatures[val:hash_parameters()], ("a function with parameters %s is already defined in the overload"):format(val:format_parameters()))
+		assert0(not self._signatures[val:hash_signature()], ("a function with parameters %s is already defined in the overload"):format(val:format_signature()))
 		table.insert(self.list, val)
-		self._signatures[val:hash_parameters()] = true
+		self._signatures[val:hash_signature()] = true
 	end,
 
 	_format = function(self, ...)
@@ -50,12 +50,12 @@ Overload = ast.abstract.Node {
 					if secondary_specificity > success_secondary_specificity then
 						success, success_specificity, success_secondary_specificity = fn, specificity, secondary_specificity
 					elseif secondary_specificity == success_secondary_specificity then
-						return nil, ("more than one function match %s, matching functions were at least (specificity %s.%s):\n\t• %s\n\t• %s"):format(args:format(state), specificity, secondary_specificity, fn:format_parameters(state), success:format_parameters(state))
+						return nil, ("more than one function match %s, matching functions were at least (specificity %s.%s):\n\t• %s\n\t• %s"):format(args:format(state), specificity, secondary_specificity, fn:format_signature(state), success:format_signature(state))
 					end
 				end
 				-- no need to add error message for less specific function since we already should have at least one success
 			elseif not success then
-				table.insert(failure, fn:format_parameters(state) .. ": " .. secondary_specificity)
+				table.insert(failure, fn:format_signature(state) .. ": " .. secondary_specificity)
 			end
 		end
 		if success then
