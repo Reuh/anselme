@@ -4,7 +4,8 @@
 
 local ast = require("anselme.ast")
 
-local Branched = ast.abstract.Runtime {
+local Branched
+Branched = ast.abstract.Runtime {
 	type = "branched",
 	mutable = true,
 
@@ -53,6 +54,16 @@ local Branched = ast.abstract.Runtime {
 
 	_eval = function(self, state)
 		return self:get(state)
+	end,
+
+	-- serialize/deserialize in current branch and discard other branches
+	_serialize = function(self)
+		local state = require("anselme.serializer_state")
+		return self:get(state)
+	end,
+	_deserialize = function(self)
+		local state = require("anselme.serializer_state")
+		return Branched:new(state, self)
 	end
 }
 

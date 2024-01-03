@@ -10,7 +10,7 @@ return {
 	{
 		"defined", "(c::function, s::string)",
 		function(state, c, s)
-			return Boolean:new(c.scope:defined_in_current_strict(state, s:to_identifier()))
+			return Boolean:new(c.scope:defined_in_current(state, s:to_identifier()))
 		end
 	},
 	{
