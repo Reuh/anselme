@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local TextInterpolation, String
+local TextInterpolation, String, Struct
 
 local operator_priority = require("anselme.common").operator_priority
 
@@ -10,11 +10,14 @@ local Translatable = ast.abstract.Node {
 	hide_in_stacktrace = true,
 
 	expression = nil,
+	context = nil, -- struct
 
 	init = function(self, expression)
 		self.expression = expression
-		self.context = ast.Struct:new()
+		self.context = Struct:new()
 		self.context:set(String:new("source"), String:new(self.expression.source))
+		self.context:set(String:new("file"), String:new(self.expression.source:match("^([^%:]*)")))
+		-- TODO: add parent script/function to context
 	end,
 
 	_format = function(self, ...)
@@ -46,7 +49,7 @@ local Translatable = ast.abstract.Node {
 }
 
 package.loaded[...] = Translatable
-TextInterpolation, String = ast.TextInterpolation, ast.String
+TextInterpolation, String, Struct = ast.TextInterpolation, ast.String, ast.Struct
 
 translation_manager = require("anselme.state.translation_manager")
 

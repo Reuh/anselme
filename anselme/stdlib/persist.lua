@@ -1,4 +1,5 @@
 local ast = require("anselme.ast")
+local Nil = ast.Nil
 
 local persistent_manager = require("anselme.state.persistent_manager")
 
@@ -13,7 +14,7 @@ return {
 		"persist", "(key, default) = value",
 		function(state, key, default, value)
 			persistent_manager:set(state, key, value)
-			return ast.Nil:new()
+			return Nil:new()
 		end
 	},
 	{
@@ -26,7 +27,7 @@ return {
 		"persist", "(key) = value",
 		function(state, key, value)
 			persistent_manager:set(state, key, value)
-			return ast.Nil:new()
+			return Nil:new()
 		end
 	},
 }

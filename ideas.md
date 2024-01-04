@@ -14,10 +14,6 @@ Translation.
 
 Translation model for stdlib: ?
 
-For translation context/disambiguation:
-* text+line+file - OK
-* func/var hierarchy?
-
 Do some more fancy scope work to allow the translation to access variables defined in the translation file?
 
 ---

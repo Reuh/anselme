@@ -4,6 +4,8 @@ local operator_priority = require("anselme.common").operator_priority
 
 local format_identifier
 
+local ArgumentTuple
+
 local Typed
 Typed = ast.abstract.Runtime {
 	type = "typed",
@@ -20,7 +22,7 @@ Typed = ast.abstract.Runtime {
 		-- try custom format
 		if state and state.scope:defined(format_identifier) then
 			local custom_format = format_identifier:eval(state)
-			local args = ast.ArgumentTuple:new(self)
+			local args = ArgumentTuple:new(self)
 			local fn, d_args = custom_format:dispatch(state, args)
 			if fn then
 				return custom_format:call(state, d_args):format(state, prio, ...)
@@ -37,5 +39,6 @@ Typed = ast.abstract.Runtime {
 
 package.loaded[...] = Typed
 format_identifier = ast.Identifier:new("format")
+ArgumentTuple = ast.ArgumentTuple
 
 return Typed

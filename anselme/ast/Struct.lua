@@ -44,7 +44,12 @@ Struct = ast.abstract.Runtime {
 		self.table = {}
 	end,
 	set = function(self, key, value) -- only for construction
-		self.table[key:hash()] = { key, value }
+		local hash = key:hash()
+		if Nil:is(value) then
+			self.table[hash] = nil
+		else
+			self.table[hash] = { key, value }
+		end
 	end,
 	include = function(self, other) -- only for construction
 		for _, e in pairs(other.table) do

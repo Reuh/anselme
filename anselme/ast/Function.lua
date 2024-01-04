@@ -2,16 +2,16 @@
 
 local ast = require("anselme.ast")
 local Overloadable = ast.abstract.Overloadable
-local ReturnBoundary, Environment
+local ReturnBoundary, Environment, Identifier, Symbol
 
 local operator_priority = require("anselme.common").operator_priority
 
 local resume_manager, calling_environment_manager
 
 local function list_cache_upvalues(v, state, list, scope)
-	if ast.Identifier:is(v) then
+	if Identifier:is(v) then
 		list[v.name] = scope:precache(state, v)
-	elseif ast.Symbol:is(v) then
+	elseif Symbol:is(v) then
 		list[v.string] = scope:precache(state, v:to_identifier())
 	end
 	v:traverse(list_cache_upvalues, state, list, scope)
@@ -66,8 +66,8 @@ Function = Overloadable {
 		-- list & cache upvalues so they aren't affected by future redefinition in a parent scope
 		local upvalues = {}
 		self.expression:traverse(list_cache_upvalues, state, upvalues, scope)
-		if scope:defined(state, ast.Identifier:new("_")) then
-			scope:get(state, ast.Identifier:new("_")):traverse(list_cache_upvalues, state, upvalues, scope)
+		if scope:defined(state, Identifier:new("_")) then
+			scope:get(state, Identifier:new("_")):traverse(list_cache_upvalues, state, upvalues, scope)
 		end
 
 		return Function:new(self.parameters:eval(state), self.expression, scope, upvalues)
@@ -143,7 +143,7 @@ Function = Overloadable {
 }
 
 package.loaded[...] = Function
-ReturnBoundary, Environment = ast.ReturnBoundary, ast.Environment
+ReturnBoundary, Environment, Identifier, Symbol = ast.ReturnBoundary, ast.Environment, ast.Identifier, ast.Symbol
 
 resume_manager = require("anselme.state.resume_manager")
 calling_environment_manager = require("anselme.state.calling_environment_manager")

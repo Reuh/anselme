@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Choice, PartialScope, ArgumentTuple = ast.Nil, ast.Choice, ast.PartialScope, ast.ArgumentTuple
+local Nil, Choice, PartialScope, ArgumentTuple, Identifier = ast.Nil, ast.Choice, ast.PartialScope, ast.ArgumentTuple, ast.Identifier
 
 local event_manager = require("anselme.state.event_manager")
 local translation_manager = require("anselme.state.translation_manager")
@@ -34,7 +34,7 @@ return {
 	{
 		"_->_", "(original::is(\"quote\"), translated::is(\"quote\"))",
 		function(state, original, translated)
-			local exp = PartialScope:preserve(state, translated.expression, ast.Identifier:new("_"))
+			local exp = PartialScope:preserve(state, translated.expression, Identifier:new("_"))
 			translation_manager:set(state, tag_manager:get(state), original.expression, exp)
 			return Nil:new()
 		end

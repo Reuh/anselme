@@ -2,6 +2,7 @@ local class = require("anselme.lib.class")
 local fmt = require("anselme.common").fmt
 local binser = require("anselme.lib.binser")
 local utf8 = utf8 or require("lua-utf8")
+local unpack = table.unpack or unpack
 
 -- NODES SHOULD BE IMMUTABLE AFTER CREATION IF POSSIBLE!
 -- i don't think i actually rely on this behavior for anything but it makes me feel better about life in general
@@ -13,7 +14,7 @@ local utf8 = utf8 or require("lua-utf8")
 
 local uuid = require("anselme.common").uuid
 
-local Call, Identifier, ArgumentTuple
+local Call, Identifier, ArgumentTuple, Struct, Tuple, String, Pair
 local resume_manager
 
 local custom_call_identifier
@@ -143,17 +144,86 @@ Node = class {
 
 	-- generate anselme code that can be used as a base for a translation file
 	-- will include every translatable element found in this node and its children
-	-- TODO: generate more stable context than source position, and only add necessery context to the tag
 	generate_translation_template = function(self)
-		local l = self:list_translatable()
-		local r = {}
-		for _, tr in ipairs(l) do
-			table.insert(r, "(("..tr.source.."))")
-			table.insert(r, Call:new(Identifier:new("_#_"), ArgumentTuple:new(tr.context, Identifier:new("_"))):format())
-			table.insert(r, "\t"..Call:new(Identifier:new("_->_"), ArgumentTuple:new(tr, tr)):format())
-			table.insert(r, "")
+		local mandatory_context = {"file"} -- will always be present in template
+		local discriminating_context = "source" -- only used when there may be conflicts
+
+		-- if there are several identical translations in the tuple, wrap them in a struct with the discriminating context
+		local function classify_discriminating(tr_tuple)
+			local r_tuple = Tuple:new()
+			local discovered = Struct:new()
+			for _, tr in tr_tuple:iter() do
+				if not discovered:has(tr) then
+					r_tuple:insert(tr)
+					discovered:set(tr, r_tuple:len())
+				else
+					local context_name = String:new(discriminating_context)
+					-- replace previousley discovered translation
+					local discovered_index = discovered:get(tr)
+					if discovered_index ~= -1 then
+						local discovered_tr = r_tuple:get(discovered_index)
+						local context = Pair:new(context_name, discovered_tr.context:get(context_name))
+						local discovered_strct = Struct:new()
+						discovered_strct:set(context, discovered_tr)
+						r_tuple:set(discovered_index, discovered_strct)
+						discovered:set(tr, -1)
+					end
+					-- add current translation
+					local context = Pair:new(context_name, tr.context:get(context_name))
+					local strct = Struct:new()
+					strct:set(context, tr)
+					r_tuple:insert(strct)
+				end
+			end
+			return r_tuple
 		end
-		return table.concat(r, "\n")
+
+		-- build a Struct{ [context1] = Struct{ [context2]} = Tuple[translatable, Struct { [context3] = translatable }, ...], ... }, ... }
+		local function classify(tr_tuple, context_i)
+			local r = Struct:new()
+			local context_name = String:new(mandatory_context[context_i])
+			for _, tr in tr_tuple:iter() do
+				local context = Pair:new(context_name, tr.context:get(context_name))
+				if not r:has(context) then
+					r:set(context, Tuple:new())
+				end
+				local context_tr_tuple = r:get(context)
+				context_tr_tuple:insert(tr)
+			end
+			for context, context_tr_tuple in r:iter() do
+				if context_i < #mandatory_context then
+					r:set(context, classify(context_tr_tuple, context_i+1))
+				elseif context_i == #mandatory_context then
+					r:set(context, classify_discriminating(context_tr_tuple))
+				end
+			end
+			return r
+		end
+
+		local classified = classify(Tuple:new(unpack(self:list_translatable())), 1)
+
+		local function build_str(tr, level)
+			level = level or 0
+			local indent = ("\t"):rep(level)
+			local r = {}
+			if Struct:is(tr) then
+				for context, context_tr in tr:iter() do
+					table.insert(r, indent..Call:new(Identifier:new("_#_"), ArgumentTuple:new(context, Identifier:new("_"))):format():gsub(" _$", ""))
+					table.insert(r, build_str(context_tr, level+1))
+				end
+			elseif Tuple:is(tr) then
+				for _, v in tr:iter() do
+					table.insert(r, build_str(v, level))
+					table.insert(r, "")
+				end
+			else
+				table.insert(r, indent.."/* "..tr.source.." */")
+				table.insert(r, indent..Call:new(Identifier:new("_->_"), ArgumentTuple:new(tr, tr)):format())
+			end
+			return table.concat(r, "\n")
+		end
+
+		return build_str(classified)
 	end,
 
 	-- call the node with the given arguments
@@ -332,7 +402,7 @@ Node = class {
 	-- Thus, any require here that may require other Nodes shall be done here. This method is called in anselme.lua after everything else is required.
 	_i_hate_cycles = function(self)
 		local ast = require("anselme.ast")
-		Call, Identifier, ArgumentTuple = ast.Call, ast.Identifier, ast.ArgumentTuple
+		Call, Identifier, ArgumentTuple, Struct, Tuple, String, Pair = ast.Call, ast.Identifier, ast.ArgumentTuple, ast.Struct, ast.Tuple, ast.String, ast.Pair
 		custom_call_identifier = Identifier:new("_!")
 
 		resume_manager = require("anselme.state.resume_manager")

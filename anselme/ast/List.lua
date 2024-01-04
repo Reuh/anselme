@@ -45,7 +45,7 @@ List = ast.abstract.Runtime {
 		return self.branched:get(state):len()
 	end,
 	iter = function(self, state)
-		return ipairs(self.branched:get(state).list)
+		return self.branched:get(state):iter()
 	end,
 	get = function(self, state, index)
 		local list = self.branched:get(state)
