@@ -66,6 +66,7 @@ return {
 			end
 		end
 	},
+
 	{
 		"while", "(condition, expression=attached block(keep return=true))",
 		function(state, condition, expression)
@@ -92,6 +93,20 @@ return {
 				cond = condition:call(state, ArgumentTuple:new())
 			end
 			return r
+		end
+	},
+	{
+		"break", "(value=())",
+		function(state, val)
+			if Return:is(val) then val = val.expression end
+			return Return:new(val, "break")
+		end
+	},
+	{
+		"continue", "(value=())",
+		function(state, val)
+			if Return:is(val) then val = val.expression end
+			return Return:new(val, "continue")
 		end
 	},
 }

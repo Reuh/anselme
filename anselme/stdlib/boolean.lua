@@ -2,6 +2,9 @@ local ast = require("anselme.ast")
 local Boolean, ArgumentTuple = ast.Boolean, ast.ArgumentTuple
 
 return {
+	{ "true", Boolean:new(true) },
+	{ "false", Boolean:new(false) },
+
 	{
 		"_==_", "(a, b)",
 		function(state, a, b)

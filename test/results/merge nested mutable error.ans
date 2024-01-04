@@ -5,7 +5,7 @@
 	↳ from [4mtest/tests/merge nested mutable error.ans:3:1[0m in block: [2minsert(a, b)…[0m[0m
 	↳ from [4mtest/tests/merge nested mutable error.ans:3:18[0m in call: [2m_[0m[0m
 	↳ from [4mscript.ans:30:6[0m in call: [2mfn![0m[0m
-	↳ from [4mscript.ans:28:3[0m in block: [2mresumed from = ()…[0m[0m
+	↳ from [4mscript.ans:28:3[0m in block: [2mresume target = ()…[0m[0m
 	↳ from [4mscript.ans:28:7[0m in call: [2melse![0m[0m
 	↳ from [4mscript.ans:24:2[0m in block: [2mif(fn . "current checkpoint")…[0m[0m
 	↳ from [4mscript.ans:24:9[0m in call: [2m_[0m[0m

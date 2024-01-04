@@ -8,7 +8,7 @@
 
 :f = $(anchor=())
 	:x = 8
-	($_)!resume(anchor)
+	($_)!from(anchor)
 		|a
 		| A |>
 			| b

@@ -4,30 +4,30 @@ return [[
 	fn.:&reached => "{name}.reached"!persist(*{})
 	fn.:&run => "{name}.run"!persist(0)
 
-	:resumed from = ()
+	:resume target = ()
 
 	fn.:check = $(anchor::anchor)
 		fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 	fn.:checkpoint = $(anchor::anchor, on resume=attached block(default=()))
 		if(on resume)
 			fn.current checkpoint = anchor
-			if(resumed from == anchor | resuming(4))
+			if(resume target == anchor | resuming(4))
 				on resume!
 			else!
 				fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 				merge branch!
 		else!
 			fn.current checkpoint = anchor
-			if(resumed from != anchor)
+			if(resume target != anchor)
 				fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 				merge branch!
 
 	:f = $
 		if(fn.current checkpoint)
-			resumed from = fn.current checkpoint
-			fn!resume(fn.current checkpoint)
+			resume target = fn.current checkpoint
+			fn!from(fn.current checkpoint)
 		else!
-			resumed from = ()
+			resume target = ()
 			fn!
 		fn.run += 1
 
@@ -52,7 +52,7 @@ return [[
 	s.current checkpoint = ()
 	return(s!)
 
-/*Additionnal helpers*/
+/* Additionnal helpers */
 :@$ cycle(l::tuple)
 	:i = 2
 	while($i <= l!len)

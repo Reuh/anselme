@@ -6,13 +6,13 @@ local calling_environment_manager = require("anselme.state.calling_environment_m
 
 return {
 	{
-		"resume", "(function::function, anchor::anchor)",
+		"from", "(function::function, anchor::anchor)",
 		function(state, func, anchor)
 			return func:resume(state, anchor)
 		end
 	},
 	{
-		"resume", "(function::function, anchor::nil)",
+		"from", "(function::function, anchor::nil)",
 		function(state, func)
 			return func:call(state, ArgumentTuple:new())
 		end

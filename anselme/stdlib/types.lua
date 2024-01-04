@@ -1,7 +1,46 @@
 local ast = require("anselme.ast")
-local Boolean = ast.Boolean
+local ArgumentTuple, Boolean, String, Typed = ast.ArgumentTuple, ast.Boolean, ast.String, ast.Typed
 
 return {
+	{
+		"_::_", "(value, check)",
+		function(state, value, check)
+			local r = check:call(state, ArgumentTuple:new(value))
+			if r:truthy() then
+				return value
+			else
+				error(("type check failure: %s does not satisfy %s"):format(value:format(state), check:format(state)), 0)
+			end
+		end
+	},
+
+	{
+		"type", "(value)",
+		function(state, v)
+			if v.type == "typed" then
+				return v.type_expression
+			else
+				return String:new(v.type)
+			end
+		end
+	},
+	{
+		"type", "(value, type)",
+		function(state, v, t)
+			return Typed:new(v, t)
+		end
+	},
+	{
+		"value", "(value)",
+		function(state, v)
+			if v.type == "typed" then
+				return v.expression
+			else
+				return v
+			end
+		end
+	},
+
 	{ "nil", "(x)", function(state, x) return Boolean:new(x.type == "nil") end },
 	{ "number", "(x)", function(state, x) return Boolean:new(x.type == "number") end },
 	{ "string", "(x)", function(state, x) return Boolean:new(x.type == "string") end },

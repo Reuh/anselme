@@ -2,6 +2,8 @@ local ast = require("anselme.ast")
 local Boolean, Number = ast.Boolean, ast.Number
 
 return {
+	{ "pi", Number:new(math.pi) },
+
 	{
 		"_<_", "(a::number, b::number)",
 		function(state, a, b)
@@ -64,6 +66,4 @@ return {
 			end
 		end
 	},
-
-	{ "pi", Number:new(math.pi) }
 }

@@ -7,7 +7,12 @@ local function define_lua(state, list)
 end
 local function load(state, l)
 	for _, m in ipairs(l) do
-		define_lua(state, require("anselme.stdlib."..m))
+		local mod = require("anselme.stdlib."..m)
+		if type(mod) == "string" then
+			parser(mod, m..".ans"):eval(state)
+		else
+			define_lua(state, mod)
+		end
 	end
 end
 
@@ -17,21 +22,18 @@ return function(main_state)
 		"tag",
 		"conditionals",
 		"base",
-		"type_check"
-	})
-
-	parser(require("anselme.stdlib.boot_script"), "boot.ans"):eval(main_state)
-
-	load(main_state, {
+		"types",
+		"boot",
 		"number",
 		"string",
 		"text",
 		"pair",
 		"structures",
-		"closure",
-		"checkpoint",
+		"wrap",
+		"attached block",
+		"function",
+		"resume",
 		"persist",
+		"script"
 	})
-
-	parser(require("anselme.stdlib.script_script"), "script.ans"):eval(main_state)
 end
