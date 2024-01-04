@@ -26,6 +26,7 @@ return function(main_state)
 		"number",
 		"string",
 		"text",
+		"pair",
 		"structures",
 		"closure",
 		"checkpoint",

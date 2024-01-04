@@ -77,7 +77,6 @@ local function run(path, interactive)
 	local state = anselme:new()
 	state:load_stdlib()
 
-	state:define("error", "(message=\"error\")", function(message) error(message, 0) end)
 	state:define("interrupt", "(code::string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
 	state:define("interrupt", "()", function(state) state:interrupt() return ast.Nil:new() end, true)
 	state:define("wait", "(duration::number)", function(duration) coroutine.yield("wait", duration) end)

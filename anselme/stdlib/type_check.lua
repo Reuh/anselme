@@ -11,6 +11,7 @@ return {
 
 	{ "text", "(x)", function(state, x) return Boolean:new(x.type == "text") end },
 
+	{ "pair", "(x)", function(state, x) return Boolean:new(x.type == "pair") end },
 	{ "tuple", "(x)", function(state, x) return Boolean:new(x.type == "tuple") end },
 	{ "list", "(x)", function(state, x) return Boolean:new(x.type == "list") end },
 	{ "struct", "(x)", function(state, x) return Boolean:new(x.type == "struct") end },

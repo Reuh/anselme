@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Choice, PartialScope, ArgumentTuple, Identifier = ast.Nil, ast.Choice, ast.PartialScope, ast.ArgumentTuple, ast.Identifier
+local Nil, Choice, PartialScope, ArgumentTuple, Identifier, Text = ast.Nil, ast.Choice, ast.PartialScope, ast.ArgumentTuple, ast.Identifier, ast.Text
 
 local event_manager = require("anselme.state.event_manager")
 local translation_manager = require("anselme.state.translation_manager")
@@ -8,6 +8,19 @@ local resume_manager = require("anselme.state.resume_manager")
 
 return {
 	-- text
+	{
+		"_+_", "(a::text, b::text)",
+		function(state, a, b)
+			local r = Text:new()
+			for _, e in ipairs(a.list) do
+				r:insert(e[1], e[2])
+			end
+			for _, e in ipairs(b.list) do
+				r:insert(e[1], e[2])
+			end
+			return r
+		end
+	},
 	{
 		"_!", "(txt::text)",
 		function(state, text)

@@ -57,4 +57,12 @@ return {
 	},
 	{ "true", Boolean:new(true) },
 	{ "false", Boolean:new(false) },
+
+	{
+		"error", "(message=\"error\")",
+		function(state, message)
+			if message.type == "string" then message = message.string end
+			error(message:format(state), 0)
+		end
+	}
 }

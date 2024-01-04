@@ -21,6 +21,17 @@ return {
 			return Number:new(l:len())
 		end
 	},
+	{
+		"find", "(l::tuple, value)",
+		function(state, l, v)
+			local i = l:find(v)
+			if i then
+				return Number:new(i)
+			else
+				return Nil:new()
+			end
+		end
+	},
 
 	-- list
 	{
@@ -37,16 +48,48 @@ return {
 		end
 	},
 	{
+		"len", "(l::list)",
+		function(state, l)
+			return Number:new(l:len(state))
+		end
+	},
+	{
+		"find", "(l::list, value)",
+		function(state, l, v)
+			local i = l:find(state, v)
+			if i then
+				return Number:new(i)
+			else
+				return Nil:new()
+			end
+		end
+	},
+	{
 		"insert", "(l::list, value)",
 		function(state, l, v)
-		l:insert(state, v)
+			l:insert(state, v)
 			return Nil:new()
 		end
 	},
 	{
-		"len", "(l::list)",
+		"insert", "(l::list, position::number, value)",
+		function(state, l, position, v)
+			l:insert(state, position.number, v)
+			return Nil:new()
+		end
+	},
+	{
+		"remove", "(l::list)",
 		function(state, l)
-			return Number:new(l:len(state))
+			l:remove(state)
+			return Nil:new()
+		end
+	},
+	{
+		"remove", "(l::list, position::number)",
+		function(state, l, position)
+			l:remove(state, position.number)
+			return Nil:new()
 		end
 	},
 	{

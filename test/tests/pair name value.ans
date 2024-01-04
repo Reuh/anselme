@@ -1,0 +1,5 @@
+:a = "foo":"barr"
+
+|{a!name}
+
+|{a!value}

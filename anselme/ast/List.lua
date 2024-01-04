@@ -47,6 +47,9 @@ List = ast.abstract.Runtime {
 	iter = function(self, state)
 		return self.branched:get(state):iter()
 	end,
+	find = function(self, state, value)
+		return self.branched:get(state):find(value)
+	end,
 	get = function(self, state, index)
 		local list = self.branched:get(state)
 		if index < 0 then index = #list.list + 1 + index end
@@ -59,13 +62,21 @@ List = ast.abstract.Runtime {
 		if index > #list.list+1 or index == 0 then error("list index out of bounds", 0) end
 		list.list[index] = val
 	end,
-	insert = function(self, state, val)
+	insert = function(self, state, position, val)
 		local l = self:_prepare_branch(state)
-		table.insert(l.list, val)
+		if val then
+			table.insert(l.list, position, val)
+		else
+			table.insert(l.list, position)
+		end
 	end,
-	remove = function(self, state)
+	remove = function(self, state, position)
 		local l = self:_prepare_branch(state)
-		table.remove(l.list)
+		if position then
+			table.remove(l.list, position)
+		else
+			table.remove(l.list)
+		end
 	end,
 
 	to_tuple = function(self, state)

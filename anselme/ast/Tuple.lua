@@ -72,6 +72,14 @@ Tuple = ast.abstract.Node {
 	iter = function(self)
 		return ipairs(self.list)
 	end,
+	find = function(self, value)
+		for i, v in self:iter() do
+			if v:hash() == value:hash() then
+				return i
+			end
+		end
+		return nil
+	end
 }
 
 return Tuple

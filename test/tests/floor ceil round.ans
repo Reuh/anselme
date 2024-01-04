@@ -1,0 +1,9 @@
+:x = pi
+
+|{floor(x)}
+
+|{ceil(x)}
+
+|{round(x)}
+
+|{round(x, 0.001)}

@@ -20,10 +20,9 @@ Do some more fancy scope work to allow the translation to access variables defin
 
 Standard library.
 
-* Text manipulation would make sense, but that would require a full UTF-8/Unicode support library like https://github.com/starwing/luautf8.
+* Text and string manipulation would make sense, but that would require a full UTF-8/Unicode support library like https://github.com/starwing/luautf8.
+	- retag/add tags
 * Something to load other files. Maybe not load it by default to let the calling game sandbox Anselme. Probably create an export scope per file to perform some nice module loading.
-* Implement the useful functions from Anselme v1.
-* Text manipulation: concatenation, retag/add tags
 * And in general, clean up everything.
 
 ---

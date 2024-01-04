@@ -1,0 +1,5 @@
+:a = ("a":"b" # | hello)
+
+:b = ("b":"c" # | world and { "x":"y" # |friends })
+
+a+b

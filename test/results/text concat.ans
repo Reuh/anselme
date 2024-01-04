@@ -1,0 +1,7 @@
+--# run #--
+--- text ---
+| {"a":"b"}"hello" {"b":"c"}"world and " {"b":"c", "x":"y"}"friends" {"b":"c"}"" |
+--- return ---
+()
+--# saved #--
+{}
