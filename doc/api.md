@@ -17,7 +17,7 @@ state:load_stdlib()
 
 -- read an anselme script file
 local f = assert(io.open("script.ans"))
-local script = anselme.parse(f:read("*a"), "script.ans")
+local script = anselme.parse(f:read("a"), "script.ans")
 f:close()
 
 -- load the script in a new branch
@@ -35,7 +35,7 @@ while run_state:active() do
 		for i, l in ipairs(data) do
 			print(("%s> %s"):format(i, l:format(run_state)))
 		end
-		local choice = tonumber(io.read("*l"))
+		local choice = tonumber(io.read("l"))
 		data:choose(choice)
 	elseif e == "return" then
 		run_state:merge()
@@ -56,7 +56,7 @@ Anselme expects that `require("anselme.module")` will try loading both `anselme/
 
 Global version string. Follow semver.
 
-_defined at line 57 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-alpha",`
+_defined at line 57 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-beta",`
 
 ### .versions
 
@@ -66,21 +66,21 @@ _defined at line 60 of [anselme/init.lua](../anselme/init.lua):_ `versions = {`
 
 #### .language
 
-Version number for languages and standard library changes.
+Version number for language and standard library changes.
 
-_defined at line 62 of [anselme/init.lua](../anselme/init.lua):_ `language = 27,`
+_defined at line 62 of [anselme/init.lua](../anselme/init.lua):_ `language = 29,`
 
 #### .save
 
 Version number for save/AST format changes.
 
-_defined at line 64 of [anselme/init.lua](../anselme/init.lua):_ `save = 4,`
+_defined at line 64 of [anselme/init.lua](../anselme/init.lua):_ `save = 6,`
 
 #### .api
 
 Version number for Lua API changes.
 
-_defined at line 66 of [anselme/init.lua](../anselme/init.lua):_ `api = 8`
+_defined at line 66 of [anselme/init.lua](../anselme/init.lua):_ `api = 9`
 
 ### .parse (code, source)
 
@@ -104,7 +104,7 @@ _defined at line 82 of [anselme/init.lua](../anselme/init.lua):_ `new = function
 
 
 ---
-_file generated at 2023-12-31T18:43:08Z_
+_file generated at 2024-01-05T00:44:54Z_
 
 # State
 
@@ -213,7 +213,7 @@ _defined at line 122 of [anselme/state/State.lua](../anselme/state/State.lua):_ 
 
 Indicate if a script is currently loaded in this branch.
 
-_defined at line 136 of [anselme/state/State.lua](../anselme/state/State.lua):_ `active = function(self)`
+_defined at line 137 of [anselme/state/State.lua](../anselme/state/State.lua):_ `active = function(self)`
 
 ### :state ()
 
@@ -223,7 +223,7 @@ Returns `"active"` if a script is loaded but not currently running (i.e. the scr
 
 Returns `"inactive"` if no script is loaded.
 
-_defined at line 144 of [anselme/state/State.lua](../anselme/state/State.lua):_ `state = function(self)`
+_defined at line 145 of [anselme/state/State.lua](../anselme/state/State.lua):_ `state = function(self)`
 
 ### :run (code, source)
 
@@ -233,7 +233,7 @@ Load a script in this branch. It will become the active script.
 
 Note that this will only load the script; execution will only start by using the `:step` method. Will error if a script is already active in this State.
 
-_defined at line 156 of [anselme/state/State.lua](../anselme/state/State.lua):_ `run = function(self, code, source)`
+_defined at line 157 of [anselme/state/State.lua](../anselme/state/State.lua):_ `run = function(self, code, source)`
 
 ### :step ()
 
@@ -243,7 +243,7 @@ Will error if no script is active.
 
 Returns `event type string, event data`.
 
-_defined at line 169 of [anselme/state/State.lua](../anselme/state/State.lua):_ `step = function(self)`
+_defined at line 171 of [anselme/state/State.lua](../anselme/state/State.lua):_ `step = function(self)`
 
 ### :interrupt (code, source)
 
@@ -256,7 +256,7 @@ The new script will then be started on the next `:step` and will preserve the cu
 
 If this is called from within a running script, this will raise an `interrupt` event in order to stop the current script execution.
 
-_defined at line 189 of [anselme/state/State.lua](../anselme/state/State.lua):_ `interrupt = function(self, code, source)`
+_defined at line 191 of [anselme/state/State.lua](../anselme/state/State.lua):_ `interrupt = function(self, code, source)`
 
 ### :eval (code, source)
 
@@ -267,13 +267,13 @@ This can be called from outside a running script, but an error will be triggered
 * returns AST in case of success. Run `:to_lua(state)` on it to convert to a Lua value.
 * returns `nil, error message` in case of error.
 
-_defined at line 212 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval = function(self, code, source)`
+_defined at line 215 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval = function(self, code, source)`
 
 ### :eval_local (code, source)
 
 Same as `:eval`, but evaluate the expression in the current scope.
 
-_defined at line 219 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval_local = function(self, code, source)`
+_defined at line 222 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval_local = function(self, code, source)`
 
 If you want to perform more advanced manipulation of the resulting AST nodes, look at the `ast` modules.
 In particular, every Node inherits the methods from [ast.abstract.Node](../ast/abstract/Node.lua).
@@ -281,4 +281,4 @@ Otherwise, each Node has its own module file defined in the [ast/](../ast) direc
 
 
 ---
-_file generated at 2023-12-31T18:43:08Z_
+_file generated at 2024-01-05T00:44:54Z_

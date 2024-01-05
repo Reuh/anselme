@@ -58,10 +58,10 @@ local anselme = {
 
 	--- Table containing per-category version numbers. Incremented by one for any change that may break compatibility.
 	versions = {
-		--- Version number for languages and standard library changes.
-		language = 28,
+		--- Version number for language and standard library changes.
+		language = 29,
 		--- Version number for save/AST format changes.
-		save = 5,
+		save = 6,
 		--- Version number for Lua API changes.
 		api = 9
 	},

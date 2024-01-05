@@ -1,6 +1,5 @@
--- Require LuaFileSystem: luarocks install luafilesystem
-
-local lfs = require("lfs")
+-- Require LuaFileSystem for running test suite: luarocks install luafilesystem
+-- Not needed for running a single script in interactive mode.
 
 package.path = "./?/init.lua;./?.lua;" .. package.path
 local anselme = require("anselme")
@@ -144,6 +143,7 @@ if not arg[1] or arg[1] == "update" then
 	}
 
 	-- list tests
+	local lfs = require("lfs")
 	local tests = {}
 	for test in lfs.dir("test/tests/") do
 		if test:match("%.ans$") then

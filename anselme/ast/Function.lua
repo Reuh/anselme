@@ -124,6 +124,7 @@ Function = Overloadable {
 	-- Note: when serializing and reloading a function, its upvalues will not be linked anymore to their original definition.
 	-- The reloaded function will not be able to affect variables defined outside its body.
 	-- Only the upvalues that explicitely appear in the function body will be saved, so we don't have to keep a copy of the whole environment.
+	-- TODO: we should also store variables that have been defined in the function scope, even if they are not referred directly in the body
 	_serialize = function(self)
 		return { parameters = self.parameters, expression = self.expression, upvalues = self.upvalues }
 	end,
