@@ -1,0 +1,15 @@
+--# run #--
+--- error ---
+[0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31mcan't call overload overload<($(table::($(x) <lua function>)) _), ($(tuple::($(x) type(x) == "tuple" | type(x) == "list")) _), ($(range::($(x) type(x) == t)) _), ($(s::($(x) <lua function>)) <lua function>)>: no function match (42), possible functions were:
+	• (table::($(x) <lua function>)): type check failure for parameter table in function (table::($(x) <lua function>))
+	• (tuple::($(x) type(x) == "tuple" | type(x) == "list")): type check failure for parameter tuple in function (tuple::($(x) type(x) == "tuple" | type(x) == "list"))
+	• (range::($(x) type(x) == t)): type check failure for parameter range in function (range::($(x) type(x) == t))
+	• (s::($(x) <lua function>)): type check failure for parameter s in function (s::($(x) <lua function>))[0m
+	↳ from [4mfor.ans:3:18[0m in call: [2miter(var)[0m[0m
+	↳ from [4mfor.ans:3:12[0m in definition: [2m:iterator = iter(var)[0m[0m
+	↳ from [4mfor.ans:2:1[0m in block: [2m:iterator = iter(var)…[0m[0m
+	↳ from [4mfor.ans:2:68[0m in call: [2m_[0m[0m
+	↳ from [4mtest/tests/for invalid iterator.ans:1:4[0m in call: [2mfor(:x, 42)[0m[0m
+	↳ from [4m?[0m in block: [2mfor(:x, 42)…[0m
+--# saved #--
+{}

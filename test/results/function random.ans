@@ -1,15 +1,15 @@
 --# run #--
 --- text ---
-| {}"c" |
+| {}"a" |
 --- text ---
-| {}"b" |
+| {}"c" |
 --- text ---
 | {}"a" |
 --- text ---
-| {}"b" |
+| {}"a" |
 --- text ---
-| {}"b" |
+| {}"c" |
 --- return ---
 ()
 --# saved #--
-{"a.checkpoint":false, "a.run":1, "b.checkpoint":false, "b.run":3, "c.checkpoint":false, "c.run":1}
+{"a.checkpoint":false, "a.run":3, "c.checkpoint":false, "c.run":2}

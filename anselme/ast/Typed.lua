@@ -28,7 +28,7 @@ Typed = ast.abstract.Runtime {
 				return custom_format:call(state, d_args):format(state, prio, ...)
 			end
 		end
-		return ("type(%s, %s)"):format(self.type_expression:format(state, operator_priority["_,_"], ...), self.expression:format_right(state, operator_priority["_,_"], ...))
+		return ("type(%s, %s)"):format(self.expression:format(state, operator_priority["_,_"], ...), self.type_expression:format_right(state, operator_priority["_,_"], ...))
 	end,
 
 	traverse = function(self, fn, ...)

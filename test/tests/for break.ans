@@ -1,0 +1,4 @@
+for(:x, range(10))
+	if(x == 3)
+		break!
+	|{x}

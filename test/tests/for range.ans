@@ -1,0 +1,27 @@
+|-
+for(:x, range(5))
+	|{x}
+
+|-
+for(:y, range(2, 7))
+	|{y}
+
+|-
+for(:z, range(2, 7, 3))
+	|{z}
+
+|-
+for(:x, range(4, 0, -1))
+	|{x}
+
+|-
+for(:x, range(4, 8, -1))
+	|{x}
+
+|-
+for(:x, range(8, 4))
+	|{x}
+
+|-
+for(:x, range(4, 4))
+	|{x}

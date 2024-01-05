@@ -26,6 +26,7 @@ return function(main_state)
 		"boot",
 		"number",
 		"string",
+		"symbol",
 		"text",
 		"pair",
 		"structures",
@@ -34,6 +35,7 @@ return function(main_state)
 		"function",
 		"resume",
 		"persist",
+		"for",
 		"script"
 	})
 end

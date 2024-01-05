@@ -1,0 +1,6 @@
+:s = *{ "a":"b", 6:"c", 98:5, true:3 }
+
+/* struct iteration is non deterministic, too lazy to sort, so we check if we have 4 key that each appear at most once */
+for(:k, s)
+	|{s!has(k)}|
+	s(k) = ()

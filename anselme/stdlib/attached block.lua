@@ -11,12 +11,17 @@ return {
 		function(state, level, keep_return)
 			-- level 2: env of the function that called the function that called attached block
 			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
-			local r = env:get(state, block_identifier)
+			local block = env:get(state, block_identifier).expression
+			local fn
 			if keep_return:truthy() then
-				return Function:new(ParameterTuple:new(), r.expression):eval(state)
+				fn = Function:new(ParameterTuple:new(), block)
 			else
-				return Function:with_return_boundary(ParameterTuple:new(), r.expression):eval(state)
+				fn = Function:with_return_boundary(ParameterTuple:new(), block)
 			end
+			state.scope:push(env)
+			fn = fn:eval(state) -- make closure
+			state.scope:pop()
+			return fn
 		end
 	},
 	{
@@ -25,12 +30,17 @@ return {
 			-- level 2: env of the function that called the function that called attached block
 			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
 			if env:defined(state, block_identifier) then
-				local r = env:get(state, block_identifier)
+				local block = env:get(state, block_identifier).expression
+				local fn
 				if keep_return:truthy() then
-					return Function:new(ParameterTuple:new(), r.expression):eval(state)
+					fn = Function:new(ParameterTuple:new(), block)
 				else
-					return Function:with_return_boundary(ParameterTuple:new(), r.expression):eval(state)
+					fn = Function:with_return_boundary(ParameterTuple:new(), block)
 				end
+				state.scope:push(env)
+				fn = fn:eval(state) -- make closure
+				state.scope:pop()
+				return fn
 			else
 				return default
 			end
