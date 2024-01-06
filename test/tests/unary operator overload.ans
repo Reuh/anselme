@@ -1,7 +1,7 @@
 :$ -f
 	return("generic minus")
 
-:$ -f::string
+:$ -f::is string
 	return("minus "+f)
 
 |{-5}

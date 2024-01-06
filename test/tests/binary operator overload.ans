@@ -1,7 +1,7 @@
 :$ a - b
 	return("generic minus")
 
-:$ a::string - b::string
+:$ a::is string - b::is string
 	return(a + " minus " + b)
 
 | {2-5}

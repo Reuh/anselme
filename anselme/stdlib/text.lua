@@ -9,7 +9,7 @@ local resume_manager = require("anselme.state.resume_manager")
 return {
 	-- text
 	{
-		"_+_", "(a::text, b::text)",
+		"_+_", "(a::is text, b::is text)",
 		function(state, a, b)
 			local r = Text:new()
 			for _, e in ipairs(a.list) do
@@ -22,7 +22,7 @@ return {
 		end
 	},
 	{
-		"_!", "(txt::text)",
+		"_!", "(txt::is text)",
 		function(state, text)
 			event_manager:write(state, text)
 			return Nil:new()
@@ -31,7 +31,7 @@ return {
 
 	-- choice
 	{
-		"_|>_", "(txt::text, fn)",
+		"_|>_", "(txt::is text, fn)",
 		function(state, text, func)
 			if func:contains_current_resume_target(state) then
 				func:call(state, ArgumentTuple:new())

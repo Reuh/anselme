@@ -1,7 +1,7 @@
-:$ fn(x::number)
+:$ fn(x::is number)
 	|x
 
-:$ fn(a::string)
+:$ fn(a::is string)
 	|a
 
 fn("s")

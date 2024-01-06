@@ -5,13 +5,13 @@ return {
 	{ "_:_", "(name, value)", function(state, a, b) return Pair:new(a,b) end },
 
 	{
-		"name", "(pair::pair)",
+		"name", "(pair::is pair)",
 		function(state, pair)
 			return pair.name
 		end
 	},
 	{
-		"value", "(pair::pair)",
+		"value", "(pair::is pair)",
 		function(state, pair)
 			return pair.value
 		end

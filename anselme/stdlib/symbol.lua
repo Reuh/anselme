@@ -1,7 +1,7 @@
 return {
 
 	{
-		"to string", "(symbol::symbol)",
+		"to string", "(symbol::is symbol)",
 		function(state, sym)
 			return sym:to_string()
 		end

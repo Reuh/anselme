@@ -1,6 +1,6 @@
 return [[
 /* For loop */
-:@$for(symbol::symbol, var, block=attached block(keep return=true))
+:@$for(symbol::is symbol, var, block=attached block(keep return=true))
 	:iterator = iter(var)
 	:value = iterator()
 	:name = symbol!to string
@@ -12,11 +12,12 @@ return [[
 		r
 
 /* Range iterables */
+:@is range = is("range")
 :@$range(stop)
 	[1, stop, 1]!type("range")
 :@$range(start, stop, step=1)
 	[start, stop, step]!type("range")
-:@$iter(range::is("range"))
+:@$iter(range::is range)
 	:v = range!value
 	:start = v(1)
 	:stop = v(2)
@@ -34,8 +35,7 @@ return [[
 				return(i-step)
 
 /* List/tuple iterables */
-:tuple or list = $(x) x!type == "tuple" | x!type == "list"
-:@$iter(tuple::tuple or list)
+:@$iter(tuple::is sequence)
 	:n = tuple!len
 	:i = 0
 	$
@@ -44,7 +44,7 @@ return [[
 			return(tuple(i))
 
 /* Table */
-:@$iter(table::table)
+:@$iter(table::is table)
 	:s = table!to struct
 	iter(s)
 ]]

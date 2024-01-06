@@ -6,9 +6,9 @@ return [[
 
 	:resume target = ()
 
-	fn.:check = $(anchor::anchor)
+	fn.:check = $(anchor::is anchor)
 		fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
-	fn.:checkpoint = $(anchor::anchor, on resume=attached block(default=()))
+	fn.:checkpoint = $(anchor::is anchor, on resume=attached block(default=()))
 		if(on resume)
 			fn.current checkpoint = anchor
 			if(resume target == anchor | resuming(4))
@@ -38,14 +38,14 @@ return [[
 :@$_!(s::is script)
 	s!value!
 
-:@$_._(s::is script, k::string)
+:@$_._(s::is script, k::is string)
 	(s!value).fn.(k)
-:@$_._(s::is script, k::string) = val
+:@$_._(s::is script, k::is string) = val
 	(s!value).fn.(k) = val
-:@$_._(s::is script, k::symbol) = val
+:@$_._(s::is script, k::is symbol) = val
 	(s!value).fn.(k) = val
 
-:@$from(s::is script, a::anchor)
+:@$from(s::is script, a::is anchor)
 	s.current checkpoint = a
 	return(s!)
 :@$from(s::is script)
@@ -53,7 +53,7 @@ return [[
 	return(s!)
 
 /* Additionnal helpers */
-:@$ cycle(l::tuple)
+:@$ cycle(l::is tuple)
 	:i = 2
 	while($i <= l!len)
 		if(l(i).run < l(1).run)
@@ -61,7 +61,7 @@ return [[
 		i += 1
 	l(1)!
 
-:@$ next(l::tuple)
+:@$ next(l::is tuple)
 	:i = 1
 	while($i <= l!len)
 		if(l(i).run == 0)
@@ -69,6 +69,6 @@ return [[
 		i += 1
 	l(i-1)!
 
-:@$ random(l::tuple)
+:@$ random(l::is tuple)
 	l(rand(1, l!len))!
 ]]

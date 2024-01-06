@@ -7,7 +7,7 @@
 	|v={v}
 	a = v
 
-:$ f(p) = v::string
+:$ f(p) = v::is string
 	|v2={v}
 	a = p
 

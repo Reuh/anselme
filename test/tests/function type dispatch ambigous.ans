@@ -1,7 +1,7 @@
-:$ fn(x::number)
+:$ fn(x::is number)
 	|x
 
-:$ fn(a::number)
+:$ fn(a::is number)
 	|a
 
 fn(5)

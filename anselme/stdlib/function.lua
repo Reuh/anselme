@@ -4,13 +4,13 @@ local assert0 = require("anselme.common").assert0
 
 return {
 	{
-		"defined", "(c::function, s::string)",
+		"defined", "(c::is function, s::is string)",
 		function(state, c, s)
 			return Boolean:new(c.scope:defined_in_current(state, s:to_identifier()))
 		end
 	},
 	{
-		"has upvalue", "(c::function, s::string)",
+		"has upvalue", "(c::is function, s::is string)",
 		function(state, c, s)
 			return Boolean:new(c.scope:defined(state, s:to_identifier()))
 		end
@@ -25,7 +25,7 @@ return {
 		end
 	},
 	{
-		"_._", "(c::function, s::string) = v",
+		"_._", "(c::is function, s::is string) = v",
 		function(state, c, s, v)
 			local identifier = s:to_identifier()
 			assert0(c.scope:defined(state, identifier), ("no variable %q defined in closure"):format(s.string))
@@ -34,7 +34,7 @@ return {
 		end
 	},
 	{
-		"_._", "(c::function, s::symbol) = v",
+		"_._", "(c::is function, s::is symbol) = v",
 		function(state, c, s, v)
 			state.scope:push(c.scope)
 			local r = Definition:new(s, v):eval(state)

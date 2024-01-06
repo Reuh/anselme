@@ -76,9 +76,9 @@ local function run(path, interactive)
 	local state = anselme:new()
 	state:load_stdlib()
 
-	state:define("interrupt", "(code::string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
+	state:define("interrupt", "(code::is string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
 	state:define("interrupt", "()", function(state) state:interrupt() return ast.Nil:new() end, true)
-	state:define("wait", "(duration::number)", function(duration) coroutine.yield("wait", duration) end)
+	state:define("wait", "(duration::is number)", function(duration) coroutine.yield("wait", duration) end)
 	state:define("run in new branch", "(code)", function(code)
 		local parallel_state = state:branch()
 		write_output("--# parallel script #--")
@@ -87,7 +87,7 @@ local function run(path, interactive)
 		write_output("--# main script #--")
 	end)
 	state:define("serialize", "(value)", function(state, value) return ast.String:new(value:serialize(state)) end, true)
-	state:define("deserialize", "(str::string)", function(state, str) return ast.abstract.Node:deserialize(state, str.string) end, true)
+	state:define("deserialize", "(str::is string)", function(state, str) return ast.abstract.Node:deserialize(state, str.string) end, true)
 
 	local run_state = state:branch()
 
@@ -123,7 +123,7 @@ end
 if not arg[1] or arg[1] == "update" then
 	-- display an animated loading indicator
 	local loading = {
-		loop = { "⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷" },
+		loop = { "⣷", "⣯", "⣟", "⡿", "⢿", "⣻", "⣽", "⣾" },
 		loop_pos = 1,
 		erase_code = "",
 

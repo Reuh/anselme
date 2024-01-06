@@ -7,7 +7,7 @@ local block_identifier = Identifier:new("_")
 
 return {
 	{
-		"attached block", "(level::number=1, keep return=false)",
+		"attached block", "(level::is number=1, keep return=false)",
 		function(state, level, keep_return)
 			-- level 2: env of the function that called the function that called attached block
 			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
@@ -25,7 +25,7 @@ return {
 		end
 	},
 	{
-		"attached block", "(level::number=1, keep return=false, default)",
+		"attached block", "(level::is number=1, keep return=false, default)",
 		function(state, level, keep_return, default)
 			-- level 2: env of the function that called the function that called attached block
 			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)

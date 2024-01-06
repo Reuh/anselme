@@ -1,8 +1,8 @@
-:$ a(x::number)
+:$ a(x::is number)
 	return(x + 2)
 
 :$ x
-	:$ a(x::string)
+	:$ a(x::is string)
 		return(x + "heh")
 
 	|{a("plop")}

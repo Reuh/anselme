@@ -1,6 +1,6 @@
 :f = ()
 _
-	:$_+_(a::string, b)
+	:$_+_(a::is string, b)
 		"{a}{b}"
 
 	:a=1

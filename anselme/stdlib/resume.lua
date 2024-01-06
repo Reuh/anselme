@@ -6,13 +6,13 @@ local calling_environment_manager = require("anselme.state.calling_environment_m
 
 return {
 	{
-		"from", "(function::function, anchor::anchor)",
+		"from", "(function::is function, anchor::is anchor)",
 		function(state, func, anchor)
 			return func:resume(state, anchor)
 		end
 	},
 	{
-		"from", "(function::function, anchor::nil)",
+		"from", "(function::is function, anchor::is nil)",
 		function(state, func)
 			return func:call(state, ArgumentTuple:new())
 		end
@@ -24,7 +24,7 @@ return {
 		end
 	},
 	{
-		"resuming", "(level::number=0)",
+		"resuming", "(level::is number=0)",
 		function(state, level)
 			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
 			state.scope:push(env)

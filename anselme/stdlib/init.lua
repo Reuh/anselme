@@ -9,7 +9,7 @@ local function load(state, l)
 	for _, m in ipairs(l) do
 		local mod = require("anselme.stdlib."..m)
 		if type(mod) == "string" then
-			parser(mod, m..".ans"):eval(state)
+			parser(mod, "stdlib/"..m..".ans"):eval(state)
 		else
 			define_lua(state, mod)
 		end
@@ -22,8 +22,8 @@ return function(main_state)
 		"tag",
 		"conditionals",
 		"base",
-		"types",
-		"boot",
+		"typed",
+		"type check",
 		"number",
 		"string",
 		"symbol",

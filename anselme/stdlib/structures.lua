@@ -4,25 +4,25 @@ local Nil, List, Table, Number, LuaFunction, ParameterTuple, Boolean = ast.Nil, 
 return {
 	-- tuple
 	{
-		"*_", "(t::tuple)",
+		"*_", "(t::is tuple)",
 		function(state, tuple)
 			return List:new(state, tuple)
 		end
 	},
 	{
-		"_!", "(l::tuple, i::number)",
+		"_!", "(l::is tuple, i::is number)",
 		function(state, l, i)
 			return l:get(i.number)
 		end
 	},
 	{
-		"len", "(l::tuple)",
+		"len", "(l::is tuple)",
 		function(state, l)
 			return Number:new(l:len())
 		end
 	},
 	{
-		"find", "(l::tuple, value)",
+		"find", "(l::is tuple, value)",
 		function(state, l, v)
 			local i = l:find(v)
 			if i then
@@ -35,26 +35,26 @@ return {
 
 	-- list
 	{
-		"_!", "(l::list, i::number)",
+		"_!", "(l::is list, i::is number)",
 		function(state, l, i)
 			return l:get(state, i.number)
 		end
 	},
 	{
-		"_!", "(l::list, i::number) = value",
+		"_!", "(l::is list, i::is number) = value",
 		function(state, l, i, v)
 			l:set(state, i.number, v)
 			return Nil:new()
 		end
 	},
 	{
-		"len", "(l::list)",
+		"len", "(l::is list)",
 		function(state, l)
 			return Number:new(l:len(state))
 		end
 	},
 	{
-		"find", "(l::list, value)",
+		"find", "(l::is list, value)",
 		function(state, l, v)
 			local i = l:find(state, v)
 			if i then
@@ -65,35 +65,35 @@ return {
 		end
 	},
 	{
-		"insert", "(l::list, value)",
+		"insert", "(l::is list, value)",
 		function(state, l, v)
 			l:insert(state, v)
 			return Nil:new()
 		end
 	},
 	{
-		"insert", "(l::list, position::number, value)",
+		"insert", "(l::is list, position::is number, value)",
 		function(state, l, position, v)
 			l:insert(state, position.number, v)
 			return Nil:new()
 		end
 	},
 	{
-		"remove", "(l::list)",
+		"remove", "(l::is list)",
 		function(state, l)
 			l:remove(state)
 			return Nil:new()
 		end
 	},
 	{
-		"remove", "(l::list, position::number)",
+		"remove", "(l::is list, position::is number)",
 		function(state, l, position)
 			l:remove(state, position.number)
 			return Nil:new()
 		end
 	},
 	{
-		"to tuple", "(l::list)",
+		"to tuple", "(l::is list)",
 		function(state, l)
 			return l:to_tuple(state)
 		end
@@ -101,25 +101,25 @@ return {
 
 	-- struct
 	{
-		"*_", "(s::struct)",
+		"*_", "(s::is struct)",
 		function(state, struct)
 			return Table:new(state, struct)
 		end
 	},
 	{
-		"_!", "(s::struct, key)",
+		"_!", "(s::is struct, key)",
 		function(state, s, k)
 			return s:get(k)
 		end
 	},
 	{
-		"has", "(s::struct, key)",
+		"has", "(s::is struct, key)",
 		function(state, s, k)
 			return Boolean:new(s:has(k))
 		end
 	},
 	{
-		"iter", "(s::struct)",
+		"iter", "(s::is struct)",
 		function(state, struct)
 			local iter = struct:iter()
 			return LuaFunction:new(ParameterTuple:new(), function()
@@ -132,26 +132,26 @@ return {
 
 	-- table
 	{
-		"_!", "(t::table, key)",
+		"_!", "(t::is table, key)",
 		function(state, t, key)
 			return t:get(state, key)
 		end
 	},
 	{
-		"_!", "(t::table, key) = value",
+		"_!", "(t::is table, key) = value",
 		function(state, t, key, value)
 		t:set(state, key, value)
 			return Nil:new()
 		end
 	},
 	{
-		"has", "(t::table, key)",
+		"has", "(t::is table, key)",
 		function(state, t, k)
 			return Boolean:new(t:has(state, k))
 		end
 	},
 	{
-		"to struct", "(t::table)",
+		"to struct", "(t::is table)",
 		function(state, t)
 			return t:to_struct(state)
 		end

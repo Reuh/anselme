@@ -1,7 +1,7 @@
-:$ fn(x::number)
+:$ fn(x::is number)
 	|x
 
-:$ fn(a::string="o")
+:$ fn(a::is string="o")
 	|a
 
 fn("s")
@@ -10,10 +10,10 @@ fn(5)
 
 fn()
 
-:$ g(n="s", a::number=5)
+:$ g(n="s", a::is number=5)
 	return("gn")
 
-:$ g(n="s", a::string="lol")
+:$ g(n="s", a::is string="lol")
 	return("gs")
 
 |{g(n="k", a="l")}
