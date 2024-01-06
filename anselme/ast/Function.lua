@@ -123,23 +123,26 @@ Function = Overloadable {
 
 	-- Note: when serializing and reloading a function, its upvalues will not be linked anymore to their original definition.
 	-- The reloaded function will not be able to affect variables defined outside its body.
-	-- Only the upvalues that explicitely appear in the function body will be saved, so we don't have to keep a copy of the whole environment.
-	-- TODO: we should also store variables that have been defined in the function scope, even if they are not referred directly in the body
+	-- Only the upvalues that explicitely appear in the function body and variables directly defined in the function scope will be saved, so we don't have to keep a full copy of the whole environment.
 	_serialize = function(self)
-		return { parameters = self.parameters, expression = self.expression, upvalues = self.upvalues }
+		local state = require("anselme.serializer_state")
+		return { parameters = self.parameters, expression = self.expression, upvalues = self.upvalues, scope = self.scope.variables:to_struct(state) }
 	end,
 	_deserialize = function(self)
 		local state = require("anselme.serializer_state")
 		local scope
 		if self.upvalues then
 			-- rebuild scope: exported + normal layer so any upvalue that happen to be exported stay there
-			-- (and link again to current scope to allow internal vars that are not considered explicit upvalues to still work, like _translations)
+			-- (and link again to current scope to allow internal vars that are not serialized to still work, like _translations)
 			scope = Environment:new(state, Environment:new(state, state.scope:capture(), nil, true))
 			for _, var in pairs(self.upvalues) do
 				scope:define(state, var:get_symbol(), var:get(state))
 			end
+			for _, var in self.scope:iter() do
+				scope:define(state, var:get_symbol(), var:get(state))
+			end
 		end
-		return Function:new(self.parameters, self.expression, Environment:new(state, scope), self.upvalues)
+		return Function:new(self.parameters, self.expression, Environment:new(state, scope), self.upvalues):set_source("saved")
 	end
 }
 

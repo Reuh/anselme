@@ -61,7 +61,6 @@ traverse = {
 local Node
 Node = class {
 	type = "node",
-	source = "?",
 	mutable = false,
 	hide_in_stacktrace = false,
 
@@ -79,6 +78,7 @@ Node = class {
 		end
 		return self
 	end,
+	source = "?",
 
 	-- call function callback with args ... on the children Nodes of this Node
 	-- by default, assumes no children Nodes
