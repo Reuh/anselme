@@ -23,12 +23,12 @@ Overload = ast.abstract.Node {
 	end,
 
 	_format = function(self, ...)
-		local s = "overload<"
+		local s = "overload(["
 		for i, e in ipairs(self.list) do
 			s = s .. e:format(...)
 			if i < #self.list then s = s .. ", " end
 		end
-		return s..">"
+		return s.."])"
 	end,
 
 	traverse = function(self, fn, ...)
@@ -50,18 +50,18 @@ Overload = ast.abstract.Node {
 					if secondary_specificity > success_secondary_specificity then
 						success, success_specificity, success_secondary_specificity = fn, specificity, secondary_specificity
 					elseif secondary_specificity == success_secondary_specificity then
-						return nil, ("more than one function match %s, matching functions were at least (specificity %s.%s):\n\t• %s\n\t• %s"):format(args:format(state), specificity, secondary_specificity, fn:format_signature(state), success:format_signature(state))
+						return nil, ("more than one function match arguments %s, matching functions were at least (specificity %s.%s):\n\t• %s (from %s)\n\t• %s (from %s)"):format(args:format(state), specificity, secondary_specificity, fn:format_signature(state), fn.source, success:format_signature(state), success.source)
 					end
 				end
 				-- no need to add error message for less specific function since we already should have at least one success
 			elseif not success then
-				table.insert(failure, fn:format_signature(state) .. ": " .. secondary_specificity)
+				table.insert(failure, ("%s (from %s):\n\t\t%s"):format(fn:format_signature(state), fn.source, secondary_specificity))
 			end
 		end
 		if success then
 			return success, args
 		else
-			return nil, ("no function match %s, possible functions were:\n\t• %s"):format(args:format(state), table.concat(failure, "\n\t• "))
+			return nil, ("no function match arguments %s, possible functions were:\n\t• %s"):format(args:format(state), table.concat(failure, "\n\t• "))
 		end
 	end
 }

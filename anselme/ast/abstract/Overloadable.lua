@@ -12,11 +12,11 @@ return ast.abstract.Node {
 		error("not implemented for "..self.type)
 	end,
 
-	-- return string
+	-- return string, friendly representation of the function signature
 	format_signature = function(self, state)
 		error("not implemented for "..self.type)
 	end,
-	-- return string
+	-- return string, unique hash for this function signature
 	hash_signature = function(self)
 		error("not implemented for "..self.type)
 	end,

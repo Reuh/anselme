@@ -39,9 +39,9 @@ Function = Overloadable {
 
 	_format = function(self, ...)
 		if self.parameters.assignment then
-			return "$"..self.parameters:format(...).."; "..self.expression:format_right(...)
+			return "$"..self.parameters:format_short(...).."; "..self.expression:format_right(...)
 		else
-			return "$"..self.parameters:format(...).." "..self.expression:format_right(...)
+			return "$"..self.parameters:format_short(...).." "..self.expression:format_right(...)
 		end
 	end,
 	_format_priority = function(self)
@@ -77,7 +77,7 @@ Function = Overloadable {
 		return args:match_parameter_tuple(state, self.parameters)
 	end,
 	format_signature = function(self, state)
-		return self.parameters:format(state)
+		return "$"..self.parameters:format_short(state)
 	end,
 	hash_signature = function(self)
 		return self.parameters:hash()

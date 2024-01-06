@@ -41,7 +41,7 @@ LuaFunction = ast.abstract.Runtime(Overloadable) {
 		return args:match_parameter_tuple(state, self.parameters)
 	end,
 	format_signature = function(self, state)
-		return self.parameters:format(state)
+		return "$"..self.parameters:format_short(state)
 	end,
 	hash_signature = function(self)
 		return self.parameters:hash()

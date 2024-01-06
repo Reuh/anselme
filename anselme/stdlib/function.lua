@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Boolean, Definition, Return = ast.Nil, ast.Boolean, ast.Definition, ast.Return
+local Nil, Boolean, Definition, Return, Overload, Overloadable = ast.Nil, ast.Boolean, ast.Definition, ast.Return, ast.Overload, ast.abstract.Overloadable
 local assert0 = require("anselme.common").assert0
 
 return {
@@ -17,7 +17,19 @@ return {
 	},
 
 	{
-		"_._", "(c::function, s::string)",
+		"overload", "(l::is sequence)",
+		function(state, l)
+			local r = Overload:new()
+			for _, fn in l:iter(state) do
+				assert0(Overloadable:issub(fn), ("trying to add a non overloadable %s to an overload"):format(fn:format(state)))
+				r:insert(fn)
+			end
+			return r
+		end
+	},
+
+	{
+		"_._", "(c::is function, s::is string)",
 		function(state, c, s)
 			local identifier = s:to_identifier()
 			assert0(c.scope:defined(state, identifier), ("no variable %q defined in closure"):format(s.string))

@@ -1,9 +1,9 @@
 --# run #--
 --- error ---
-[0m[31m[0m[31mcan't call overload overload<($(a::($(x) <lua function>)) _), ($(x::($(x) <lua function>)) _)>: more than one function match (5), matching functions were at least (specificity 1.3):
-	• (x::($(x) <lua function>))
-	• (a::($(x) <lua function>))[0m
+[0m[31m[0m[31mcan't call overload fn: more than one function match arguments (5), matching functions were at least (specificity 1.2):
+	• $(x::is number) (from test/tests/function type dispatch ambigous.ans:1:1)
+	• $(a::is number) (from test/tests/function type dispatch ambigous.ans:4:1)[0m
 	↳ from [4mtest/tests/function type dispatch ambigous.ans:7:3[0m in call: [2mfn(5)[0m[0m
-	↳ from [4m?[0m in block: [2m:fn = ($(x::number) _)…[0m
+	↳ from [4m?[0m in block: [2m:fn = ($(x::is number) _)…[0m
 --# saved #--
 {}

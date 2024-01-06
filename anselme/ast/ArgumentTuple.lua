@@ -159,7 +159,7 @@ ArgumentTuple = ast.abstract.Node {
 			-- type check (assume ok for default values)
 			if param.type_check and arg ~= param.default then
 				local r = param.type_check:call(state, ArgumentTuple:new(arg))
-				if not r:truthy() then return false, ("type check failure for parameter %s in function %s"):format(param.identifier:format(state), params:format(state)) end
+				if not r:truthy() then return false, ("type check failure for parameter %s"):format(param.identifier:format(state)) end
 				if Number:is(r) then
 					specificity = specificity + r.number
 				else

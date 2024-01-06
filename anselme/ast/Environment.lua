@@ -19,6 +19,7 @@ local VariableMetadata = ast.abstract.Runtime {
 		if self.symbol.alias then
 			return v:call(state, ArgumentTuple:new())
 		else
+			v.from_symbol = self.symbol
 			return v
 		end
 	end,
@@ -31,11 +32,11 @@ local VariableMetadata = ast.abstract.Runtime {
 	end,
 	set = function(self, state, value)
 		if self.symbol.constant then
-			error(("trying to change the value of constant %s"):format(self.symbol.string), 0)
+			error(("trying to change the value of constant %s"):format(self.symbol.string:format(state)), 0)
 		end
 		if self.symbol.type_check then
 			local r = self.symbol.type_check:call(state, ArgumentTuple:new(value))
-			if not r:truthy() then error(("type check failure for %s; %s does not satisfy %s"):format(self.symbol.string, value, self.symbol.type_check), 0) end
+			if not r:truthy() then error(("type check failure for %s; %s does not satisfy %s"):format(self.symbol.string:format(state), value, self.symbol.type_check:format(state)), 0) end
 		end
 		if self.symbol.alias then
 			local assign_args = ArgumentTuple:new()
@@ -223,7 +224,9 @@ local Environment = ast.abstract.Runtime {
 		local e = self
 		while e.parent do
 			e = e.parent
-			d = d + 1
+			if not (e.partial or e.export) then -- only count full layers
+				d = d + 1
+			end
 		end
 		return d
 	end,
