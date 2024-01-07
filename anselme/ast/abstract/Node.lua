@@ -45,6 +45,9 @@ traverse = {
 	merge = function(self, state, cache)
 		self:merge(state, cache)
 	end,
+	post_deserialize = function(self, state, cache)
+		self:post_deserialize(state, cache)
+	end,
 	hash = function(self, t)
 		table.insert(t, self:hash())
 	end,
@@ -55,6 +58,9 @@ traverse = {
 		for hash, target in pairs(self:list_resume_targets()) do
 			add_to_node._list_resume_targets_cache[hash] = target
 		end
+	end,
+	list_used_identifiers = function(self, t)
+		self:list_used_identifiers(t)
 	end
 }
 
@@ -134,12 +140,20 @@ Node = class {
 	end,
 
 	-- generate a list of translatable nodes that appear in this node
-	-- should only be called on non-evaluated nodes
+	-- should only be called on non-evaluated nodes (non-evaluated nodes don't contain cycles)
 	-- if a node is translatable, redefine this to add it to the table - note that it shouldn't call :traverse or :list_translatable on its children, as nested translations should not be needed
 	list_translatable = function(self, t)
 		t = t or {}
 		self:traverse(traverse.list_translatable, t)
 		return t
+	end,
+
+	-- generate a list of identifiers that are used in this node
+	-- should only be called on non-evaluated nodes
+	-- the list contains at least all used nodes; some unused nodes may be present
+	-- redefine on identifier nodes to add an identifier to the table
+	list_used_identifiers = function(self, t)
+		self:traverse(traverse.list_used_identifiers, t)
 	end,
 
 	-- generate anselme code that can be used as a base for a translation file
@@ -388,8 +402,21 @@ Node = class {
 		package.loaded["anselme.serializer_state"] = state
 		local r = binser.deserializeN(str, 1, index)
 		package.loaded["anselme.serializer_state"] = nil
+		r:post_deserialize(state, {})
 		return r
 	end,
+	-- call :_post_deserialize on all children nodes
+	-- automatically called after a sucesfull deserialization, intended to perform finishing touches for deserialization
+	-- notably, there is no guarantee that children nodes are already deserialized when _deserialize is called on a node
+	-- anything that require such a guarantee should be done here
+	post_deserialize = function(self, state, cache)
+		if not cache[self] then
+			cache[self] = true
+			self:_post_deserialize(state, cache)
+			self:traverse(traverse.post_deserialize, state, cache)
+		end
+	end,
+	_post_deserialize = function(self, state, cache) end,
 
 	__tostring = function(self) return self:format() end,
 

@@ -1,4 +1,4 @@
-:choice = 1
+:@choice = 1
 
 :$ jump button
 	1 # | A

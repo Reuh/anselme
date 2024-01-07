@@ -23,6 +23,13 @@ Identifier = ast.abstract.Node {
 		return state.scope:get(self)
 	end,
 
+	list_used_identifiers = function(self, t)
+		if not t[self.name] then
+			t[self.name] = true
+			table.insert(t, self)
+		end
+	end,
+
 	to_string = function(self)
 		return String:new(self.name)
 	end,

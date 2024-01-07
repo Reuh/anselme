@@ -9,9 +9,10 @@ return [[
 	fn.:check = $(anchor::is anchor)
 		fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
 	fn.:checkpoint = $(anchor::is anchor, on resume=attached block(default=()))
+		:resuming = resuming(1) /* calling function is resuming */
 		if(on resume)
 			fn.current checkpoint = anchor
-			if(resume target == anchor | resuming(4))
+			if(resume target == anchor | resuming)
 				on resume!
 			else!
 				fn.reached(anchor) = (fn.reached(anchor) | 0) + 1

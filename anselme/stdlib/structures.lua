@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, List, Table, Number, LuaFunction, ParameterTuple, Boolean = ast.Nil, ast.List, ast.Table, ast.Number, ast.LuaFunction, ast.ParameterTuple, ast.Boolean
+local Nil, List, Table, Number, LuaCall, ParameterTuple, Boolean = ast.Nil, ast.List, ast.Table, ast.Number, ast.LuaCall, ast.ParameterTuple, ast.Boolean
 
 return {
 	-- tuple
@@ -122,7 +122,7 @@ return {
 		"iter", "(s::is struct)",
 		function(state, struct)
 			local iter = struct:iter()
-			return LuaFunction:new(ParameterTuple:new(), function()
+			return LuaCall:make_function(state, ParameterTuple:new(), function()
 				local k = iter()
 				if k == nil then return Nil:new()
 				else return k end

@@ -10,7 +10,7 @@ return {
 		"attached block", "(level::is number=1, keep return=false)",
 		function(state, level, keep_return)
 			-- level 2: env of the function that called the function that called attached block
-			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
+			local env = calling_environment_manager:get_level(state, level:to_lua(state))
 			local block = env:get(state, block_identifier).expression
 			local fn
 			if keep_return:truthy() then
@@ -28,7 +28,7 @@ return {
 		"attached block", "(level::is number=1, keep return=false, default)",
 		function(state, level, keep_return, default)
 			-- level 2: env of the function that called the function that called attached block
-			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
+			local env = calling_environment_manager:get_level(state, level:to_lua(state))
 			if env:defined(state, block_identifier) then
 				local block = env:get(state, block_identifier).expression
 				local fn

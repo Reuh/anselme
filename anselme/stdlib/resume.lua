@@ -18,15 +18,9 @@ return {
 		end
 	},
 	{
-		"resuming", "()",
-		function(state)
-			return Boolean:new(resume_manager:resuming(state))
-		end
-	},
-	{
 		"resuming", "(level::is number=0)",
 		function(state, level)
-			local env = calling_environment_manager:get_level(state, level:to_lua(state)+1)
+			local env = calling_environment_manager:get_level(state, level:to_lua(state))
 			state.scope:push(env)
 			local r = Boolean:new(resume_manager:resuming(state))
 			state.scope:pop()

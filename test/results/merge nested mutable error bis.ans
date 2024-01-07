@@ -4,14 +4,14 @@
 	↳ from [4mtest/tests/merge nested mutable error bis.ans:14:7[0m in call: [2merror("abort")[0m[0m
 	↳ from [4mtest/tests/merge nested mutable error bis.ans:3:1[0m in block: [2minsert(a, b)…[0m[0m
 	↳ from [4mtest/tests/merge nested mutable error bis.ans:3:18[0m in call: [2m_[0m[0m
-	↳ from [4mstdlib/script.ans:30:6[0m in call: [2mfn![0m[0m
-	↳ from [4mstdlib/script.ans:28:3[0m in block: [2mresume target = ()…[0m[0m
-	↳ from [4mstdlib/script.ans:28:7[0m in call: [2melse![0m[0m
-	↳ from [4mstdlib/script.ans:24:2[0m in block: [2mif(fn . "current checkpoint")…[0m[0m
-	↳ from [4mstdlib/script.ans:24:9[0m in call: [2m_[0m[0m
-	↳ from [4mstdlib/script.ans:38:9[0m in call: [2mvalue(s)![0m[0m
-	↳ from [4mstdlib/script.ans:37:1[0m in block: [2mvalue(s)![0m[0m
-	↳ from [4mstdlib/script.ans:37:20[0m in call: [2m_[0m[0m
+	↳ from [4mstdlib/script.ans:31:6[0m in call: [2mfn![0m[0m
+	↳ from [4mstdlib/script.ans:29:3[0m in block: [2mresume target = ()…[0m[0m
+	↳ from [4mstdlib/script.ans:29:7[0m in call: [2melse![0m[0m
+	↳ from [4mstdlib/script.ans:25:2[0m in block: [2mif(fn . "current checkpoint")…[0m[0m
+	↳ from [4mstdlib/script.ans:25:9[0m in call: [2m_[0m[0m
+	↳ from [4mstdlib/script.ans:39:9[0m in call: [2mvalue(s)![0m[0m
+	↳ from [4mstdlib/script.ans:38:1[0m in block: [2mvalue(s)![0m[0m
+	↳ from [4mstdlib/script.ans:38:20[0m in call: [2m_[0m[0m
 	↳ from [4mtest/tests/merge nested mutable error bis.ans:19:2[0m in call: [2mf![0m[0m
 	↳ from [4m?[0m in block: [2m:a = *[1]…[0m
 --# post run check #--

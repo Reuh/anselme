@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Identifier
+local Identifier, Symbol
 
 local String = ast.abstract.Node {
 	type = "string",
@@ -25,10 +25,13 @@ local String = ast.abstract.Node {
 
 	to_identifier = function(self)
 		return Identifier:new(self.string)
+	end,
+	to_symbol = function(self)
+		return Symbol:new(self.string)
 	end
 }
 
 package.loaded[...] = String
-Identifier = ast.Identifier
+Identifier, Symbol = ast.Identifier, ast.Symbol
 
 return String

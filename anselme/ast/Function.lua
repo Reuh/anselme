@@ -1,30 +1,20 @@
 -- note: functions only appear in non-evaluated nodes! once evaluated, they always become closures
 
 local ast = require("anselme.ast")
-local Overloadable = ast.abstract.Overloadable
-local ReturnBoundary, Environment, Identifier, Symbol
+local ReturnBoundary, Environment, Identifier
 
 local operator_priority = require("anselme.common").operator_priority
 
 local resume_manager, calling_environment_manager
 
-local function list_cache_upvalues(v, state, list, scope)
-	if Identifier:is(v) then
-		list[v.name] = scope:precache(state, v)
-	elseif Symbol:is(v) then
-		list[v.string] = scope:precache(state, v:to_identifier())
-	end
-	v:traverse(list_cache_upvalues, state, list, scope)
-end
-
 local Function
-Function = Overloadable {
+Function = ast.abstract.Overloadable {
 	type = "function",
 
 	parameters = nil, -- ParameterTuple
 	expression = nil, -- function content
 	scope = nil, -- Environment; captured scope for closure (evaluated functions); not set when not evaluated
-	upvalues = nil, -- {[name]=variable metadata}; not set when not evaluated. Contain _at least_ all the upvalues explicitely defined in the function code.
+	upvalues = nil, -- {variable metadata, ...}; not set when not evaluated. Contain _at least_ all the upvalues explicitely defined in the function code.
 
 	init = function(self, parameters, expression, scope, upvalues)
 		self.parameters = parameters
@@ -64,10 +54,15 @@ Function = Overloadable {
 		state.scope:pop()
 
 		-- list & cache upvalues so they aren't affected by future redefinition in a parent scope
-		local upvalues = {}
-		self.expression:traverse(list_cache_upvalues, state, upvalues, scope)
+		local used_identifiers = {}
+		self.parameters:list_used_identifiers(used_identifiers)
+		self.expression:list_used_identifiers(used_identifiers)
 		if scope:defined(state, Identifier:new("_")) then
-			scope:get(state, Identifier:new("_")):traverse(list_cache_upvalues, state, upvalues, scope)
+			scope:get(state, Identifier:new("_")):list_used_identifiers(used_identifiers)
+		end
+		local upvalues = {}
+		for _, identifier in ipairs(used_identifiers) do
+			table.insert(upvalues, scope:precache(state, identifier))
 		end
 
 		return Function:new(self.parameters:eval(state), self.expression, scope, upvalues)
@@ -83,7 +78,7 @@ Function = Overloadable {
 		return self.parameters:hash()
 	end,
 	call_dispatched = function(self, state, args)
-		assert(self.scope, "can't call unevaluated function")
+		assert(self._evaluated, "can't call unevaluated function")
 
 		-- push captured closure scope
 		local calling_environment = state.scope:capture()
@@ -102,7 +97,7 @@ Function = Overloadable {
 	end,
 	resume = function(self, state, target)
 		if self.parameters.min_arity > 0 then error("can't resume function with parameters") end
-		assert(self.scope, "can't resume unevaluated function")
+		assert(self._evaluated, "can't resume unevaluated function")
 
 		-- push captured closure scope
 		local calling_environment = state.scope:capture()
@@ -126,28 +121,45 @@ Function = Overloadable {
 	-- Only the upvalues that explicitely appear in the function body and variables directly defined in the function scope will be saved, so we don't have to keep a full copy of the whole environment.
 	_serialize = function(self)
 		local state = require("anselme.serializer_state")
-		return { parameters = self.parameters, expression = self.expression, upvalues = self.upvalues, scope = self.scope.variables:to_struct(state) }
+		return self.parameters, self.expression, self.scope.variables:to_struct(state), self.upvalues
 	end,
-	_deserialize = function(self)
-		local state = require("anselme.serializer_state")
-		local scope
-		if self.upvalues then
-			-- rebuild scope: exported + normal layer so any upvalue that happen to be exported stay there
-			-- (and link again to current scope to allow internal vars that are not serialized to still work, like _translations)
-			scope = Environment:new(state, Environment:new(state, state.scope:capture(), nil, true))
-			for _, var in pairs(self.upvalues) do
-				scope:define(state, var:get_symbol(), var:get(state))
+	_deserialize = function(parameters, expression, variables, upvalues)
+		local r = Function:new(parameters, expression):set_source("saved")
+		r._deserialize_data = { variables = variables, upvalues = upvalues }
+		return r
+	end,
+	-- we need variables to be fully deserialized before rebuild the function scope
+	_post_deserialize = function(self, state, cache)
+		if self._deserialize_data then
+			local upvalues, variables = self._deserialize_data.upvalues, self._deserialize_data.variables
+			self._deserialize_data = nil
+			-- rebuild upvalues: exported + normal layer so any upvalue that happen to be exported stay there
+			-- (and link again to global scope to allow internal vars that are not serialized to still work, like _translations)
+			state.scope:push_global()
+			state.scope:push_export()
+			state.scope:push()
+			self.upvalues = {}
+			for _, var in ipairs(upvalues) do
+				state.scope:define(var:get_symbol(), var:get(state))
+				table.insert(self.upvalues, state.scope.current:precache(state, var:get_symbol():to_identifier()))
 			end
-			for _, var in self.scope:iter() do
-				scope:define(state, var:get_symbol(), var:get(state))
+			-- rebuild function variables
+			state.scope:push()
+			self.scope = state.scope:capture()
+			for _, var in variables:iter() do
+				self.scope:define(state, var:get_symbol(), var:get(state))
 			end
+			state.scope:pop()
+			state.scope:pop()
+			state.scope:pop()
+			state.scope:pop()
+			self._evaluated = true
 		end
-		return Function:new(self.parameters, self.expression, Environment:new(state, scope), self.upvalues):set_source("saved")
 	end
 }
 
 package.loaded[...] = Function
-ReturnBoundary, Environment, Identifier, Symbol = ast.ReturnBoundary, ast.Environment, ast.Identifier, ast.Symbol
+ReturnBoundary, Environment, Identifier = ast.ReturnBoundary, ast.Environment, ast.Identifier
 
 resume_manager = require("anselme.state.resume_manager")
 calling_environment_manager = require("anselme.state.calling_environment_manager")

@@ -1,17 +1,23 @@
 --# run #--
 --- error ---
-[0m[31m[0m[31m[0m[31mcan't call overload _._: no function match arguments (overload([($(b) _), ($(x) _), ($() _)]), "a"), possible functions were:
-	• $(s::is script, k::is symbol) = val (from stdlib/script.ans:44:1):
+[0m[31m[0m[31m[0m[31mcan't call overload _._: no function match arguments (value, "a"), possible functions were:
+	• $(s::is script, k::is symbol) = val (from stdlib/script.ans:45:1):
 		expected 3 arguments, received 2
-	• $(s::is script, k::is string) = val (from stdlib/script.ans:42:1):
+	• $(s::is script, k::is string) = val (from stdlib/script.ans:43:1):
 		expected 3 arguments, received 2
-	• $(s::is script, k::is string) (from stdlib/script.ans:40:1):
+	• $(s::is script, k::is string) (from stdlib/script.ans:41:1):
 		type check failure for parameter s
 	• $(c::is function, s::is symbol) = v (from test/tests/function separate variable from variants.ans:10:4):
 		expected 3 arguments, received 2
 	• $(c::is function, s::is string) = v (from test/tests/function separate variable from variants.ans:10:4):
 		expected 3 arguments, received 2
 	• $(c::is function, s::is string) (from test/tests/function separate variable from variants.ans:10:4):
+		type check failure for parameter c
+	• $(c::is environment, s::is symbol) = v (from test/tests/function separate variable from variants.ans:10:4):
+		expected 3 arguments, received 2
+	• $(c::is environment, s::is string) = v (from test/tests/function separate variable from variants.ans:10:4):
+		expected 3 arguments, received 2
+	• $(c::is environment, s::is string) (from test/tests/function separate variable from variants.ans:10:4):
 		type check failure for parameter c[0m
 	↳ from [4mtest/tests/function separate variable from variants.ans:10:4[0m in call: [2mf . "a"[0m[0m
 	↳ from [4mtest/tests/function separate variable from variants.ans:10:1[0m in text interpolation: [2m| {f . "a"} = 2 |[0m[0m

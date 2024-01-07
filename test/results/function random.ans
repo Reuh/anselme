@@ -2,14 +2,14 @@
 --- text ---
 | {}"a" |
 --- text ---
+| {}"c" |
+--- text ---
 | {}"b" |
 --- text ---
 | {}"c" |
 --- text ---
-| {}"a" |
---- text ---
-| {}"b" |
+| {}"c" |
 --- return ---
 ()
 --# saved #--
-{"a.checkpoint":false, "a.run":2, "b.checkpoint":false, "b.run":2, "c.checkpoint":false, "c.run":1}
+{"a.checkpoint":false, "a.run":1, "b.checkpoint":false, "b.run":1, "c.checkpoint":false, "c.run":3}

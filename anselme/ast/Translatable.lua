@@ -44,7 +44,9 @@ local Translatable = ast.abstract.Node {
 	end,
 
 	list_translatable = function(self, t)
+		t = t or {}
 		table.insert(t, self)
+		return t
 	end
 }
 

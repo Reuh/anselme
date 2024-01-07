@@ -6,7 +6,7 @@ local ast = require("anselme.ast")
 local to_anselme = require("anselme.common.to_anselme")
 local unpack = table.unpack or unpack
 
-local LuaFunction, Environment, Node
+local LuaCall, Environment, Node
 
 local parameter_tuple = require("anselme.parser.expression.contextual.parameter_tuple")
 local symbol = require("anselme.parser.expression.primary.symbol")
@@ -64,7 +64,7 @@ local ScopeStack = class {
 					return to_anselme(original_func(unpack(lua_args)))
 				end
 			end
-			self:define_overloadable(sym, LuaFunction:new(parameters, func):eval(self.state))
+			self:define_overloadable(sym, LuaCall:make_function(self.state, parameters, func))
 		elseif Node:issub(value) then
 			self:define(sym, value)
 		else
@@ -150,6 +150,6 @@ local ScopeStack = class {
 }
 
 package.loaded[...] = ScopeStack
-LuaFunction, Environment, Node = ast.LuaFunction, ast.Environment, ast.abstract.Node
+LuaCall, Environment, Node = ast.LuaCall, ast.Environment, ast.abstract.Node
 
 return ScopeStack

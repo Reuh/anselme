@@ -4,7 +4,7 @@
 --- text ---
 | {}"" {}"idk" {}" is esperanto" |
 --- error ---
-[0m[31m[0m[31mcan't call overload a: no function match arguments (type(5, "nope")), possible functions were:
+[0m[31m[0m[31mcan't call overload a: no function match arguments (value), possible functions were:
 	• $(name::($(x) type(x) == t)) (from test/tests/function custom type dispatch error.ans:7:1):
 		type check failure for parameter name
 	• $(name::($(x) type(x) == t)) (from test/tests/function custom type dispatch error.ans:4:1):
