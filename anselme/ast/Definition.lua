@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Overloadable
+local Nil, Overloadable, Overload
 
 local operator_priority = require("anselme.common").operator_priority
 
@@ -30,7 +30,7 @@ local Definition = ast.abstract.Node {
 		local symbol = self.symbol:eval(state)
 		local val = self.expression:eval(state)
 
-		if Overloadable:issub(val) then
+		if Overloadable:issub(val) or Overload:is(val) then
 			state.scope:define_overloadable(symbol, val)
 		else
 			state.scope:define(symbol, val)
@@ -41,6 +41,6 @@ local Definition = ast.abstract.Node {
 }
 
 package.loaded[...] = Definition
-Nil, Overloadable = ast.Nil, ast.abstract.Overloadable
+Nil, Overloadable, Overload = ast.Nil, ast.abstract.Overloadable, ast.Overload
 
 return Definition

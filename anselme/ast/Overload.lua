@@ -17,9 +17,15 @@ Overload = ast.abstract.Node {
 		end
 	end,
 	insert = function(self, val) -- only for construction
-		assert0(not self._signatures[val:hash_signature()], ("a function with parameters %s is already defined in the overload"):format(val:format_signature()))
-		table.insert(self.list, val)
-		self._signatures[val:hash_signature()] = true
+		if Overload:is(val) then
+			for _, overloadable in ipairs(val.list) do
+				self:insert(overloadable)
+			end
+		else
+			assert0(not self._signatures[val:hash_signature()], ("a function with parameters %s is already defined in the overload"):format(val:format_signature()))
+			table.insert(self.list, val)
+			self._signatures[val:hash_signature()] = true
+		end
 	end,
 
 	_format = function(self, ...)
@@ -61,7 +67,7 @@ Overload = ast.abstract.Node {
 		if success then
 			return success, args
 		else
-			return nil, ("no function match arguments %s, possible functions were:\n\t• %s"):format(args:format(state), table.concat(failure, "\n\t• "))
+			return nil, ("no function match arguments %s, possible functions were:\n\t• %s"):format(args:format_short(state), table.concat(failure, "\n\t• "))
 		end
 	end
 }

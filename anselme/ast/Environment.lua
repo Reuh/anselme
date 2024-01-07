@@ -123,7 +123,7 @@ local Environment = ast.abstract.Runtime {
 	end,
 	-- define or redefine new overloadable variable in current environment, inheriting existing overload variants from (parent) scopes
 	define_overloadable = function(self, state, symbol, exp)
-		assert(Overloadable:issub(exp), "trying to add an non-overloadable value to an overload")
+		assert(Overloadable:issub(exp) or Overload:is(exp), "trying to add an non-overloadable value to an overload")
 
 		local identifier = symbol:to_identifier()
 
