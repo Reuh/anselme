@@ -11,6 +11,7 @@ local uuid = require("anselme.common").uuid
 local parser = require("anselme.parser")
 local binser = require("anselme.lib.binser")
 local assert0 = require("anselme.common").assert0
+local operator_priority = require("anselme.common").operator_priority
 local anselme
 local Identifier, Return, Node
 
@@ -40,8 +41,29 @@ State = class {
 
 	--- Load standard library.
 	-- You will probably want to call this on every State right after creation.
-	load_stdlib = function(self)
-		require("anselme.stdlib")(self)
+	load_stdlib = function(self, language)
+		local stdlib = require("anselme.stdlib")
+		if language then
+			self.scope:push_export()
+			self.scope:push()
+			stdlib(self)
+			self.scope:pop()
+			local exported = self.scope:capture()
+			self.scope:pop()
+
+			for name, var in exported.variables:iter(self) do
+				if operator_priority[name.name] then
+					self.scope:define(var:get_symbol(), var:get(self))
+				end
+			end
+
+			self.scope:push_partial(Identifier:new("stdlib"))
+			self.scope:define(Identifier:new("stdlib"):to_symbol(), exported)
+			parser(require("anselme.stdlib.language."..language), "stdlib/language/"..language..".ans"):eval(self)
+			self.scope:pop()
+		else
+			stdlib(self)
+		end
 	end,
 
 	---## Branching and merging

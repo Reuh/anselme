@@ -4,15 +4,13 @@ local assert0 = require("anselme.common").assert0
 
 return {
 	{
-		"defined", "(c::is function, s::is string)",
-		function(state, c, s)
-			return Boolean:new(c.scope:defined_in_current(state, s:to_identifier()))
-		end
-	},
-	{
-		"has upvalue", "(c::is function, s::is string)",
-		function(state, c, s)
-			return Boolean:new(c.scope:defined(state, s:to_identifier()))
+		"defined", "(c::is function, s::is string, search parent::is boolean=false)",
+		function(state, c, s, l)
+			if l:truthy() then
+				return Boolean:new(c.scope:defined(state, s:to_identifier()))
+			else
+				return Boolean:new(c.scope:defined_in_current(state, s:to_symbol()))
+			end
 		end
 	},
 

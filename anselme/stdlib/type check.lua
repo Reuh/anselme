@@ -20,7 +20,9 @@ return [[
 :@is struct = is("struct")
 :@is table = is("table")
 
+:@is environment = is("environment")
+
 :@is function = is("function")
 :@is overload = is("overload")
-:@is callable = $(x) x!type == "overload" | x!type == "function" | x!type == "lua function" | x!type == "quote"
+:@is callable = $(x) x!type == "overload" | x!type == "function" | x!type == "quote"
 ]]
