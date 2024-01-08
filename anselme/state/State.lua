@@ -41,6 +41,10 @@ State = class {
 
 	--- Load standard library.
 	-- You will probably want to call this on every State right after creation.
+	--
+	-- Optionally, you can specify `language` (string) to instead load a translated version of the standaring library. Available translations:
+	--
+	-- * `"frFR"`
 	load_stdlib = function(self, language)
 		local stdlib = require("anselme.stdlib")
 		if language then
@@ -173,7 +177,7 @@ State = class {
 	end,
 	--- Load a script in this branch. It will become the active script.
 	--
-	-- `code` is the code string or AST to run, `source` is the source name string to show in errors (optional).
+	-- `code` is the code string or AST to run. If `code` is a string, `source` is the source name string to show in errors (optional).
 	--
 	-- Note that this will only load the script; execution will only start by using the `:step` method. Will error if a script is already active in this State.
 	run = function(self, code, source)
@@ -184,6 +188,14 @@ State = class {
 			if Return:is(r) then r = r.expression end
 			return "return", r
 		end)
+	end,
+	--- Same as `:run`, but read the code from a file.
+	-- `source` will be set as the file path.
+	run_file = function(self, path)
+		local f = assert(io.open(path, "r"))
+		local block = parser(f:read("a"), path)
+		f:close()
+		return self:run(block)
 	end,
 	--- When a script is active, will resume running it until the next event.
 	--

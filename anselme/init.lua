@@ -73,10 +73,18 @@ local anselme = {
 	-- Usage:
 	-- ```lua
 	-- local ast = anselme.parse("1 + 2", "test")
-	-- ast:eval()
+	-- ast:eval(state)
 	-- ```
 	parse = function(code, source)
 		return parser(code, source)
+	end,
+	--- Same as `:parse`, but read the code from a file.
+	-- `source` will be set as the file path.
+	parse_file = function(path)
+		local f = assert(io.open(path, "r"))
+		local block = parser(f:read("a"), path)
+		f:close()
+		return block
 	end,
 	--- Return a new [State](#state).
 	new = function()
