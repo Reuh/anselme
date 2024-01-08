@@ -64,6 +64,15 @@ local function run_loop(run_state, write_output, interactive)
 	end
 end
 
+-- create execution state
+local global_state = anselme:new()
+global_state:load_stdlib()
+global_state:define("interrupt", "(code::is string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
+global_state:define("interrupt", "()", function(state) state:interrupt() return ast.Nil:new() end, true)
+global_state:define("wait", "(duration::is number)", function(duration) coroutine.yield("wait", duration) end)
+global_state:define("serialize", "(value)", function(state, value) return ast.String:new(value:serialize(state)) end, true)
+global_state:define("deserialize", "(str::is string)", function(state, str) return ast.abstract.Node:deserialize(state, str.string) end, true)
+
 -- run a test file and return the result
 local function run(path, interactive)
 	local out = { "--# run #--" }
@@ -73,23 +82,17 @@ local function run(path, interactive)
 	end
 	math.randomseed()
 
-	local state = anselme:new()
-	state:load_stdlib()
-
-	state:define("interrupt", "(code::is string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
-	state:define("interrupt", "()", function(state) state:interrupt() return ast.Nil:new() end, true)
-	state:define("wait", "(duration::is number)", function(duration) coroutine.yield("wait", duration) end)
-	state:define("run in new branch", "(code)", function(code)
-		local parallel_state = state:branch()
+	local state = global_state:branch(path)
+	state:define("run in new branch", "(code)", function(state, code)
+		local parallel_state = state.source_branch:branch()
 		write_output("--# parallel script #--")
-		parallel_state:run(code, "parallel")
+		parallel_state:run(code.string, "parallel")
 		run_loop(parallel_state, write_output, interactive)
 		write_output("--# main script #--")
-	end)
-	state:define("serialize", "(value)", function(state, value) return ast.String:new(value:serialize(state)) end, true)
-	state:define("deserialize", "(str::is string)", function(state, str) return ast.abstract.Node:deserialize(state, str.string) end, true)
+		return ast.Nil:new()
+	end, true)
 
-	local run_state = state:branch()
+	local run_state = state:branch(path.." - run")
 
 	local f = assert(io.open(path, "r"))
 	local s, block = pcall(anselme.parse, f:read("a"), path)
@@ -106,7 +109,7 @@ local function run(path, interactive)
 	run_loop(run_state, write_output, interactive)
 
 	if state:defined("post run check") then
-		local post_run_state = state:branch()
+		local post_run_state = state:branch(path.." - post run check")
 		post_run_state:run("post run check!")
 
 		write_output("--# post run check #--")

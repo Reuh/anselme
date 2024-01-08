@@ -1,7 +1,7 @@
 -- note: functions only appear in non-evaluated nodes! once evaluated, they always become closures
 
 local ast = require("anselme.ast")
-local ReturnBoundary, Environment, Identifier
+local ReturnBoundary, Identifier
 
 local operator_priority = require("anselme.common").operator_priority
 
@@ -62,7 +62,8 @@ Function = ast.abstract.Overloadable {
 		end
 		local upvalues = {}
 		for _, identifier in ipairs(used_identifiers) do
-			table.insert(upvalues, scope:precache(state, identifier))
+			local var = scope:precache(state, identifier)
+			if var then table.insert(upvalues, var) end
 		end
 
 		return Function:new(self.parameters:eval(state), self.expression, scope, upvalues)
@@ -159,7 +160,7 @@ Function = ast.abstract.Overloadable {
 }
 
 package.loaded[...] = Function
-ReturnBoundary, Environment, Identifier = ast.ReturnBoundary, ast.Environment, ast.Identifier
+ReturnBoundary, Identifier = ast.ReturnBoundary, ast.Identifier
 
 resume_manager = require("anselme.state.resume_manager")
 calling_environment_manager = require("anselme.state.calling_environment_manager")

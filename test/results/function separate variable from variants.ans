@@ -7,17 +7,17 @@
 		expected 3 arguments, received 2
 	• $(s::is script, k::is string) (from stdlib/script.ans:41:1):
 		type check failure for parameter s
-	• $(c::is function, s::is symbol) = v (from test/tests/function separate variable from variants.ans:10:4):
+	• $(c::is function, s::is symbol) = v (from stdlib/for.ans:2:1):
 		expected 3 arguments, received 2
-	• $(c::is function, s::is string) = v (from test/tests/function separate variable from variants.ans:10:4):
+	• $(c::is function, s::is string) = v (from stdlib/for.ans:2:1):
 		expected 3 arguments, received 2
-	• $(c::is function, s::is string) (from test/tests/function separate variable from variants.ans:10:4):
+	• $(c::is function, s::is string) (from stdlib/for.ans:2:1):
 		type check failure for parameter c
-	• $(c::is environment, s::is symbol) = v (from test/tests/function separate variable from variants.ans:10:4):
+	• $(c::is environment, s::is symbol) = v (from stdlib/for.ans:2:1):
 		expected 3 arguments, received 2
-	• $(c::is environment, s::is string) = v (from test/tests/function separate variable from variants.ans:10:4):
+	• $(c::is environment, s::is string) = v (from stdlib/for.ans:2:1):
 		expected 3 arguments, received 2
-	• $(c::is environment, s::is string) (from test/tests/function separate variable from variants.ans:10:4):
+	• $(c::is environment, s::is string) (from stdlib/for.ans:2:1):
 		type check failure for parameter c[0m
 	↳ from [4mtest/tests/function separate variable from variants.ans:10:4[0m in call: [2mf . "a"[0m[0m
 	↳ from [4mtest/tests/function separate variable from variants.ans:10:1[0m in text interpolation: [2m| {f . "a"} = 2 |[0m[0m

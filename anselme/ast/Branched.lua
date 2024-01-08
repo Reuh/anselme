@@ -20,15 +20,22 @@ Branched = ast.abstract.Runtime {
 		return not not self.value[state.branch_id]
 	end,
 	get = function(self, state)
-		return self.value[state.branch_id] or self.value[state.source_branch_id]
+		local branch = state
+		repeat
+			if self.value[branch.branch_id] then
+				return self.value[branch.branch_id]
+			end
+			branch = branch.source_branch
+		until not branch
+		error("no value assigned in this branch or any parent branch")
 	end,
 	set = function(self, state, value)
 		self.value[state.branch_id] = value
 	end,
 	_merge = function(self, state, cache)
 		local val = self.value[state.branch_id]
-		if val then
-			self.value[state.source_branch_id] = val
+		if val and state.source_branch then
+			self.value[state.source_branch.branch_id] = val
 			self.value[state.branch_id] = nil
 			val:merge(state, cache)
 		end

@@ -5,7 +5,7 @@
 --- text ---
 | {}"" {}"42" {}"" |
 --- error ---
-[0m[31m[0m[31m[0m[31midentifier "z" is undefined in branch 1c25ebb8-5027-4ccf-105b9-370d83e78fd7[0m
+[0m[31m[0m[31m[0m[31midentifier "z" is undefined in branch test/tests/exported variable nested.ans - run[0m
 	↳ from [4mtest/tests/exported variable nested.ans:12:3[0m in identifier: [2mz[0m[0m
 	↳ from [4mtest/tests/exported variable nested.ans:12:1[0m in text interpolation: [2m| {z} |[0m[0m
 	↳ from [4m?[0m in block: [2m:f = ($() _)…[0m

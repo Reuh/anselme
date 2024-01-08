@@ -19,12 +19,12 @@ local State
 State = class {
 	type = "anselme state",
 
-	init = function(self, branch_from)
+	init = function(self, branch_from, branch_id)
 		-- create a new branch from an existing state
 		-- note: the existing state must not currently have an active script
 		if branch_from then
-			self.branch_id = uuid()
-			self.source_branch_id = branch_from.branch_id
+			self.branch_id = branch_id or uuid()
+			self.source_branch = branch_from
 			self.scope = ScopeStack:new(self, branch_from)
 
 			event_manager:reset(self) -- events are isolated per branch
@@ -74,16 +74,16 @@ State = class {
 
 	--- Name of the branch associated to this State.
 	branch_id = "main",
-	--- Name of the branch this State was branched from.
-	source_branch_id = "main",
+	--- State this State was branched from.
+	source_branch = nil,
 
 	--- Return a new branch of this State.
 	--
 	-- Branches act as indepent copies of this State where any change will not be reflected in the source State until it is merged back into the source branch.
 	-- Note: probably makes the most sense to create branches from the main State only.
-	branch = function(self)
+	branch = function(self, branch_id)
 		assert(not self:active(), "can't branch while a script is active")
-		return State:new(self)
+		return State:new(self, branch_id)
 	end,
 	--- Merge everything that was changed in this branch back into the main State branch.
 	--

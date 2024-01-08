@@ -1,6 +1,6 @@
 --# run #--
 --- error ---
-[0m[31m[0m[31m[0m[31midentifier "b" is undefined in branch 1c25ebb8-5027-4ccf-105b9-370d83e78fd7[0m
+[0m[31m[0m[31m[0m[31midentifier "b" is undefined in branch test/tests/function scope wrong.ans - run[0m
 	↳ from [4mtest/tests/function scope wrong.ans:4:7[0m in identifier: [2mb[0m[0m
 	↳ from [4mtest/tests/function scope wrong.ans:4:1[0m in text interpolation: [2m| a: {b} |[0m[0m
 	↳ from [4m?[0m in block: [2m:a = ($() _)…[0m

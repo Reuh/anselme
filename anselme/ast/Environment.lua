@@ -75,16 +75,16 @@ local Environment = ast.abstract.Runtime {
 	partial = nil, -- { [name string] = true, ... }
 	export = nil, -- bool
 
-	_lookup_cache = nil, -- { [name string] = variable metadata, ... }
-	_lookup_cache_current = nil, -- { [name string] = variable metadata, ... }
+	_lookup_cache = nil, -- Table of { [identifier] = variable metadata, ... }
+	_lookup_cache_current = nil, -- Table of { [identifier] = variable metadata, ... }
 
 	init = function(self, state, parent, partial_names, is_export)
 		self.variables = Table:new(state)
 		self.parent = parent
 		self.partial = partial_names
 		self.export = is_export
-		self._lookup_cache = {}
-		self._lookup_cache_current = {}
+		self._lookup_cache = Table:new(state)
+		self._lookup_cache_current = Table:new(state)
 	end,
 	-- precache variable and return its variable metadata
 	-- when cached, if a variable is defined in a parent scope after it has been cached here from a higher parent, it will not be used in this env
@@ -101,6 +101,8 @@ local Environment = ast.abstract.Runtime {
 			fn(self.parent, ...)
 		end
 		fn(self.variables, ...)
+		fn(self._lookup_cache, ...)
+		fn(self._lookup_cache_current, ...)
 	end,
 	_format = function(self, state)
 		return "<environment>"
@@ -117,9 +119,10 @@ local Environment = ast.abstract.Runtime {
 			return self.parent:define(state, symbol, exp)
 		end
 		local variable = VariableMetadata:new(state, symbol, exp)
-		self.variables:set(state, symbol:to_identifier(), variable)
-		self._lookup_cache[name] = variable
-		self._lookup_cache_current[name] = variable
+		local identifier = symbol:to_identifier()
+		self.variables:set(state, identifier, variable)
+		self._lookup_cache:set(state, identifier, variable)
+		self._lookup_cache_current:set(state, identifier, variable)
 	end,
 	-- define or redefine new overloadable variable in current environment, inheriting existing overload variants from (parent) scopes
 	define_overloadable = function(self, state, symbol, exp)
@@ -151,40 +154,46 @@ local Environment = ast.abstract.Runtime {
 	end,
 
 	-- lookup variable in current or parent scope, cache the result
+	-- returns nil if undefined
 	_lookup = function(self, state, identifier)
-		local name = identifier.name
 		local _cache = self._lookup_cache
-		if _cache[name] == nil then
+		local var
+		if not _cache:has(state, identifier) then
 			if self.variables:has(state, identifier) then
-				_cache[name] = self.variables:get(state, identifier)
+				var = self.variables:get(state, identifier)
 			elseif self.parent then
-				_cache[name] = self.parent:_lookup(state, identifier)
+				var = self.parent:_lookup(state, identifier)
 			end
+			if var then _cache:set(state, identifier, var) end
+		else
+			var = _cache:get(state, identifier)
 		end
-		local var = _cache[name]
 		if var and not var:undefined(state) then
 			return var
 		end
-		return nil
 	end,
+	-- lookup variable in current scope, cache the result
+	-- returns nil if undefined
 	_lookup_in_current = function(self, state, symbol)
-		local name = symbol.string
+		local identifier = symbol:to_identifier()
 		local _cache = self._lookup_cache_current
-		if _cache[name] == nil then
-			local identifier = symbol:to_identifier()
+		local var
+		if not _cache:has(state, identifier) then
+			local name = symbol.string
 			if self.variables:has(state, identifier) then
-				_cache[name] = self.variables:get(state, identifier)
+				var = self.variables:get(state, identifier)
 			elseif self.parent then
 				if (self.partial and not self.partial[name]) or (self.export ~= symbol.exported) then
-					_cache[name] = self.parent:_lookup_in_current(state, symbol)
+					var = self.parent:_lookup_in_current(state, symbol)
 				end
 			end
+			if var then _cache:set(state, identifier, var) end
+		else
+			var = _cache:get(state, identifier)
 		end
-		local var = _cache[name]
 		if var and not var:undefined(state) then
 			return var
 		end
-		return nil
 	end,
 
 	-- returns bool if variable defined in current or parent environment

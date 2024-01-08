@@ -7,7 +7,7 @@
 		type check failure for parameter tuple
 	• $(range::is range) (from stdlib/for.ans:19:1):
 		type check failure for parameter range
-	• $(s::is struct) (from stdlib/for.ans:3:14):
+	• $(s::is struct) (from stdlib/for.ans:2:1):
 		type check failure for parameter s[0m
 	↳ from [4mstdlib/for.ans:3:18[0m in call: [2miter(var)[0m[0m
 	↳ from [4mstdlib/for.ans:3:12[0m in definition: [2m:iterator = iter(var)[0m[0m
