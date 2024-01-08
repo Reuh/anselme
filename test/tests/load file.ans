@@ -1,0 +1,5 @@
+:e = load("test/tests/import/test.ans")
+
+|{e.a}
+
+|{e.c}

@@ -50,13 +50,13 @@ State = class {
 			self.scope:pop()
 			local exported = self.scope:capture()
 			self.scope:pop()
-
+			-- redefine operators
 			for name, var in exported.variables:iter(self) do
 				if operator_priority[name.name] then
 					self.scope:define(var:get_symbol(), var:get(self))
 				end
 			end
-
+			-- load translated functions
 			self.scope:push_partial(Identifier:new("stdlib"))
 			self.scope:define(Identifier:new("stdlib"):to_symbol(), exported)
 			parser(require("anselme.stdlib.language."..language), "stdlib/language/"..language..".ans"):eval(self)

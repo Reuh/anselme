@@ -1,6 +1,7 @@
 local ast = require("anselme.ast")
 local Nil, Boolean, Definition = ast.Nil, ast.Boolean, ast.Definition
 local assert0 = require("anselme.common").assert0
+local parser = require("anselme.parser")
 
 return {
 	{
@@ -38,6 +39,43 @@ return {
 			local r = Definition:new(s, v):eval(state)
 			state.scope:pop()
 			return r
+		end
+	},
+
+	{
+		"import", "(env::is environment, symbol tuple::is tuple)",
+		function(state, env, l)
+			for _, sym in l:iter(state) do
+				Definition:new(sym, env:get(state, sym:to_identifier())):eval(state)
+			end
+			return env
+		end
+	},
+	{
+		"import", "(env::is environment, symbol::is symbol)",
+		function(state, env, sym)
+			Definition:new(sym, env:get(state, sym:to_identifier())):eval(state)
+			return env
+		end
+	},
+
+	{
+		"load", "(path::is string)",
+		function(state, path)
+			-- read file
+			local f = assert(io.open(path.string, "r"))
+			local block = parser(f:read("a"), path.string)
+			f:close()
+			-- exec in new scope
+			state.scope:push_global()
+			state.scope:push_export()
+			state.scope:push()
+			block:eval(state)
+			state.scope:pop()
+			local exported = state.scope:capture()
+			state.scope:pop()
+			state.scope:pop()
+			return exported
 		end
 	},
 }
