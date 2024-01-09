@@ -41,6 +41,10 @@ Table = ast.abstract.Runtime {
 		return self.branched:get(state)
 	end,
 
+	get_strict = function(self, state, key)
+		local s = self.branched:get(state)
+		return s:get_strict(key)
+	end,
 	get = function(self, state, key)
 		local s = self.branched:get(state)
 		return s:get(key)

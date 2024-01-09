@@ -109,11 +109,17 @@ Struct = ast.abstract.Runtime {
 	end,
 
 	get = function(self, key)
+		local v = self:get_strict(key)
+		if v ~= nil then
+			return v
+		else
+			return Nil:new()
+		end
+	end,
+	get_strict = function(self, key)
 		local hash = key:hash()
 		if self.table[hash] then
 			return self.table[hash][2]
-		else
-			return Nil:new()
 		end
 	end,
 	has = function(self, key)

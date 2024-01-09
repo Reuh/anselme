@@ -157,16 +157,14 @@ local Environment = ast.abstract.Runtime {
 	-- returns nil if undefined
 	_lookup = function(self, state, identifier)
 		local _cache = self._lookup_cache
-		local var
-		if not _cache:has(state, identifier) then
+		local var = _cache:get_strict(state, identifier)
+		if not var then
 			if self.variables:has(state, identifier) then
 				var = self.variables:get(state, identifier)
 			elseif self.parent then
 				var = self.parent:_lookup(state, identifier)
 			end
 			if var then _cache:set(state, identifier, var) end
-		else
-			var = _cache:get(state, identifier)
 		end
 		if var and not var:undefined(state) then
 			return var
@@ -177,8 +175,8 @@ local Environment = ast.abstract.Runtime {
 	_lookup_in_current = function(self, state, symbol)
 		local identifier = symbol:to_identifier()
 		local _cache = self._lookup_cache_current
-		local var
-		if not _cache:has(state, identifier) then
+		local var = _cache:get_strict(state, identifier)
+		if not var then
 			local name = symbol.string
 			if self.variables:has(state, identifier) then
 				var = self.variables:get(state, identifier)
@@ -188,8 +186,6 @@ local Environment = ast.abstract.Runtime {
 				end
 			end
 			if var then _cache:set(state, identifier, var) end
-		else
-			var = _cache:get(state, identifier)
 		end
 		if var and not var:undefined(state) then
 			return var
