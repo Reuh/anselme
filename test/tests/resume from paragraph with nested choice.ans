@@ -1,18 +1,18 @@
 :@choice = 2
 
 :f = "f"!script($_)
-	| a |>
+	*| a
 		|-> a
 		#p!checkpoint
-		| aa |>
+		*| aa
 			|-> aa
-		| ab |>
+		*| ab
 			|-> ab
-	| b |>
+	*| b
 		|-> b
 	choice = 2
 
-	| c |>
+	*| c
 		|-> c
 	choice=1
 

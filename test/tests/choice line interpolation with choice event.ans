@@ -2,10 +2,11 @@
 
 :$ jump button
 	1 # |A
-	| Suprise choice! |> ()
+	*| Suprise choice!
+		()
 	return("JOIN")
 
-| Press {jump button!} to jump. |>
+*| Press {jump button!} to jump.
 	|ok
-| No |>
+*| No
 	|ko

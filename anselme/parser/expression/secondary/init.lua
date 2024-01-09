@@ -10,7 +10,6 @@ local secondaries = {
 	r("infix.tuple"),
 	r("infix.tag"),
 	r("infix.translate"),
-	r("infix.choice"),
 	r("infix.and"),
 	r("infix.or"),
 	r("infix.equal"),

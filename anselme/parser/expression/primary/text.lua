@@ -14,12 +14,6 @@ return string {
 		local start_source = source:clone()
 		local interpolation, rem = string.parse(self, source, str, limit_pattern)
 
-		-- restore | when chaining with a choice operator
-		if rem:match("^>") then
-			rem = "|" .. rem
-			source:increment(-1)
-		end
-
 		-- remove terminal space
 		local last = interpolation.list[#interpolation.list]
 		if ast.String:is(last) then last.string = last.string:gsub("%s$", "") end

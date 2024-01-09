@@ -31,7 +31,7 @@ return {
 
 	-- choice
 	{
-		"_|>_", "(txt::is text, fn)",
+		"write choice", "(text::is text, fn=attached block(keep return=true))",
 		function(state, text, func)
 			if func:contains_current_resume_target(state) then
 				func:call(state, ArgumentTuple:new())
@@ -40,7 +40,8 @@ return {
 				event_manager:write(state, Choice:new(text, func))
 			end
 			return Nil:new()
-		end
+		end,
+		alias = { "*_" }
 	},
 
 	-- translation

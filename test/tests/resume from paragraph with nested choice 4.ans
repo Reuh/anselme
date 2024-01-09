@@ -1,16 +1,16 @@
 :@choice = 1
 :i = "i"!script($_)
-	| a |>
+	*| a
 		|-> a
 		#p!checkpoint
-		| aa |>
+		*| aa
 			|-> aa
-		| ab |>
+		*| ab
 			|-> ab
-	| b |>
+	*| b
 		|-> b
 	if(1)
-		| c |>
+		*| c
 			|-> c
 
 | i:

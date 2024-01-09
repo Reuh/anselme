@@ -10,7 +10,7 @@
 	:x = 8
 	($_)!from(anchor)
 		|a
-		| A |>
+		*| A
 			| b
 			c = #pouet
 			g!
@@ -18,7 +18,7 @@
 			_
 				| f
 				| g
-		| B |>
+		*| B
 			| boum
 
 		|h {x}

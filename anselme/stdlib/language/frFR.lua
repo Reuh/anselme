@@ -79,4 +79,6 @@ return [[
 
 :@fusionner branche = stdlib.merge branch
 :@persister = stdlib.persist
+
+:@écrire choix = stdlib.write choice
 ]]

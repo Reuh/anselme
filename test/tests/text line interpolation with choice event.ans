@@ -2,12 +2,12 @@
 
 :$ jump button
 	1 # | A
-	| Surprise choice! |>
+	*| Surprise choice!
 		| ok
 
 :$ move axis
 	1 # | left
-	| Surprise choice! |>
+	*| Surprise choice!
 		| ok2
 	return(" joystick")
 

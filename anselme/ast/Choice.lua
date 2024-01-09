@@ -20,11 +20,8 @@ Choice = ast.abstract.Runtime {
 		fn(self.func, ...)
 	end,
 
-	_format = function(self, ...)
-		return ("%s |> %s"):format(self.text:format(...), self.func:format_right(...))
-	end,
-	_format_priority = function(self)
-		return operator_priority["_|>_"]
+	_format = function(self, state, prio, ...)
+		return ("write choice(%s, %s)"):format(self.text:format(state, operator_priority["_,_"], ...), self.func:format_right(state, operator_priority["_,_"], ...))
 	end,
 
 	build_event_data = function(self, state, event_buffer)

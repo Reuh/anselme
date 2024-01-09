@@ -5,13 +5,13 @@
 	1 # | left
 	return(" joystick")
 
-| Press {jump button!} to jump. |>
+*| Press {jump button!} to jump.
 	|ok
-| No |>
+*| No
 	|ko
 :@choice = 1
 
-| Other |>
+*| Other
 	|ok
-| Use {move axis!} to move. |>
+*| Use {move axis!} to move.
 	|ko

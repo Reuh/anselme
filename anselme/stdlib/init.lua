@@ -3,6 +3,11 @@ local parser = require("anselme.parser")
 local function define_lua(state, list)
 	for _, fn in ipairs(list) do
 		state.scope:define_lua("@"..fn[1], fn[2], fn[3], true)
+		if fn.alias then
+			for _, alias in ipairs(fn.alias) do
+				state.scope:define_lua("@"..alias, fn[2], fn[3], true)
+			end
+		end
 	end
 end
 local function load(state, l)

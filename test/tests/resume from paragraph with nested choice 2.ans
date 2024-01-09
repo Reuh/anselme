@@ -1,17 +1,17 @@
 :@choice=1
 :g = "g"!script($_)
-	| a |>
+	*| a
 		|-> a
 		#p!checkpoint
-		| aa |>
+		*| aa
 			|-> aa
-		| ab |>
+		*| ab
 			|-> ab
-	| b |>
+	*| b
 		|-> b
 	choice = 2
 	|autoflush
-	| c |>
+	*| c
 		|-> c
 	choice = 1
 

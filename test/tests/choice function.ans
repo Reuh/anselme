@@ -1,11 +1,11 @@
 :$ f
-	| neol |>
+	*| neol
 		| nah
 
-| ho |>
+*| ho
 	|plop
 f!
-| oh |>
+*| oh
 	|ok
 f!
 :@choice=3
