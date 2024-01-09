@@ -6,6 +6,8 @@ return [[
 :@is number = is("number")
 :@is string = is("string")
 :@is boolean = is("boolean")
+:@is false = $(x) !x
+:@is true = $(x) !!x
 :@is symbol = is("symbol")
 :@is anchor = is("anchor")
 :@is pair = is("pair")

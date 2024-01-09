@@ -57,6 +57,8 @@ return [[
 :@est = stdlib.is
 :@est une ancre = stdlib.is anchor
 :@est un booléen = stdlib.is boolean
+:@est vrai = stdlib.is true
+:@est faux = stdlib.is false
 :@est appelable = stdlib.is callable
 :@est une fonction = stdlib.is function
 :@est une liste = stdlib.is list

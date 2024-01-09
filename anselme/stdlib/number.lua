@@ -12,7 +12,7 @@ return {
 			end
 		end
 	},
-	{ "_<_", "(a::equal(false), b::is number)", function(state, a, b) return Boolean:new(false) end },
+	{ "_<_", "(a::is false, b::is number)", function(state, a, b) return Boolean:new(false) end },
 	{
 		"_<=_", "(a::is number, b::is number)",
 		function(state, a, b)
@@ -21,7 +21,7 @@ return {
 			end
 		end
 	},
-	{ "_<=_", "(a::equal(false), b::is number)", function(state, a, b) return Boolean:new(false) end },
+	{ "_<=_", "(a::is false, b::is number)", function(state, a, b) return Boolean:new(false) end },
 	{
 		"_>_", "(a::is number, b::is number)",
 		function(state, a, b)
@@ -30,7 +30,7 @@ return {
 			end
 		end
 	},
-	{ "_>_", "(a::equal(false), b::is number)", function(state, a, b) return Boolean:new(false) end },
+	{ "_>_", "(a::is false, b::is number)", function(state, a, b) return Boolean:new(false) end },
 	{
 		"_>=_", "(a::is number, b::is number)",
 		function(state, a, b)
@@ -39,7 +39,7 @@ return {
 			end
 		end
 	},
-	{ "_>=_", "(a::equal(false), b::is number)", function(state, a, b) return Boolean:new(false) end },
+	{ "_>=_", "(a::is false, b::is number)", function(state, a, b) return Boolean:new(false) end },
 	{ "_+_", "(a::is number, b::is number)", function(state, a, b) return Number:new(a.number + b.number) end },
 	{ "_-_", "(a::is number, b::is number)", function(state, a, b) return Number:new(a.number - b.number) end },
 	{ "_*_", "(a::is number, b::is number)", function(state, a, b) return Number:new(a.number * b.number) end },
