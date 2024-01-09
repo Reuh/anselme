@@ -9,10 +9,9 @@ Symbol = ast.abstract.Node {
 
 	string = nil,
 	constant = nil, -- bool
-	type_check = nil, -- exp
-
 	alias = nil, -- bool
 	exported = nil, -- bool
+	value_check = nil, -- exp
 
 	confined_to_branch = nil, -- bool
 
@@ -20,21 +19,14 @@ Symbol = ast.abstract.Node {
 		modifiers = modifiers or {}
 		self.string = str
 		self.constant = modifiers.constant
-		self.type_check = modifiers.type_check
+		self.value_check = modifiers.value_check
 		self.alias = modifiers.alias
 		self.confined_to_branch = modifiers.confined_to_branch
 		self.exported = modifiers.exported
 	end,
-
-	_eval = function(self, state)
-		return self:with {
-			type_check = self.type_check and self.type_check:eval(state)
-		}
-	end,
-
 	with = function(self, modifiers)
 		modifiers = modifiers or {}
-		for _, k in ipairs{"constant", "type_check", "alias", "exported", "confined_to_branch"} do
+		for _, k in ipairs{"constant", "value_check", "alias", "exported", "confined_to_branch"} do
 			if modifiers[k] == nil then
 				modifiers[k] = self[k]
 			end
@@ -42,8 +34,34 @@ Symbol = ast.abstract.Node {
 		return Symbol:new(self.string, modifiers)
 	end,
 
+	traverse = function(self, fn, ...)
+		if self.value_check then
+			fn(self.value_check, ...)
+		end
+	end,
+
+	_eval = function(self, state)
+		return self:with {
+			value_check = self.value_check and self.value_check:eval(state)
+		}
+	end,
+
 	_hash = function(self)
-		return ("symbol<%q>"):format(self.string)
+		local prefix = ""
+		if self.constant then
+			prefix = prefix .. ":"
+		end
+		if self.alias then
+			prefix = prefix .. "&"
+		end
+		if self.exported then
+			prefix = prefix .. "@"
+		end
+		if self.value_check then
+			return ("symbol<%s%q;%s>"):format(prefix, self.string, self.value_check:hash())
+		else
+			return ("symbol<%s%q>"):format(prefix, self.string)
+		end
 	end,
 
 	_format = function(self, state, prio, ...)
@@ -58,13 +76,13 @@ Symbol = ast.abstract.Node {
 			s = s .. "@"
 		end
 		s = s .. self.string
-		if self.type_check then
-			s = s .. "::" .. self.type_check:format_right(state, operator_priority["_::_"], ...)
+		if self.value_check then
+			s = s .. "::" .. self.value_check:format_right(state, operator_priority["_::_"], ...)
 		end
 		return s
 	end,
 	_format_priority = function(self)
-		if self.type_check then
+		if self.value_check then
 			return operator_priority["_::_"]
 		end
 		return math.huge

@@ -2,13 +2,13 @@
 --- error ---
 [0m[31m[0m[31m[0m[31m[0m[31m[0m[31m[0m[31mcan't call overload iter: no function match arguments (value), possible functions were:
 	• $(table::is table) (from stdlib/for.ans:46:1):
-		type check failure for parameter table
+		value check failure for parameter table
 	• $(tuple::is sequence) (from stdlib/for.ans:37:1):
-		type check failure for parameter tuple
+		value check failure for parameter tuple
 	• $(range::is range) (from stdlib/for.ans:19:1):
-		type check failure for parameter range
+		value check failure for parameter range
 	• $(s::is struct) (from stdlib/for.ans:2:1):
-		type check failure for parameter s[0m
+		value check failure for parameter s[0m
 	↳ from [4mstdlib/for.ans:3:18[0m in call: [2miter(var)[0m[0m
 	↳ from [4mstdlib/for.ans:3:12[0m in definition: [2m:iterator = iter(var)[0m[0m
 	↳ from [4mstdlib/for.ans:2:1[0m in block: [2m:iterator = iter(var)…[0m[0m

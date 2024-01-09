@@ -23,7 +23,7 @@ return function(main_state)
 		"conditionals",
 		"base",
 		"typed",
-		"type check",
+		"value check",
 		"number",
 		"string",
 		"symbol",

@@ -7,7 +7,7 @@ local FunctionParameter = ast.FunctionParameter
 
 local operator_priority = require("anselme.common").operator_priority
 local assignment_priority = operator_priority["_=_"]
-local type_check_priority = operator_priority["_::_"]
+local value_check_priority = operator_priority["_::_"]
 
 return primary {
 	match = function(self, str)
@@ -19,11 +19,11 @@ return primary {
 		-- name
 		local ident, rem = identifier:parse(source, str)
 
-		-- type check
-		local type_check
+		-- value check
+		local value_check
 		if rem:match("^%s*::") then
 			local scheck = source:consume(rem:match("^(%s*::%s*)(.*)$"))
-			type_check, rem = expression_to_ast(source, scheck, limit_pattern, type_check_priority)
+			value_check, rem = expression_to_ast(source, scheck, limit_pattern, value_check_priority)
 		end
 
 		-- default value
@@ -35,6 +35,6 @@ return primary {
 			end
 		end
 
-		return FunctionParameter:new(ident, default, type_check):set_source(source_param), rem
+		return FunctionParameter:new(ident, default, value_check):set_source(source_param), rem
 	end
 }

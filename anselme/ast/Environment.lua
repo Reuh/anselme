@@ -34,9 +34,9 @@ local VariableMetadata = ast.abstract.Runtime {
 		if self.symbol.constant then
 			error(("trying to change the value of constant %s"):format(self.symbol.string:format(state)), 0)
 		end
-		if self.symbol.type_check then
-			local r = self.symbol.type_check:call(state, ArgumentTuple:new(value))
-			if not r:truthy() then error(("type check failure for %s; %s does not satisfy %s"):format(self.symbol.string:format(state), value, self.symbol.type_check:format(state)), 0) end
+		if self.symbol.value_check then
+			local r = self.symbol.value_check:call(state, ArgumentTuple:new(value))
+			if not r:truthy() then error(("value check failure for %s; %s does not satisfy %s"):format(self.symbol.string:format(state), value, self.symbol.value_check:format(state)), 0) end
 		end
 		if self.symbol.alias then
 			local assign_args = ArgumentTuple:new()

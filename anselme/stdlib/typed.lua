@@ -9,7 +9,7 @@ return {
 			if r:truthy() then
 				return value
 			else
-				error(("type check failure: %s does not satisfy %s"):format(value:format(state), check:format(state)), 0)
+				error(("value check failure: %s does not satisfy %s"):format(value:format(state), check:format(state)), 0)
 			end
 		end
 	},

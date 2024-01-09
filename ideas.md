@@ -24,7 +24,7 @@ Standard library.
 
 ---
 
-Default arguments and initial variables values should pass the type check associated with the variable / parameter.
+Default arguments and initial variables values should pass the value check associated with the variable / parameter.
 Issue: dispatch is decided before evaluating default values.
 
 ---
@@ -42,8 +42,6 @@ Syntax modifications:
 	- regular operator assignments:
 		Could interpret the left operand as a string when it is an identifier, like how _._ works.
 		Would feel good to have less nodes. But because we can doesn't mean we should. Also Assignment is reused in a few other places.
-
-* remove operators if possible, i'd like to avoid the code looking like a bunch of sigils. Could be replaced by functions: _|>_, _::_
 
 # Can be done later
 
@@ -83,7 +81,7 @@ Performance:
 	Assuming the filter functions are pure seems reasonable, so caching could be done.
 	Could also hardcode some shortcut paths for the simple type equality check case.
 	Or track function/expression purity and cache/precompute the results. Not sure how to do that with multiple dispatch though.
-	(note for future reference: once a function is first evaluated into a closure, its parameters are fixed, including the type check overloads)
+	(note for future reference: once a function is first evaluated into a closure, its parameters are fixed, including the value check callable)
 * the recursive AST interpreter is also pretty meh, could do a bytecode VM.
 	This one seems like a lot more work.
 	Could also compile to Lua and let LuaJIT deal with it. Or WASM, that sounds trendy.

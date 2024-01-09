@@ -4,7 +4,7 @@
 --- text ---
 | {}"" {}"type(12, \"kg\")" {}"" |
 --- error ---
-[0m[31m[0m[31mtype check failure for weigh; 32 does not satisfy $(x) type(x) == t[0m
+[0m[31m[0m[31mvalue check failure for weigh; 32 does not satisfy $(x) type(x) == t[0m
 	↳ from [4mtest/tests/constrained variable assignement.ans:9:7[0m in assignment: [2mweigh = 32[0m[0m
 	↳ from [4m?[0m in block: [2m:weigh::is("kg") = type(5, "kg")…[0m
 --# saved #--

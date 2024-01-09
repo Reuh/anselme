@@ -7,18 +7,18 @@ FunctionParameter = ast.abstract.Node {
 
 	identifier = nil,
 	default = nil, -- can be nil
-	type_check = nil, -- can be nil
+	value_check = nil, -- can be nil
 
-	init = function(self, identifier, default, type_check)
+	init = function(self, identifier, default, value_check)
 		self.identifier = identifier
 		self.default = default
-		self.type_check = type_check
+		self.value_check = value_check
 	end,
 
 	_format = function(self, state, prio, ...)
 		local s = self.identifier:format(state, prio, ...)
-		if self.type_check then
-			s = s .. "::" .. self.type_check:format_right(state, operator_priority["_::_"], ...)
+		if self.value_check then
+			s = s .. "::" .. self.value_check:format_right(state, operator_priority["_::_"], ...)
 		end
 		if self.default then
 			s = s .. "=" .. self.default:format_right(state, operator_priority["_=_"], ...)
@@ -28,7 +28,7 @@ FunctionParameter = ast.abstract.Node {
 	_format_priority = function(self)
 		if self.default then
 			return operator_priority["_=_"]
-		elseif self.type_check then -- type_check has higher prio than assignment in any case
+		elseif self.value_check then -- value_check has higher prio than assignment in any case
 			return operator_priority["_::_"]
 		else
 			return math.huge
@@ -38,11 +38,11 @@ FunctionParameter = ast.abstract.Node {
 	traverse = function(self, fn, ...)
 		fn(self.identifier, ...)
 		if self.default then fn(self.default, ...) end
-		if self.type_check then fn(self.type_check, ...) end
+		if self.value_check then fn(self.value_check, ...) end
 	end,
 
 	_eval = function(self, state)
-		return FunctionParameter:new(self.identifier, self.default, self.type_check and self.type_check:eval(state))
+		return FunctionParameter:new(self.identifier, self.default, self.value_check and self.value_check:eval(state))
 	end
 }
 
