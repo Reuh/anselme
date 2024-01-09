@@ -27,6 +27,16 @@ Function = ast.abstract.Overloadable {
 		return Function:new(parameters, ReturnBoundary:new(expression))
 	end,
 
+	-- returns the same function, without the return boundary
+	-- this does not create a new function scope
+	without_return_boundary = function(self)
+		if ReturnBoundary:is(self.expression) then
+			return Function:new(self.parameters, self.expression.expression, self.scope, self.upvalues)
+		else
+			return self
+		end
+	end,
+
 	_format = function(self, ...)
 		if self.parameters.assignment then
 			return "$"..self.parameters:format_short(...).."; "..self.expression:format_right(...)

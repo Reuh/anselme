@@ -12,6 +12,7 @@ return [[
 
 :@défini = stdlib.defined
 :@surcharge = stdlib.overload
+:@préserver retour = stdlib.keep return
 
 :@si = stdlib.if
 :@sinon = stdlib.else

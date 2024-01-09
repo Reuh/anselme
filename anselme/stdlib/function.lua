@@ -27,6 +27,13 @@ return {
 	},
 
 	{
+		"keep return", "(f::is function)",
+		function(state, f)
+			return f:without_return_boundary()
+		end
+	},
+
+	{
 		"_._", "(c::is function, s::is string)",
 		function(state, c, s)
 			local identifier = s:to_identifier()
