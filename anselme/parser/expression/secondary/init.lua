@@ -30,9 +30,8 @@ local secondaries = {
 	r("infix.call"),
 	r("infix.index_identifier"),
 	r("infix.index"),
-	r("infix.assignment"), -- deported after equal
 	r("infix.assignment_call"),
-	r("infix.definition"),
+	r("infix.assignment"), -- deported after equal
 	r("infix.pair"), -- deported after value_check
 
 	-- unary suffix operators

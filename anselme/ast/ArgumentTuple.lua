@@ -6,6 +6,7 @@ local operator_priority = require("anselme.common").operator_priority
 local ArgumentTuple
 ArgumentTuple = ast.abstract.Node {
 	type = "argument tuple",
+	hide_in_stacktrace = true,
 
 	arguments = nil,
 

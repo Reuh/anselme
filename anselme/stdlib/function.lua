@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Boolean, Definition, Return, Overload, Overloadable = ast.Nil, ast.Boolean, ast.Definition, ast.Return, ast.Overload, ast.abstract.Overloadable
+local Nil, Boolean, Call, Quote, Return, Overload, Overloadable = ast.Nil, ast.Boolean, ast.Call, ast.Quote, ast.Return, ast.Overload, ast.abstract.Overloadable
 local assert0 = require("anselme.common").assert0
 
 return {
@@ -54,7 +54,7 @@ return {
 		"_._", "(c::is function, s::is symbol) = v",
 		function(state, c, s, v)
 			state.scope:push(c.scope)
-			local r = Definition:new(s, v):eval(state)
+			local r = Call:from_operator("_=_", Quote:new(s), v):eval(state)
 			state.scope:pop()
 			return r
 		end

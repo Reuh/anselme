@@ -27,22 +27,6 @@ Standard library.
 Default arguments and initial variables values should pass the value check associated with the variable / parameter.
 Issue: dispatch is decided before evaluating default values.
 
----
-
-Syntax modifications:
-
-* on the subject of assignments:
-	- multiple assignments:
-
-	:a, :b = 5, 6
-	a, b = list!($(l) l[3], l[6])
-
-		Easy by interpreting the left operand as a List. And also make this work for for loops.
-
-	- regular operator assignments:
-		Could interpret the left operand as a string when it is an identifier, like how _._ works.
-		Would feel good to have less nodes. But because we can doesn't mean we should. Also Assignment is reused in a few other places.
-
 # Can be done later
 
 Server API.
@@ -52,6 +36,12 @@ To be able to use Anselme in another language, it would be nice to be able to ac
 No need to bother with networking I think. Just do some stdin/stdout handling, maybe use something like JSON-RPC: https://www.jsonrpc.org/specification (reminder: will need to add some metadata to specify content length, not aware of any streaming json lib in pure Lua - here's a rxi seal of quality library btw: https://github.com/rxi/json.lua). Or just make our own protocol around JSON.
 Issue: how to represent Anselme values? they will probably contain cycles, needs to access their methods, etc.
 Probably wise to look into how other do it. LSP: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+
+---
+
+Return system.
+
+Could be reused for exception handling or other purposes if accessible by the user.
 
 ---
 

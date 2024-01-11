@@ -7,7 +7,7 @@ local expression_to_ast = require("anselme.parser.expression.to_ast")
 local escape = require("anselme.common").escape
 
 local ast = require("anselme.ast")
-local Symbol, Definition, Function, ParameterTuple = ast.Symbol, ast.Definition, ast.Function, ast.ParameterTuple
+local Symbol, Call, Quote, Function, ParameterTuple = ast.Symbol, ast.Call, ast.Quote, ast.Function, ast.ParameterTuple
 
 local regular_operators = require("anselme.common").regular_operators
 local prefixes = regular_operators.prefixes
@@ -198,7 +198,7 @@ return primary {
 
 			-- return function
 			local fn = Function:with_return_boundary(parameters, right):set_source(source_start)
-			return Definition:new(symbol, fn):set_source(source_start), rem
+			return Call:from_operator("_=_", Quote:new(symbol), fn):set_source(source_start), rem
 		end
 	end
 }

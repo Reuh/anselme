@@ -16,21 +16,21 @@ for _, infix in ipairs(infixes) do
 
 	-- avoid a lot of unecessary trouble with <= & friends. why would you ever want to use i <= 7 as i = i < 7 anyway.
 	if not operator_priority["_"..compound_operator.."_"] then
-		table.insert(generated, assignment {
-			operator = compound_operator,
-			identifier = identifier,
-			build_ast = function(self, left, right)
-				right = Call:new(Identifier:new(infix_identifier), ArgumentTuple:new(left, right))
-				return assignment.build_ast(self, left, right)
-			end
-		})
-
 		table.insert(generated, assignment_call {
 			operator = compound_operator,
 			identifier = identifier,
 			build_ast = function(self, left, right)
 				right = Call:new(Identifier:new(infix_identifier), ArgumentTuple:new(left, right))
 				return assignment_call.build_ast(self, left, right)
+			end
+		})
+
+		table.insert(generated, assignment {
+			operator = compound_operator,
+			identifier = identifier,
+			build_ast = function(self, left, right)
+				right = Call:new(Identifier:new(infix_identifier), ArgumentTuple:new(left, right))
+				return assignment.build_ast(self, left, right)
 			end
 		})
 	end

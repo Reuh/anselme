@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Call, Function, ParameterTuple, FunctionParameter, Identifier, Overload, Assignment = ast.Call, ast.Function, ast.ParameterTuple, ast.FunctionParameter, ast.Identifier, ast.Overload, ast.Assignment
+local Call, Function, ParameterTuple, FunctionParameter, Identifier, Overload = ast.Call, ast.Function, ast.ParameterTuple, ast.FunctionParameter, ast.Identifier, ast.Overload
 
 return {
 	{
@@ -12,7 +12,7 @@ return {
 			if Call:is(exp) then
 				set_exp = Call:new(exp.func, exp.arguments:with_assignment(Identifier:new("value")))
 			elseif Identifier:is(exp) then
-				set_exp = Assignment:new(exp, Identifier:new("value"))
+				set_exp = Call:from_operator("_=_", q, Identifier:new("value"))
 			end
 
 			if set_exp then

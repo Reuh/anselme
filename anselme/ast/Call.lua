@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Identifier
+local Identifier, Quote, ArgumentTuple
 
 local regular_operators = require("anselme.common").regular_operators
 local operator_priority = require("anselme.common").operator_priority
@@ -23,6 +23,9 @@ Call = ast.abstract.Node {
 	init = function(self, func, arguments)
 		self.func = func
 		self.arguments = arguments
+	end,
+	from_operator = function(self, operator, left, right)
+		return Call:new(Identifier:new(operator), ArgumentTuple:new(left, right))
 	end,
 
 	_format = function(self, ...)
@@ -67,6 +70,14 @@ Call = ast.abstract.Node {
 		return operator_priority["_!"]
 	end,
 
+	is_infix = function(self, operator)
+		return Identifier:is(self.func) and self.func.name == operator
+			and self.arguments.arity == 2 and #self.arguments.positional == 2
+	end,
+	is_simple_assignment = function(self)
+		return self:is_infix("_=_") and Quote:is(self.arguments.positional[1]) and Identifier:is(self.arguments.positional[1].expression)
+	end,
+
 	traverse = function(self, fn, ...)
 		fn(self.func, ...)
 		fn(self.arguments, ...)
@@ -81,6 +92,6 @@ Call = ast.abstract.Node {
 }
 
 package.loaded[...] = Call
-Identifier = ast.Identifier
+Identifier, Quote, ArgumentTuple = ast.Identifier, ast.Quote, ast.ArgumentTuple
 
 return Call

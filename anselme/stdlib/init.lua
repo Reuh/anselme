@@ -28,6 +28,7 @@ return function(main_state)
 		"conditionals",
 		"base",
 		"typed",
+		"assignment",
 		"value check",
 		"number",
 		"string",

@@ -14,7 +14,10 @@ ParameterTuple = ast.abstract.Node {
 	eval_depth = 0, -- scope deth where this parametertuple was evaluated, used as secondary specificity
 
 	init = function(self, ...)
-		self.list = {...}
+		self.list = {}
+		for _, param in ipairs{...} do
+			self:insert(param)
+		end
 	end,
 	insert = function(self, val) -- only for construction
 		assert(not self.assignment, "can't add new parameters after assignment parameter was added")

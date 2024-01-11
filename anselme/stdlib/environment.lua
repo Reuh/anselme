@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Boolean, Definition = ast.Nil, ast.Boolean, ast.Definition
+local Nil, Boolean, Call, Quote = ast.Nil, ast.Boolean, ast.Call, ast.Quote
 local assert0 = require("anselme.common").assert0
 local parser = require("anselme.parser")
 
@@ -36,7 +36,7 @@ return {
 		"_._", "(c::is environment, s::is symbol) = v",
 		function(state, env, s, v)
 			state.scope:push(env)
-			local r = Definition:new(s, v):eval(state)
+			local r = Call:from_operator("_=_", Quote:new(s), v):eval(state)
 			state.scope:pop()
 			return r
 		end
@@ -46,7 +46,7 @@ return {
 		"import", "(env::is environment, symbol tuple::is tuple)",
 		function(state, env, l)
 			for _, sym in l:iter(state) do
-				Definition:new(sym, env:get(state, sym:to_identifier())):eval(state)
+				Call:from_operator("_=_", Quote:new(sym), env:get(state, sym:to_identifier())):eval(state)
 			end
 			return env
 		end
@@ -54,7 +54,7 @@ return {
 	{
 		"import", "(env::is environment, symbol::is symbol)",
 		function(state, env, sym)
-			Definition:new(sym, env:get(state, sym:to_identifier())):eval(state)
+			Call:from_operator("_=_", Quote:new(sym), env:get(state, sym:to_identifier())):eval(state)
 			return env
 		end
 	},

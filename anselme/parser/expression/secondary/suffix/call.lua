@@ -8,7 +8,7 @@ local struct = require("anselme.parser.expression.primary.struct")
 local operator_priority = require("anselme.common").operator_priority
 
 local ast = require("anselme.ast")
-local Call, ArgumentTuple, Tuple, Assignment, Nil = ast.Call, ast.ArgumentTuple, ast.Tuple, ast.Assignment, ast.Nil
+local Call, ArgumentTuple, Tuple, Nil = ast.Call, ast.ArgumentTuple, ast.Tuple, ast.Nil
 
 return secondary {
 	priority = operator_priority["_()"],
@@ -44,8 +44,9 @@ return secondary {
 		end
 
 		for _, v in ipairs(exp.list) do
-			if Assignment:is(v) then
-				args:add_named(v.identifier, v.expression)
+			if Call:is(v) and v:is_simple_assignment() then
+				local pos = v.arguments.positional
+				args:add_named(pos[1].expression, pos[2])
 			else
 				args:add_positional(v)
 			end

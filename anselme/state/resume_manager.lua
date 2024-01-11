@@ -22,6 +22,7 @@ local resume_manager = class {
 	-- same as :push, but the resume will stop immediately after reaching the target or a node containing the target
 	-- (we will stop even if the node is not directly reached - this is used to run a specific line containing a node,
 	-- notably for Definition of exported variables)
+	-- TODO unused?
 	push_no_continue = function(self, state, target)
 		assert(ResumeTarget:issub(target), "can only resume to a resume target")
 		state.scope:push_partial(resume_target_identifier, resume_no_continue_identifier, resume_environment_identifier)

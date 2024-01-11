@@ -222,7 +222,7 @@ Node = class {
 			local r = {}
 			if Struct:is(tr) then
 				for context, context_tr in tr:iter() do
-					table.insert(r, indent..Call:new(Identifier:new("_#_"), ArgumentTuple:new(context, Identifier:new("_"))):format():gsub(" _$", ""))
+					table.insert(r, indent..Call:from_operator("_#_", context, Identifier:new("_")):format():gsub(" _$", ""))
 					table.insert(r, build_str(context_tr, level+1))
 				end
 			elseif Tuple:is(tr) then
@@ -232,7 +232,7 @@ Node = class {
 				end
 			else
 				table.insert(r, indent.."/* "..tr.source.." */")
-				table.insert(r, indent..Call:new(Identifier:new("_->_"), ArgumentTuple:new(tr, tr)):format())
+				table.insert(r, indent..Call:from_operator("_->_", tr, tr):format())
 			end
 			return table.concat(r, "\n")
 		end

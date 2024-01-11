@@ -15,7 +15,6 @@ return [[
 :@is text = is("text")
 
 :@is sequence = $(x) x!type == "tuple" | x!type == "list"
-:@is tuple = is("tuple")
 :@is list = is("list")
 
 :@is map = $(x) x!type == "struct" | x!type == "table"
