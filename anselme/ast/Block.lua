@@ -38,7 +38,6 @@ local Block = ast.abstract.Node {
 		state.scope:push()
 		if self:contains_current_resume_target(state) then
 			local target = resume_manager:get(state)
-			local no_continue = resume_manager:no_continue(state)
 			local resumed = false
 			for _, e in ipairs(self.expressions) do
 				if e:contains_resume_target(target) then resumed = true end
@@ -47,7 +46,7 @@ local Block = ast.abstract.Node {
 					if AutoCall:issub(r) then
 						r = r:call(state, ArgumentTuple:new())
 					end
-					if Return:is(r) or no_continue then
+					if Return:is(r) then
 						break -- pass on to parent block until we reach a function boundary
 					end
 				end
