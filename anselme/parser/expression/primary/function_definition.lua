@@ -32,8 +32,8 @@ local function_parameter_maybe_parenthesis = function_parameter_no_default {
 
 			local exp, rem = function_parameter_no_default:parse(source, str, limit_pattern)
 
-			if not rem:match("^%s*%)") then error(("unexpected %q at end of parenthesis"):format(rem), 0) end
-			rem = source:consume(rem:match("^(%s*%))(.-)$"))
+			if not rem:match("^[ \t]*%)") then error(("unexpected %q at end of parenthesis"):format(rem:match("^[^\n]*")), 0) end
+			rem = source:consume(rem:match("^([ \t]*%))(.-)$"))
 
 			return exp, rem
 		else
@@ -49,7 +49,7 @@ local function_parameter_maybe_parenthesis = function_parameter_no_default {
 local function search_prefix_signature(modifiers, source, str, limit_pattern)
 	for _, pfx in ipairs(prefixes) do
 		local prefix = pfx[1]
-		local prefix_pattern = "%s*"..escape(prefix).."%s*"
+		local prefix_pattern = "[ \t]*"..escape(prefix).."[ \t]*"
 		if str:match("^"..prefix_pattern) then
 			-- operator name
 			local rem = source:consume(str:match("^("..prefix_pattern..")(.*)$"))
@@ -82,7 +82,7 @@ local function search_infix_signature(modifiers, source, str, limit_pattern)
 
 		for _, ifx in ipairs(infixes) do
 			local infix = ifx[1]
-			local infix_pattern = "%s*"..escape(infix).."%s*"
+			local infix_pattern = "[ \t]*"..escape(infix).."[ \t]*"
 			if rem:match("^"..infix_pattern) then
 				-- operator name
 				rem = src:consume(rem:match("^("..infix_pattern..")(.*)$"))
@@ -119,7 +119,7 @@ local function search_suffix_signature(modifiers, source, str, limit_pattern)
 
 		for _, sfx in ipairs(suffixes) do
 			local suffix = sfx[1]
-			local suffix_pattern = "%s*"..escape(suffix).."%s*"
+			local suffix_pattern = "[ \t]*"..escape(suffix).."[ \t]*"
 			if rem:match("^"..suffix_pattern) then
 				-- operator name
 				rem = src:count(rem:match("^("..suffix_pattern..")(.*)$"))

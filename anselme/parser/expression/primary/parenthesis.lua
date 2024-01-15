@@ -22,7 +22,7 @@ return primary {
 			local s
 			s, exp, rem = pcall(expression_to_ast, source, rem, "%)")
 			if not s then error("invalid expression inside parentheses: "..exp, 0) end
-			if not rem:match("^%s*%)") then error(("unexpected %q at end of parenthesis"):format(rem), 0) end
+			if not rem:match("^%s*%)") then error(("unexpected %q at end of parenthesis"):format(rem:match("^[^\n]*")), 0) end
 		end
 		rem = source:consume(rem:match("^(%s*%))(.*)$"))
 

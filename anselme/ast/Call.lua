@@ -16,6 +16,7 @@ local Call
 
 Call = ast.abstract.Node {
 	type = "call",
+	explicit = true, -- false for implicit calls
 
 	func = nil,
 	arguments = nil, -- ArgumentTuple

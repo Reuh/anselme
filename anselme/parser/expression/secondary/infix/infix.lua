@@ -23,7 +23,7 @@ return secondary {
 
 		local sright = source:consume(str:match("^("..escaped..")(.*)$"))
 		local s, right, rem = pcall(expression_to_ast, source, sright, limit_pattern, self.priority)
-		if not s then error(("invalid expression after binary operator %q: %s"):format(self.operator, right), 0) end
+		if not s then error(("invalid expression after infix operator %q: %s"):format(self.operator, right), 0) end
 
 		return self:build_ast(primary, right):set_source(start_source), rem
 	end,

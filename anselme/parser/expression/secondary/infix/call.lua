@@ -14,7 +14,7 @@ return infix {
 
 	match = function(self, str, current_priority, primary)
 		local escaped = escape(self.operator)
-		return self.priority > current_priority and str:match("^"..escaped) and identifier:match(str:match("^"..escaped.."%s*(.-)$"))
+		return self.priority > current_priority and str:match("^"..escaped) and identifier:match(str:match("^"..escaped.."[ \t]*(.-)$"))
 	end,
 
 	build_ast = function(self, left, right)

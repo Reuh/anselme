@@ -1,11 +1,13 @@
 --- try to parse a secondary expression
 
+local comment = require("anselme.parser.expression.comment")
+
 local function r(name)
 	return require("anselme.parser.expression.secondary."..name), nil
 end
 
 local secondaries = {
-	-- binary infix operators
+	-- binary infix operators,
 	r("infix.semicolon"),
 	r("infix.tuple"),
 	r("infix.tag"),
@@ -49,8 +51,16 @@ end
 return {
 	-- returns exp, rem if expression found
 	-- returns nil if no expression found
-	-- returns nil, err if error
 	search = function(self, source, str, limit_pattern, current_priority, primary)
+		str = source:consume(str:match("^([ \t]*)(.*)$"))
+		-- if there is a comment, restart the parsing after the comment ends
+		local c, c_rem = comment:search(source, str, limit_pattern)
+		if c then
+			local ce, ce_rem = self:search(source, c_rem, limit_pattern, current_priority, primary)
+			if ce then return ce, ce_rem
+			else return primary, c_rem end -- noop
+		end
+		-- search secondary
 		for _, secondary in ipairs(secondaries) do
 			local exp, rem = secondary:search(source, str, limit_pattern, current_priority, primary)
 			if exp then return exp, rem end

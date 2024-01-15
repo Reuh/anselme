@@ -16,27 +16,27 @@ return primary {
 
 		-- i would LOVE to reuse the regular list parsing code for this, but unfortunately the list parsing code
 		-- itself depends on this and expect this to be available quite early, and it's ANNOYING
-		while not rem:match("^%s*%)") do
+		while not rem:match("^[ \t]*%)") do
 			-- parameter
 			local func_param
 			func_param, rem = function_parameter:expect(source, rem, limit_pattern)
 
 			-- next! comma separator
-			if not rem:match("^%s*%)") then
-				if not rem:match("^%s*,") then
-					error(("unexpected %q at end of argument list"):format(rem), 0)
+			if not rem:match("^[ \t]*%)") then
+				if not rem:match("^[ \t]*,") then
+					error(("unexpected %q at end of argument list"):format(rem:match("^[^\n]*")), 0)
 				end
-				rem = source:consume(rem:match("^(%s*,)(.*)$"))
+				rem = source:consume(rem:match("^([ \t]*,)(.*)$"))
 			end
 
 			-- add
 			parameters:insert(func_param)
 		end
-		rem = rem:match("^%s*%)(.*)$")
+		rem = rem:match("^[ \t]*%)(.*)$")
 
 		-- assigment param
-		if rem:match("^%s*=") then
-			rem = source:consume(rem:match("^(%s*=%s*)(.*)$"))
+		if rem:match("^[ \t]*=") then
+			rem = source:consume(rem:match("^([ \t]*=[ \t]*)(.*)$"))
 
 			local func_param
 			func_param, rem = function_parameter_no_default:expect(source, rem, limit_pattern)

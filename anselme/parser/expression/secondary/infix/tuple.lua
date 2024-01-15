@@ -20,8 +20,8 @@ return infix {
 
 		local escaped = escape(self.operator)
 		local rem = str
-		while rem:match("^%s*"..escaped) do
-			rem = source:consume(rem:match("^(%s*"..escaped..")(.*)$"))
+		while rem:match("^[ \t]*"..escaped) do
+			rem = source:consume(rem:match("^([ \t]*"..escaped..")(.*)$"))
 
 			local s, right
 			s, right, rem = pcall(expression_to_ast, source, rem, limit_pattern, self.priority)

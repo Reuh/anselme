@@ -1,11 +1,15 @@
-local code_to_tree = require("anselme.parser.code_to_tree")
-local tree_to_ast = require("anselme.parser.tree_to_ast")
+local block = require("anselme.parser.expression.block")
+local Source = require("anselme.parser.Source")
+
+local function expect_end(exp, rem)
+	if rem:match("[^%s]") then
+		error(("expected end of expression before %q"):format(rem))
+	end
+	return exp
+end
 
 -- parse code (string) with the associated source (Source)
 -- the returned AST tree is stateless and can be stored/evaluated/etc as you please
 return function(code, source)
-	local tree = code_to_tree(code, source)
-	local block = tree_to_ast(tree)
-
-	return block
+	return expect_end(block(Source:new(source, 1, 1), code))
 end

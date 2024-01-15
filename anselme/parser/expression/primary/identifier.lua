@@ -2,8 +2,8 @@ local primary = require("anselme.parser.expression.primary.primary")
 
 local Identifier = require("anselme.ast.Identifier")
 
-local disallowed_set = (".~`^+-=<>/[]*{}|\\_!?,;:()\"@&$#%"):gsub("[^%w]", "%%%1")
-local identifier_pattern = "%s*[^0-9%s'"..disallowed_set.."][^"..disallowed_set.."]*"
+local disallowed_set = ("\n.~`^+-=<>/[]*{}|\\_!?,;:()\"@&$#%"):gsub("[^%w]", "%%%1")
+local identifier_pattern = "[ \t]*[^0-9%s'"..disallowed_set.."][^"..disallowed_set.."]*"
 
 local common = require("anselme.common")
 local trim, escape = common.trim, common.escape
@@ -17,7 +17,7 @@ for _, suffix in ipairs(regular_operators.suffixes) do table.insert(operators, "
 
 -- all valid identifier patterns
 local identifier_patterns = { identifier_pattern }
-for _, operator in ipairs(operators) do table.insert(identifier_patterns, "%s*"..escape(operator)) end
+for _, operator in ipairs(operators) do table.insert(identifier_patterns, "[ \t]*"..escape(operator)) end
 
 return primary {
 	match = function(self, str)

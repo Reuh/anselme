@@ -27,7 +27,7 @@ return secondary {
 			exp, rem = parenthesis:parse(source, str, limit_pattern)
 
 			if Nil:is(exp) then
-				if str:match("^%(%s*%(%s*%)%s*%)") then -- special case: single nil argument
+				if str:match("^%([ \t]*%([ \t]*%)[ \t]*%)") then -- special case: single nil argument
 					exp = Tuple:new(Nil:new())
 				else -- no arguments
 					exp = Tuple:new()

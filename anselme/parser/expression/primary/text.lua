@@ -5,7 +5,7 @@ local TextInterpolation, Translatable = ast.TextInterpolation, ast.Translatable
 
 return string {
 	type = "text",
-	start_pattern = "|%s?",
+	start_pattern = "|[ \t]?",
 	stop_char = "|",
 	allow_implicit_stop = true,
 	interpolation = TextInterpolation,
@@ -16,7 +16,7 @@ return string {
 
 		-- remove terminal space
 		local last = interpolation.list[#interpolation.list]
-		if ast.String:is(last) then last.string = last.string:gsub("%s$", "") end
+		if ast.String:is(last) then last.string = last.string:gsub("[ \t]$", "") end
 
 		return Translatable:new(interpolation):set_source(start_source), rem
 	end

@@ -21,16 +21,16 @@ return primary {
 
 		-- value check
 		local value_check
-		if rem:match("^%s*::") then
-			local scheck = source:consume(rem:match("^(%s*::%s*)(.*)$"))
+		if rem:match("^[ \t]*::") then
+			local scheck = source:consume(rem:match("^([ \t]*::[ \t]*)(.*)$"))
 			value_check, rem = expression_to_ast(source, scheck, limit_pattern, value_check_priority)
 		end
 
 		-- default value
 		local default
 		if not no_default_value then
-			if rem:match("^%s*=") then
-				local sdefault = source:consume(rem:match("^(%s*=%s*)(.*)$"))
+			if rem:match("^[ \t]*=") then
+				local sdefault = source:consume(rem:match("^([ \t]*=[ \t]*)(.*)$"))
 				default, rem = expression_to_ast(source, sdefault, limit_pattern, assignment_priority)
 			end
 		end

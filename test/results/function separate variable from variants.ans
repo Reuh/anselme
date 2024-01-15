@@ -21,6 +21,6 @@
 		value check failure for parameter c[0m
 	↳ from [4mtest/tests/function separate variable from variants.ans:10:4[0m in call: [2mf . "a"[0m[0m
 	↳ from [4mtest/tests/function separate variable from variants.ans:10:1[0m in text interpolation: [2m| {f . "a"} = 2 |[0m[0m
-	↳ from [4m?[0m in block: [2m:f = ($() _)…[0m
+	↳ from [4mtest/tests/function separate variable from variants.ans:1:1[0m in block: [2m:f = ($() _)…[0m
 --# saved #--
 {}

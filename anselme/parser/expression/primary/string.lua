@@ -37,7 +37,7 @@ return primary {
 		while not rem:match("^"..stop_pattern) do
 			local text_source = source:clone()
 			local text
-			text, rem = rem:match("^([^%{%\\"..stop_pattern.."]*)(.-)$") -- get all text until something potentially happens
+			text, rem = rem:match("^([^\n%{%\\"..stop_pattern.."]*)(.-)$") -- get all text until something potentially happens
 
 			-- cut the text prematurely at limit_pattern if relevant
 			if self.allow_implicit_stop and limit_pattern and text:match(limit_pattern) then
@@ -50,23 +50,25 @@ return primary {
 
 			interpolation:insert(String:new(text):set_source(text_source))
 
+			-- interpolated expression
 			if rem:match("^%{") then
 				local ok, exp
 				ok, exp, rem = pcall(expression_to_ast, source, source:consume(rem:match("^(%{)(.*)$")), "%}")
 				if not ok then error("invalid expression inside interpolation: "..exp, 0) end
-				if not rem:match("^%s*%}") then error(("unexpected %q at end of interpolation"):format(rem), 0) end
-				rem = source:consume(rem:match("^(%s*%})(.*)$"))
+				if not rem:match("^[ \t]*%}") then error(("unexpected %q at end of interpolation"):format(rem:match("^[^\n]*")), 0) end
+				rem = source:consume(rem:match("^([ \t]*%})(.*)$"))
 				interpolation:insert(exp)
+			-- escape sequence
 			elseif rem:match("^\\") then
 				text, rem = source:consume(rem:match("^(\\(.))(.*)$"))
 				interpolation:insert(String:new(escape_code[text] or text))
+			-- consumed everything until end-of-line/file, implicit stop allowed, close your eyes and imagine the text has been closed
+			elseif self.allow_implicit_stop and (rem:match("^\n") or not rem:match("[^%s]")) then
+				rem = self.stop_char .. rem
+				source:increment(-1)
+			-- no end token after the comment
 			elseif not rem:match("^"..stop_pattern) then
-				if not self.allow_implicit_stop or rem:match("[^%s]") then
-					error(("unexpected %q at end of "..self.type):format(rem), 0)
-				-- consumed everything until end-of-line, implicit stop allowed, close your eyes and imagine the text has been closed
-				else
-					rem = rem .. self.stop_char
-				end
+				error(("unexpected %q at end of "..self.type):format(rem:match("^[^\n]*")), 0)
 			end
 		end
 		rem = source:consume(rem:match("^("..stop_pattern..")(.*)$"))

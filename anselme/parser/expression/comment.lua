@@ -11,7 +11,7 @@ comment = primary {
 		local content_list = {}
 		while not rem:match("^%*%/") do
 			local content
-			content, rem = rem:match("^([^%/%*]*)(.-)$")
+			content, rem = rem:match("^([^\n%/%*]*)(.-)$")
 
 			-- cut the text prematurely at limit_pattern if relevant
 			if limit_pattern and content:match(limit_pattern) then
@@ -32,6 +32,10 @@ comment = primary {
 				table.insert(content_list, "/*")
 				table.insert(content_list, subcomment)
 				table.insert(content_list, "*/")
+			-- consumed everything until end-of-line/file, close your eyes and imagine the text has been closed
+			elseif rem:match("^\n") or not rem:match("[^%s]") then
+				rem = "*/" .. rem
+				source:increment(-2)
 			-- no end token after the comment
 			elseif not rem:match("^%*%/") then
 				-- single * or /, keep on commentin'
@@ -39,12 +43,9 @@ comment = primary {
 					local s
 					s, rem = source:count(rem:match("^([%*%/])(.-)$"))
 					table.insert(content_list, s)
-				-- anything other than end-of-line
-				elseif rem:match("[^%s]") then
-					error(("unexpected %q at end of comment"):format(rem), 0)
-				-- consumed everything until end-of-line, close your eyes and imagine the text has been closed
+				-- anything else
 				else
-					rem = rem .. "*/"
+					error(("unexpected %q at end of comment"):format(rem:match("^[^\n]*")), 0)
 				end
 			end
 		end

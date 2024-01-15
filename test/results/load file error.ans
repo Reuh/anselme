@@ -3,6 +3,6 @@
 [0m[31m[0m[31m[0m[31mno variable "b" defined in environment[0m
 	↳ from [4mtest/tests/load file error.ans:3:4[0m in call: [2me . "b"[0m[0m
 	↳ from [4mtest/tests/load file error.ans:3:1[0m in text interpolation: [2m| {e . "b"} |[0m[0m
-	↳ from [4m?[0m in block: [2m:e = load("test/tests/import/test.ans")…[0m
+	↳ from [4mtest/tests/load file error.ans:1:1[0m in block: [2m:e = load("test/tests/import/test.ans")…[0m
 --# saved #--
 {}

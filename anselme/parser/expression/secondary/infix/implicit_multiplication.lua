@@ -18,6 +18,8 @@ return infix {
 	parse = function(self, source, str, limit_pattern, current_priority, primary)
 		local start_source = source:clone()
 		local right, rem = identifier:parse(source, str, limit_pattern)
-		return Call:new(Identifier:new(self.identifier), ArgumentTuple:new(primary, right)):set_source(start_source), rem
+		local r = Call:new(Identifier:new(self.identifier), ArgumentTuple:new(primary, right)):set_source(start_source)
+		r.explicit = false
+		return r, rem
 	end
 }

@@ -22,18 +22,18 @@ return primary {
 		local end_match = escape(end_char)
 
 		local l
-		if not rem:match("^%s*"..end_match) then
+		if not rem:match("^[ \t]*"..end_match) then
 			local s
-			s, l, rem = pcall(expression_to_ast, source, rem, end_match)
+			s, l, rem = pcall(expression_to_ast, source, rem, end_match, nil)
 			if not s then error("invalid expression in list: "..l, 0) end
 		end
 
 		if not Tuple:is(l) or l.explicit then l = Tuple:new(l) end -- single or no element
 
-		if not rem:match("^%s*"..end_match) then
-			error(("unexpected %q at end of list"):format(rem), 0)
+		if not rem:match("^[ \t]*"..end_match) then
+			error(("unexpected %q at end of list"):format(rem:match("^[^\n]*")), 0)
 		end
-		rem = source:consume(rem:match("^(%s*"..end_match..")(.*)$"))
+		rem = source:consume(rem:match("^([ \t]*"..end_match..")(.*)$"))
 
 		l.explicit = true
 		return l:set_source(start_source), rem

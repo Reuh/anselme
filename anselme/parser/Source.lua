@@ -15,12 +15,18 @@ Source = class {
 	increment = function(self, n, ...)
 		self.position = self.position + n
 	end,
+	increment_line = function(self, n, ...)
+		self.line = self.line + n
+	end,
 	count = function(self, capture, ...)
-		self:increment(utf8.len(capture))
-		return capture, ...
+		return capture, self:consume(capture, ...)
 	end,
 	consume = function(self, capture, ...)
-		self:increment(utf8.len(capture))
+		for _ in capture:gmatch(".-\n") do
+			self.position = 1
+			self:increment_line(1)
+		end
+		self:increment(utf8.len(capture:match("[^\n]*$")))
 		return ...
 	end,
 

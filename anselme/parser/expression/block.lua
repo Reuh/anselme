@@ -1,0 +1,70 @@
+local expression_to_ast = require("anselme.parser.expression.to_ast")
+
+local ast = require("anselme.ast")
+local PartialScope, Block, Flush, Call, Identifier = ast.PartialScope, ast.Block, ast.Flush, ast.Call, ast.Identifier
+
+local function block(source, str)
+	local start_source = source:clone()
+
+	if not str:match("^\n") then
+		str = "\n"..str
+		source:increment_line(-1)
+	end
+
+	local levels = { { indentation = utf8.len(str:match("^\n([ \t]*)")), block = Block:new() } }
+	local current_level = levels[#levels]
+
+	local rem = str
+	local last_line_empty
+	while rem:match("^\n") do
+		local line = source:consume(rem:match("^(\n)(.*)$"))
+		local new_indentation = utf8.len(line:match("^([ \t]*)"))
+		-- indentation of empty line is determined using the next line
+		-- (consecutive empty lines are merged into one)
+		if line:match("^\n") then
+			rem = line
+			last_line_empty = true
+		elseif line:match("[^%s]") then
+			-- raise indentation
+			if new_indentation > current_level.indentation then
+				local child_block = Block:new()
+				local cur_exps = current_level.block.expressions
+				cur_exps[#cur_exps] = PartialScope:attach_block(cur_exps[#cur_exps], child_block):set_source(source)
+				table.insert(levels, { indentation = new_indentation, block = child_block })
+				current_level = levels[#levels]
+			-- lower indentation
+			elseif new_indentation < current_level.indentation then
+				while new_indentation < current_level.indentation do
+					table.remove(levels)
+					current_level = levels[#levels]
+				end
+				if new_indentation ~= current_level.indentation then
+					error(("invalid indentation; at %s"):format(source))
+				end
+			end
+
+			-- parse line
+			local s, exp
+			s, exp, rem = pcall(expression_to_ast, source, line)
+			if not s then error(("invalid expression in block: %s"):format(exp), 0) end
+
+			-- single implicit _: line was empty (e.g. single comment in the line)
+			if Call:is(exp) and not exp.explicit and Identifier:is(exp.func) and exp.func.name == "_" then
+				exp = Flush:new()
+			end
+
+			-- add line
+			if last_line_empty then
+				current_level.block:add(Flush:new())
+				last_line_empty = nil
+			end
+			current_level.block:add(exp)
+		else -- end-of-file
+			rem = ""
+		end
+	end
+
+	return levels[1].block:set_source(start_source), rem
+end
+
+return block

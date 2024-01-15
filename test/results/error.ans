@@ -2,6 +2,6 @@
 --- error ---
 [0m[31m[0m[31mnope[0m
 	↳ from [4mtest/tests/error.ans:1:6[0m in call: [2merror("nope")[0m[0m
-	↳ from [4m?[0m in block: [2merror("nope")[0m
+	↳ from [4mtest/tests/error.ans:1:1[0m in block: [2merror("nope")[0m
 --# saved #--
 {}
