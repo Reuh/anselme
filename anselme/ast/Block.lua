@@ -8,20 +8,21 @@ local Block = ast.abstract.Node {
 
 	expressions = {},
 
-	init = function(self)
-		self.expressions = {}
+	init = function(self, ...)
+		self.expressions = {...}
 	end,
 	add = function(self, expression) -- only for construction
 		table.insert(self.expressions, expression)
 	end,
 
-	_format = function(self, state, prio, ...)
+	_format = function(self, state, prio, indentation, ...)
 		local l = {}
+		local indent = ("\t"):rep(indentation)
 		for _, e in ipairs(self.expressions) do
 			if Flush:is(e) then
-				table.insert(l, (e:format(state, 0, ...):gsub("\n$", "")))
+				table.insert(l, indent..(e:format(state, 0, indentation, ...):gsub("\n$", "")))
 			else
-				table.insert(l, e:format(state, 0, ...))
+				table.insert(l, indent..e:format(state, 0, indentation, ...))
 			end
 		end
 		return table.concat(l, "\n")

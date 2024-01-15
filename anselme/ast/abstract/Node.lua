@@ -14,7 +14,7 @@ local unpack = table.unpack or unpack
 
 local uuid = require("anselme.common").uuid
 
-local Call, Identifier, ArgumentTuple, Struct, Tuple, String, Pair
+local Call, Identifier, Struct, Tuple, String, Pair
 local resume_manager
 
 local custom_call_identifier
@@ -336,9 +336,6 @@ Node = class {
 			end
 		end
 
-		local indentation = ("\t"):rep(indentation_level)
-		s = s:gsub("\n", "\n"..indentation)
-
 		return s
 	end,
 	-- same as :format, but should be called only for nodes right of the current operator
@@ -427,7 +424,7 @@ Node = class {
 	-- Thus, any require here that may require other Nodes shall be done here. This method is called in anselme.lua after everything else is required.
 	_i_hate_cycles = function(self)
 		local ast = require("anselme.ast")
-		Call, Identifier, ArgumentTuple, Struct, Tuple, String, Pair = ast.Call, ast.Identifier, ast.ArgumentTuple, ast.Struct, ast.Tuple, ast.String, ast.Pair
+		Call, Identifier, Struct, Tuple, String, Pair = ast.Call, ast.Identifier, ast.Struct, ast.Tuple, ast.String, ast.Pair
 		custom_call_identifier = Identifier:new("_!")
 
 		resume_manager = require("anselme.state.resume_manager")

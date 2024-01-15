@@ -27,11 +27,11 @@ PartialScope = ast.abstract.Node {
 	end,
 
 	_format = function(self, state, priority, indentation, ...)
-		if self.definitions[attached_block_symbol] then
+		if self.definitions[attached_block_symbol] and not Undefined:is(self.definitions[attached_block_symbol]) then
 			local block = self.definitions[attached_block_symbol]
 			local exp = self.expression:format(state, priority, indentation, ...)
 			if exp:sub(-2) == " _" then exp = exp:sub(1, -3) end
-			return exp.."\n\t"..block:format(state, priority, indentation + 1, ...)
+			return exp.."\n"..block:format(state, priority, indentation + 1, ...) -- block is a Block and will indent itself like a good boy
 		else
 			return self.expression:format(state, priority, indentation, ...)
 		end
