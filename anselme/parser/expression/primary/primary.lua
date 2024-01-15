@@ -5,11 +5,11 @@ return class {
 
 	-- returns exp, rem if expression found
 	-- returns nil if no expression found
-	search = function(self, source, str, limit_pattern)
+	search = function(self, source, options, str)
 		if not self:match(str) then
 			return nil
 		end
-		return self:parse(source, str, limit_pattern)
+		return self:parse(source, options, str)
 	end,
 	-- return bool
 	-- (not needed if you redefined :search)
@@ -18,15 +18,15 @@ return class {
 	end,
 	-- return AST, rem
 	-- (not needed if you redefined :search)
-	parse = function(self, source, str, limit_pattern)
+	parse = function(self, source, options, str)
 		error("unimplemented")
 	end,
 
 	-- class helpers --
 
 	-- return AST, rem
-	expect = function(self, source, str, limit_pattern)
-		local exp, rem = self:search(source, str, limit_pattern)
+	expect = function(self, source, options, str)
+		local exp, rem = self:search(source, options, str)
 		if not exp then error(("expected %s but got %s"):format(self.type, str)) end
 		return exp, rem
 	end

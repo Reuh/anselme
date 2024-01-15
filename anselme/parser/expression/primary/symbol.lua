@@ -14,7 +14,7 @@ return primary {
 		return false
 	end,
 
-	parse = function(self, source, str)
+	parse = function(self, source, options, str)
 		local mod_const, mod_alias, mod_export, rem = source:consume(str:match("^(%:(:?)(&?)(@?))(.-)$"))
 		local constant, alias, value_check_exp, exported
 
@@ -25,13 +25,13 @@ return primary {
 
 		-- name
 		local ident
-		ident, rem = identifier:parse(source, rem)
+		ident, rem = identifier:parse(source, options, rem)
 
 		-- value check
 		local nil_val = Nil:new()
 		if value_check:match(rem, 0, nil_val) then
 			local exp
-			exp, rem = value_check:parse(source, rem, nil, 0, nil_val)
+			exp, rem = value_check:parse(source, options, rem, 0, nil_val)
 			value_check_exp = exp.arguments.positional[2]
 		end
 

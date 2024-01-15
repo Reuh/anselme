@@ -14,6 +14,7 @@ return infix {
 
 	match = function(self, str, current_priority, primary)
 		local escaped = escape(self.operator)
+		-- TODO: doesn't support newline between ! and identifier, event in multiline expression
 		return self.priority > current_priority and str:match("^"..escaped) and identifier:match(str:match("^"..escaped.."[ \t]*(.-)$"))
 	end,
 

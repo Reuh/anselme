@@ -8,23 +8,23 @@ local expression_to_ast = require("anselme.parser.expression.to_ast")
 return infix {
 	-- returns exp, rem if expression found
 	-- returns nil if no expression found
-	search = function(self, source, str, limit_pattern, current_priority, operating_on_primary)
+	search = function(self, source, options, str, current_priority, operating_on_primary)
 		if not self:match(str, current_priority, operating_on_primary) then
 			return nil
 		end
-		return self:maybe_parse(source, str, limit_pattern, current_priority, operating_on_primary)
+		return self:maybe_parse(source, options, str, current_priority, operating_on_primary)
 	end,
 
 	parse = function() error("no guaranteed parse for this operator") end,
 
 	-- return AST, rem
 	-- return nil
-	maybe_parse = function(self, source, str, limit_pattern, current_priority, primary)
+	maybe_parse = function(self, source, options, str, current_priority, primary)
 		local start_source = source:clone()
 		local escaped = escape(self.operator)
 
 		local sright = source:consume(str:match("^("..escaped..")(.*)$"))
-		local s, right, rem = pcall(expression_to_ast, source, sright, limit_pattern, self.priority)
+		local s, right, rem = pcall(expression_to_ast, source, options, sright, self.priority)
 		if not s then return nil end
 
 		return self:build_ast(primary, right):set_source(start_source), rem

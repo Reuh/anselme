@@ -51,18 +51,18 @@ end
 return {
 	-- returns exp, rem if expression found
 	-- returns nil if no expression found
-	search = function(self, source, str, limit_pattern, current_priority, primary)
-		str = source:consume(str:match("^([ \t]*)(.*)$"))
+	search = function(self, source, options, str, current_priority, primary)
+		str = source:consume_leading_whitespace( options,str)
 		-- if there is a comment, restart the parsing after the comment ends
-		local c, c_rem = comment:search(source, str, limit_pattern)
+		local c, c_rem = comment:search(source, options, str)
 		if c then
-			local ce, ce_rem = self:search(source, c_rem, limit_pattern, current_priority, primary)
+			local ce, ce_rem = self:search(source, options, c_rem, current_priority, primary)
 			if ce then return ce, ce_rem
 			else return primary, c_rem end -- noop
 		end
 		-- search secondary
 		for _, secondary in ipairs(secondaries) do
-			local exp, rem = secondary:search(source, str, limit_pattern, current_priority, primary)
+			local exp, rem = secondary:search(source, options, str, current_priority, primary)
 			if exp then return exp, rem end
 		end
 	end

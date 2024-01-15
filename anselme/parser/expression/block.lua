@@ -3,7 +3,7 @@ local expression_to_ast = require("anselme.parser.expression.to_ast")
 local ast = require("anselme.ast")
 local PartialScope, Block, Flush, Call, Identifier = ast.PartialScope, ast.Block, ast.Flush, ast.Call, ast.Identifier
 
-local function block(source, str)
+local function block(source, options, str)
 	local start_source = source:clone()
 
 	if not str:match("^\n") then
@@ -45,7 +45,7 @@ local function block(source, str)
 
 			-- parse line
 			local s, exp
-			s, exp, rem = pcall(expression_to_ast, source, line)
+			s, exp, rem = pcall(expression_to_ast, source, options, line)
 			if not s then error(("invalid expression in block: %s"):format(exp), 0) end
 
 			-- single implicit _: line was empty (e.g. single comment in the line)

@@ -10,12 +10,6 @@ Documentation:
 
 ---
 
-Translation.
-
-Do some more fancy scope work to allow the translation to access variables defined in the translation file?
-
----
-
 Standard library.
 
 * Text and string manipulation would make sense, but that would require a full UTF-8/Unicode support library like https://github.com/starwing/luautf8.
@@ -27,7 +21,21 @@ Standard library.
 Default arguments and initial variables values should pass the value check associated with the variable / parameter.
 Issue: dispatch is decided before evaluating default values.
 
+---
+
+Multiline string and comments?
+
+---
+
+Error on undefined struct/table key? I copied the Lua behavior but maybe not useful here.
+
 # Can be done later
+
+Translation.
+
+Do some more fancy scope work to allow the translation to access variables defined in the translation file?
+
+---
 
 Server API.
 
@@ -45,6 +53,10 @@ Could be reused for exception handling or other purposes if accessible by the us
 
 ---
 
+Custom function for building text/string interpolation.
+
+---
+
 Reduce the number of AST node types ; try to merge similar node and make simpler individuals nodes if possible by composing them.
 Won't help with performance but make me feel better, and easier to extend. Anselme should be more minimal is possible.
 
@@ -53,15 +65,6 @@ Won't help with performance but make me feel better, and easier to extend. Ansel
 Static analysis tools.
 
 To draw a graph of branches, keep track of used variables and prune the unused ones from the Environments, pre-filter Overloads, etc.
-
----
-
-Multiline expressions.
-
-* add the ability to escape newlines
-	Issue: need a way to correctly track line numbers, the current parser assumes one expression = one source
-* allow some expressions to run over several lines (the ones that expect a closing token, like paren/list/structs)
-	Issue: the line and expression parsing is completely separate
 
 ---
 

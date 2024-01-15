@@ -16,7 +16,7 @@ return secondary {
 		return self.priority > current_priority and str:match("^"..escaped)
 	end,
 
-	parse = function(self, source, str, limit_pattern, current_priority, primary)
+	parse = function(self, source, options, str, current_priority, primary)
 		local start_source = source:clone()
 		local escaped = escape(self.operator)
 

@@ -17,17 +17,17 @@ return secondary {
 		return self.priority > current_priority and (parenthesis:match(str) or tuple:match(str) or struct:match(str))
 	end,
 
-	parse = function(self, source, str, limit_pattern, current_priority, primary)
+	parse = function(self, source, options, str, current_priority, primary)
 		local start_source = source:clone()
 		local args = ArgumentTuple:new()
 
 		local exp, rem
 
 		if parenthesis:match(str) then
-			exp, rem = parenthesis:parse(source, str, limit_pattern)
+			exp, rem = parenthesis:parse(source, options, str)
 
 			if Nil:is(exp) then
-				if str:match("^%([ \t]*%([ \t]*%)[ \t]*%)") then -- special case: single nil argument
+				if str:match("^%([ \t\n]*%([ \t\n]*%)[ \t\n]*%)") then -- special case: single nil argument
 					exp = Tuple:new(Nil:new())
 				else -- no arguments
 					exp = Tuple:new()
@@ -36,10 +36,10 @@ return secondary {
 				exp = Tuple:new(exp)
 			end
 		elseif tuple:match(str) then
-			exp, rem = tuple:parse(source, str, limit_pattern)
+			exp, rem = tuple:parse(source, options, str)
 			exp = Tuple:new(exp)
 		else
-			exp, rem = struct:parse(source, str, limit_pattern)
+			exp, rem = struct:parse(source, options, str)
 			exp = Tuple:new(exp)
 		end
 

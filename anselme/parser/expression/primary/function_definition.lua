@@ -26,18 +26,19 @@ local function_parameter_maybe_parenthesis = function_parameter_no_default {
 			return function_parameter_no_default:match(str)
 		end
 	end,
-	parse = function(self, source, str, limit_pattern)
+	parse = function(self, source, options, str)
 		if str:match("^%(") then
 			str = source:consume(str:match("^(%()(.*)$"))
 
-			local exp, rem = function_parameter_no_default:parse(source, str, limit_pattern)
+			local exp, rem = function_parameter_no_default:parse(source, options, str)
+			rem = source:consume_leading_whitespace(options, rem)
 
-			if not rem:match("^[ \t]*%)") then error(("unexpected %q at end of parenthesis"):format(rem:match("^[^\n]*")), 0) end
-			rem = source:consume(rem:match("^([ \t]*%))(.-)$"))
+			if not rem:match("^%)") then error(("unexpected %q at end of parenthesis"):format(rem:match("^[^\n]*")), 0) end
+			rem = source:consume(rem:match("^(%))(.-)$"))
 
 			return exp, rem
 		else
-			return function_parameter_no_default:parse(source, str, limit_pattern)
+			return function_parameter_no_default:parse(source, options, str)
 		end
 	end
 }
@@ -46,7 +47,7 @@ local function_parameter_maybe_parenthesis = function_parameter_no_default {
 -- :$-parameter exp
 -- returns symbol, parameter_tuple, rem if success
 -- return nil otherwise
-local function search_prefix_signature(modifiers, source, str, limit_pattern)
+local function search_prefix_signature(modifiers, source, options, str)
 	for _, pfx in ipairs(prefixes) do
 		local prefix = pfx[1]
 		local prefix_pattern = "[ \t]*"..escape(prefix).."[ \t]*"
@@ -57,7 +58,7 @@ local function search_prefix_signature(modifiers, source, str, limit_pattern)
 
 			-- parameters
 			local parameter
-			parameter, rem = function_parameter_maybe_parenthesis:expect(source, rem, limit_pattern)
+			parameter, rem = function_parameter_maybe_parenthesis:expect(source, options, rem)
 
 			local parameters = ParameterTuple:new()
 			parameters:insert(parameter)
@@ -72,10 +73,10 @@ end
 -- :$parameterA + parameterB exp
 -- returns symbol, parameter_tuple, rem if success
 -- return nil otherwise
-local function search_infix_signature(modifiers, source, str, limit_pattern)
+local function search_infix_signature(modifiers, source, options, str)
 	if function_parameter_maybe_parenthesis:match(str) then
 		local src = source:clone() -- operate on clone source since search success is not yet guaranteed
-		local parameter_a, rem = function_parameter_maybe_parenthesis:parse(src, str, limit_pattern)
+		local parameter_a, rem = function_parameter_maybe_parenthesis:parse(src, options, str)
 
 		local parameters = ParameterTuple:new()
 		parameters:insert(parameter_a)
@@ -91,7 +92,7 @@ local function search_infix_signature(modifiers, source, str, limit_pattern)
 				-- parameters
 				if function_parameter_maybe_parenthesis:match(rem) then
 					local parameter_b
-					parameter_b, rem = function_parameter_maybe_parenthesis:parse(src, rem, limit_pattern)
+					parameter_b, rem = function_parameter_maybe_parenthesis:parse(src, options, rem)
 
 					parameters:insert(parameter_b)
 
@@ -109,10 +110,10 @@ end
 -- :$parameter! exp
 -- returns symbol, parameter_tuple, rem if success
 -- return nil otherwise
-local function search_suffix_signature(modifiers, source, str, limit_pattern)
+local function search_suffix_signature(modifiers, source, options, str)
 	if function_parameter_maybe_parenthesis:match(str) then
 		local src = source:clone() -- operate on clone source since search success is not yet guaranteed
-		local parameter_a, rem = function_parameter_maybe_parenthesis:parse(src, str, limit_pattern)
+		local parameter_a, rem = function_parameter_maybe_parenthesis:parse(src, options, str)
 
 		local parameters = ParameterTuple:new()
 		parameters:insert(parameter_a)
@@ -136,10 +137,10 @@ end
 -- :$identifier(parameter_tuple, ...) exp
 -- returns symbol, parameter_tuple, rem if success
 -- return nil otherwise
-local function search_function_signature(modifiers, source, str, limit_pattern)
+local function search_function_signature(modifiers, source, options, str)
 	if identifier:match(str) then
 		local name_source = source:clone()
-		local name, rem = identifier:parse(source, str, limit_pattern)
+		local name, rem = identifier:parse(source, options, str)
 
 		-- name
 		local symbol = name:to_symbol(modifiers):set_source(name_source)
@@ -147,7 +148,7 @@ local function search_function_signature(modifiers, source, str, limit_pattern)
 		-- parse eventual parameters
 		local parameters
 		if parameter_tuple:match(rem) then
-			parameters, rem = parameter_tuple:parse(source, rem)
+			parameters, rem = parameter_tuple:parse(source, options, rem)
 		else
 			parameters = ParameterTuple:new()
 		end
@@ -161,7 +162,7 @@ return primary {
 		return str:match("^%::?&?@?%$")
 	end,
 
-	parse = function(self, source, str, limit_pattern)
+	parse = function(self, source, options, str)
 		local source_start = source:clone()
 		local mod_const, mod_alias, mod_exported, rem = source:consume(str:match("^(%:(:?)(&?)(@?)%$)(.-)$"))
 
@@ -174,16 +175,16 @@ return primary {
 
 		-- search for a valid signature
 		local symbol, parameters
-		local s, p, r = search_prefix_signature(modifiers, source, rem, limit_pattern)
+		local s, p, r = search_prefix_signature(modifiers, source, options, rem)
 		if s then symbol, parameters, rem = s, p, r
 		else
-			s, p, r = search_infix_signature(modifiers, source, rem, limit_pattern)
+			s, p, r = search_infix_signature(modifiers, source, options, rem)
 			if s then symbol, parameters, rem = s, p, r
 			else
-				s, p, r = search_suffix_signature(modifiers, source, rem, limit_pattern)
+				s, p, r = search_suffix_signature(modifiers, source, options, rem)
 				if s then symbol, parameters, rem = s, p, r
 				else
-					s, p, r = search_function_signature(modifiers, source, rem, limit_pattern)
+					s, p, r = search_function_signature(modifiers, source, options, rem)
 					if s then symbol, parameters, rem = s, p, r end
 				end
 			end
@@ -193,7 +194,7 @@ return primary {
 		if symbol then
 			-- parse expression
 			local right
-			s, right, rem = pcall(expression_to_ast, source, rem, limit_pattern, operator_priority["$_"])
+			s, right, rem = pcall(expression_to_ast, source, options, rem, operator_priority["$_"])
 			if not s then error(("invalid expression in function definition: %s"):format(right), 0) end
 
 			-- return function

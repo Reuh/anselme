@@ -17,12 +17,12 @@ return secondary {
 	end,
 
 	-- return AST, rem
-	parse = function(self, source, str, limit_pattern, current_priority, primary)
+	parse = function(self, source, options, str, current_priority, primary)
 		local start_source = source:clone()
 		local escaped = escape(self.operator)
 
 		local sright = source:consume(str:match("^("..escaped..")(.*)$"))
-		local s, right, rem = pcall(expression_to_ast, source, sright, limit_pattern, self.priority)
+		local s, right, rem = pcall(expression_to_ast, source, options, sright, self.priority)
 		if not s then error(("invalid expression after infix operator %q: %s"):format(self.operator, right), 0) end
 
 		return self:build_ast(primary, right):set_source(start_source), rem

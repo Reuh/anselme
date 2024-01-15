@@ -29,6 +29,13 @@ Source = class {
 		self:increment(utf8.len(capture:match("[^\n]*$")))
 		return ...
 	end,
+	consume_leading_whitespace = function(self, options, str)
+		if options.allow_newlines then
+			return self:consume(str:match("^([ \t\n]*)(.*)$"))
+		else
+			return self:consume(str:match("^([ \t]*)(.*)$"))
+		end
+	end,
 
 	clone = function(self)
 		return Source:new(self.name, self.line, self.position)

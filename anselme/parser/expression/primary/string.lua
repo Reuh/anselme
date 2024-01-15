@@ -27,7 +27,8 @@ return primary {
 	match = function(self, str)
 		return str:match("^"..self.start_pattern)
 	end,
-	parse = function(self, source, str, limit_pattern)
+	parse = function(self, source, options, str)
+		local limit_pattern = options.limit_pattern
 		local interpolation = self.interpolation:new()
 
 		local stop_pattern = escape(self.stop_char)
@@ -52,11 +53,13 @@ return primary {
 
 			-- interpolated expression
 			if rem:match("^%{") then
+				local opts = options:with { limit_pattern = "%}", allow_newlines = false }
 				local ok, exp
-				ok, exp, rem = pcall(expression_to_ast, source, source:consume(rem:match("^(%{)(.*)$")), "%}")
+				ok, exp, rem = pcall(expression_to_ast, source, opts, source:consume(rem:match("^(%{)(.*)$")))
 				if not ok then error("invalid expression inside interpolation: "..exp, 0) end
-				if not rem:match("^[ \t]*%}") then error(("unexpected %q at end of interpolation"):format(rem:match("^[^\n]*")), 0) end
-				rem = source:consume(rem:match("^([ \t]*%})(.*)$"))
+				rem = source:consume_leading_whitespace(opts, rem)
+				if not rem:match("^%}") then error(("unexpected %q at end of interpolation"):format(rem:match("^[^\n]*")), 0) end
+				rem = source:consume(rem:match("^(%})(.*)$"))
 				interpolation:insert(exp)
 			-- escape sequence
 			elseif rem:match("^\\") then

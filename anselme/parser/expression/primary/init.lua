@@ -33,14 +33,14 @@ local primaries = {
 return {
 	-- returns exp, rem if expression found
 	-- returns nil if no expression found
-	search = function(self, source, str, limit_pattern)
-		str = source:consume(str:match("^([ \t]*)(.*)$"))
+	search = function(self, source, options, str)
+		str = source:consume_leading_whitespace(options, str)
 		-- if there is a comment, restart the parsing after the comment ends
-		local c, c_rem = comment:search(source, str, limit_pattern)
-		if c then return self:search(source, c_rem, limit_pattern) end
+		local c, c_rem = comment:search(source, options, str)
+		if c then return self:search(source, options, c_rem) end
 		-- search primary
 		for _, primary in ipairs(primaries) do
-			local exp, rem = primary:search(source, str, limit_pattern)
+			local exp, rem = primary:search(source, options, str)
 			if exp then return exp, rem end
 		end
 	end

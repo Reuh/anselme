@@ -12,7 +12,7 @@ return prefix {
 	operator = "$",
 	priority = operator_priority["$_"],
 
-	parse = function(self, source, str, limit_pattern)
+	parse = function(self, source, options, str)
 		local source_start = source:clone()
 		local escaped = escape(self.operator)
 		local rem = source:consume(str:match("^("..escaped..")(.*)$"))
@@ -20,14 +20,14 @@ return prefix {
 		-- parse eventual parameters
 		local parameters
 		if parameter_tuple:match(rem) then
-			parameters, rem = parameter_tuple:parse(source, rem)
+			parameters, rem = parameter_tuple:parse(source, options, rem)
 		else
 			parameters = ParameterTuple:new()
 		end
 
 		-- parse expression
 		local s, right
-		s, right, rem = pcall(expression_to_ast, source, rem, limit_pattern, self.priority)
+		s, right, rem = pcall(expression_to_ast, source, options, rem, self.priority)
 		if not s then error(("invalid expression after unop %q: %s"):format(self.operator, right), 0) end
 
 		return Function:with_return_boundary(parameters, right):set_source(source_start), rem

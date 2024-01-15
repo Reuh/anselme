@@ -6,7 +6,7 @@ return primary {
 	match = function(self, str)
 		return str:match("^%d*%.%d+") or str:match("^%d+")
 	end,
-	parse = function(self, source, str)
+	parse = function(self, source, options, str)
 		local start_source = source:clone()
 		local d, r = str:match("^(%d*%.%d+)(.*)$")
 		if not d then

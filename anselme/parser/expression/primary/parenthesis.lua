@@ -11,20 +11,24 @@ return primary {
 	match = function(self, str)
 		return str:match("^%(")
 	end,
-	parse = function(self, source, str)
+	parse = function(self, source, options, str)
 		local start_source = source:clone()
+		local opts = options:with{ limit_pattern = "%)", allow_newlines = true }
+
 		local rem = source:consume(str:match("^(%()(.*)$"))
+		rem = source:consume_leading_whitespace(opts, rem)
 
 		local exp
-		if rem:match("^%s*%)") then
+		if rem:match("^%)") then
 			exp = Nil:new()
 		else
 			local s
-			s, exp, rem = pcall(expression_to_ast, source, rem, "%)")
+			s, exp, rem = pcall(expression_to_ast, source, opts, rem)
 			if not s then error("invalid expression inside parentheses: "..exp, 0) end
-			if not rem:match("^%s*%)") then error(("unexpected %q at end of parenthesis"):format(rem:match("^[^\n]*")), 0) end
+			rem = source:consume_leading_whitespace(opts, rem)
+			if not rem:match("^%)") then error(("unexpected %q at end of parenthesis"):format(rem:match("^[^\n]*")), 0) end
 		end
-		rem = source:consume(rem:match("^(%s*%))(.*)$"))
+		rem = source:consume(rem:match("^(%))(.*)$"))
 
 		return exp:set_source(start_source), rem
 	end

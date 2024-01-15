@@ -8,7 +8,7 @@ return primary {
 		return str:match("^\n")
 	end,
 
-	parse = function(self, source, str)
+	parse = function(self, source, options, str)
 		-- implicit _, do not consume the newline
 		local r = Call:new(Identifier:new("_"), ArgumentTuple:new()):set_source(source)
 		r.explicit = false

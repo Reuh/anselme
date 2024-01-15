@@ -10,9 +10,9 @@ return string {
 	allow_implicit_stop = true,
 	interpolation = TextInterpolation,
 
-	parse = function(self, source, str, limit_pattern)
+	parse = function(self, source, options, str)
 		local start_source = source:clone()
-		local interpolation, rem = string.parse(self, source, str, limit_pattern)
+		local interpolation, rem = string.parse(self, source, options, str)
 
 		-- remove terminal space
 		local last = interpolation.list[#interpolation.list]

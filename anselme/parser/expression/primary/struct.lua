@@ -9,8 +9,8 @@ return primary {
 		return str:match("^%{")
 	end,
 
-	parse = function(self, source, str)
-		local l, rem = tuple:parse_tuple(source, str, "{", '}')
+	parse = function(self, source, options, str)
+		local l, rem = tuple:parse_tuple(source, options, str, "{", '}')
 
 		return Struct:from_tuple(l), rem
 	end

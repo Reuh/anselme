@@ -13,9 +13,11 @@ local common = {
 	trim = function(str)
 		return str:match("^%s*(.-)%s*$")
 	end,
+	-- format ansi colored string
 	fmt = function(str, ...)
 		return ansicolors(str):format(...)
 	end,
+	-- generate a uuidv4
 	uuid = function()
 		return ("xxxxxxxx-xxxx-4xxx-Nxxx-xxxxxxxxxxxx") -- version 4
 			:gsub("N", math.random(0x8, 0xb)) -- variant 1

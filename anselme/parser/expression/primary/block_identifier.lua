@@ -8,7 +8,7 @@ return primary {
 		return str:match("^_")
 	end,
 
-	parse = function(self, source, str)
+	parse = function(self, source, options, str)
 		local source_start = source:clone()
 		local rem = source:consume(str:match("^(_)(.-)$"))
 		return Call:new(Identifier:new("_"), ArgumentTuple:new()):set_source(source_start), rem

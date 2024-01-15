@@ -27,7 +27,7 @@ return primary {
 		return false
 	end,
 
-	parse = function(self, source, str)
+	parse = function(self, source, options, str)
 		for _, pat in ipairs(identifier_patterns) do
 			if str:match("^"..pat) then
 				local start_source = source:clone()

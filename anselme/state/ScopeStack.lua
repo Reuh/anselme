@@ -6,6 +6,7 @@ local ast = require("anselme.ast")
 local to_anselme = require("anselme.common.to_anselme")
 local unpack = table.unpack or unpack
 
+local Source, Options
 local LuaCall, Environment, Node
 
 local parameter_tuple = require("anselme.parser.expression.contextual.parameter_tuple")
@@ -50,10 +51,10 @@ local ScopeStack = class {
 	-- if `raw_mode` is true, no anselme-to/from-lua conversion will be performed in the function
 	-- the function will receive the state followed by AST nodes as arguments, and is expected to return an AST node
 	define_lua = function(self, name, value, func, raw_mode)
-		local source = require("anselme.parser.Source"):new()
-		local sym = symbol:parse(source, (":%s"):format(name))
+		local source, options = Source:new(), Options:new()
+		local sym = symbol:parse(source, options, (":%s"):format(name))
 		if func then
-			local parameters = parameter_tuple:parse(source, value)
+			local parameters = parameter_tuple:parse(source, options, value)
 			if not raw_mode then
 				local original_func = func
 				func = function(state, ...)
@@ -151,5 +152,7 @@ local ScopeStack = class {
 
 package.loaded[...] = ScopeStack
 LuaCall, Environment, Node = ast.LuaCall, ast.Environment, ast.abstract.Node
+Source = require("anselme.parser.Source")
+Options = require("anselme.parser.Options")
 
 return ScopeStack

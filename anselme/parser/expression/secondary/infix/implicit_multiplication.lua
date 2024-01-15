@@ -15,9 +15,9 @@ return infix {
 		return self.priority > current_priority and identifier:match(str)
 	end,
 
-	parse = function(self, source, str, limit_pattern, current_priority, primary)
+	parse = function(self, source, options, str, current_priority, primary)
 		local start_source = source:clone()
-		local right, rem = identifier:parse(source, str, limit_pattern)
+		local right, rem = identifier:parse(source, options, str)
 		local r = Call:new(Identifier:new(self.identifier), ArgumentTuple:new(primary, right)):set_source(start_source)
 		r.explicit = false
 		return r, rem

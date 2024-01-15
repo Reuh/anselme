@@ -5,7 +5,8 @@ comment = primary {
 	match = function(self, str)
 		return str:match("^%/%*")
 	end,
-	parse = function(self, source, str, limit_pattern)
+	parse = function(self, source, options, str)
+		local limit_pattern = options.limit_pattern
 		local rem = source:consume(str:match("^(%/%*)(.*)$"))
 
 		local content_list = {}
@@ -27,7 +28,7 @@ comment = primary {
 			-- nested comment
 			if rem:match("^%/%*") then
 				local subcomment
-				subcomment, rem = comment:parse(source, rem, limit_pattern)
+				subcomment, rem = comment:parse(source, options, rem)
 
 				table.insert(content_list, "/*")
 				table.insert(content_list, subcomment)
