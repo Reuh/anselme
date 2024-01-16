@@ -4,10 +4,9 @@
 --- text ---
 | {}"quote " {}"\"" {}"" |
 --- text ---
-| {}"other codes " {}"\
-" {}" " {}"\\" {}" " {}"\9" {}" " {}"{" {}"braces}" |
+| {}"other codes " {}"\n" {}" " {}"\" {}" " {}"\t" {}" " {}"{" {}"braces}" |
 --- text ---
-| {}"" {}"escaping expressions abc and {stuff} \\ and quotes \"" {}"" |
+| {}"" {}"escaping expressions abc and {stuff} \ and quotes \"" {}"" |
 --- return ---
 ()
 --# saved #--

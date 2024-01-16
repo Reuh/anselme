@@ -16,7 +16,7 @@ local String = ast.abstract.Node {
 	end,
 
 	_format = function(self)
-		return ("%q"):format(self.string)
+		return ("\"%s\""):format(self.string:gsub("[\n\t\"]", { ["\n"] = "\\n", ["\t"] = "\\t", ["\""] = "\\\"" }))
 	end,
 
 	to_lua = function(self, state)

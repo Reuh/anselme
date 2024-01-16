@@ -33,7 +33,7 @@ comment = primary {
 				table.insert(content_list, "/*")
 				table.insert(content_list, subcomment)
 				table.insert(content_list, "*/")
-			-- consumed everything until end-of-line/file, close your eyes and imagine the text has been closed
+			-- consumed everything until end-of-string, close your eyes and imagine the text has been closed
 			elseif rem:match("^\n") or not rem:match("[^%s]") then
 				rem = "*/" .. rem
 				source:increment(-2)

@@ -1,0 +1,5 @@
+--# run #--
+--- return ---
+"foo\nbar\n\ta\n\tb\n\t  c\n d"
+--# saved #--
+{}

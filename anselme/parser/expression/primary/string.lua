@@ -18,9 +18,9 @@ local escape_code = {
 return primary {
 	type = "string", -- interpolation type - used for errors
 	start_pattern = "\"", -- pattern that start the string interpolation
-	stop_char = "\"", -- character that stops the string interpolation - must be a single character!
+	stop_char = "\"", -- character that stops the string interpolation - must be a single one byte character!
 
-	allow_implicit_stop = false, -- set to true to allow the string to be closed implicitely when reaching the end of the expression or limit_pattern
+	allow_implicit_stop = false, -- set to true to allow the string to be closed implicitely when reaching the end of the expression, line, or limit_pattern
 
 	interpolation = StringInterpolation,
 
@@ -35,10 +35,11 @@ return primary {
 		local start_source = source:clone()
 		local rem = source:consume(str:match("^("..self.start_pattern..")(.-)$"))
 
+		local string_pattern = "^([^%{%\\"..stop_pattern..(self.allow_implicit_stop and "\n" or "").."]*)(.-)$"
 		while not rem:match("^"..stop_pattern) do
 			local text_source = source:clone()
 			local text
-			text, rem = rem:match("^([^\n%{%\\"..stop_pattern.."]*)(.-)$") -- get all text until something potentially happens
+			text, rem = rem:match(string_pattern) -- get all text until something potentially happens
 
 			-- cut the text prematurely at limit_pattern if relevant
 			if self.allow_implicit_stop and limit_pattern and text:match(limit_pattern) then
@@ -53,7 +54,7 @@ return primary {
 
 			-- interpolated expression
 			if rem:match("^%{") then
-				local opts = options:with { limit_pattern = "%}", allow_newlines = false }
+				local opts = options:with { limit_pattern = "%}", allow_newlines = not self.allow_implicit_stop }
 				local ok, exp
 				ok, exp, rem = pcall(expression_to_ast, source, opts, source:consume(rem:match("^(%{)(.*)$")))
 				if not ok then error("invalid expression inside interpolation: "..exp, 0) end
@@ -65,7 +66,7 @@ return primary {
 			elseif rem:match("^\\") then
 				text, rem = source:consume(rem:match("^(\\(.))(.*)$"))
 				interpolation:insert(String:new(escape_code[text] or text))
-			-- consumed everything until end-of-line/file, implicit stop allowed, close your eyes and imagine the text has been closed
+			-- consumed everything until end-of-string, implicit stop allowed, close your eyes and imagine the text has been closed
 			elseif self.allow_implicit_stop and (rem:match("^\n") or not rem:match("[^%s]")) then
 				rem = self.stop_char .. rem
 				source:increment(-1)

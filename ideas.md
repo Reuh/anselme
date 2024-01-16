@@ -23,7 +23,7 @@ Issue: dispatch is decided before evaluating default values.
 
 ---
 
-Multiline string and comments?
+Multiline comments?
 
 # Can be done later
 

@@ -1,7 +1,7 @@
 local string = require("anselme.parser.expression.primary.string")
 
 local ast = require("anselme.ast")
-local TextInterpolation, Translatable = ast.TextInterpolation, ast.Translatable
+local TextInterpolation, Translatable, String = ast.TextInterpolation, ast.Translatable, ast.String
 
 return string {
 	type = "text",
@@ -16,7 +16,7 @@ return string {
 
 		-- remove terminal space
 		local last = interpolation.list[#interpolation.list]
-		if ast.String:is(last) then last.string = last.string:gsub("[ \t]$", "") end
+		if String:is(last) then last.string = last.string:gsub("[ \t]$", "") end
 
 		return Translatable:new(interpolation):set_source(start_source), rem
 	end
