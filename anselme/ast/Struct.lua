@@ -113,7 +113,7 @@ Struct = ast.abstract.Runtime {
 		if v ~= nil then
 			return v
 		else
-			return Nil:new()
+			error(("key %q is undefined in %s"):format(key:format(), self.type), 0)
 		end
 	end,
 	get_strict = function(self, key)

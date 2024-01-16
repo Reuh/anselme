@@ -25,10 +25,6 @@ Issue: dispatch is decided before evaluating default values.
 
 Multiline string and comments?
 
----
-
-Error on undefined struct/table key? I copied the Lua behavior but maybe not useful here.
-
 # Can be done later
 
 Translation.
