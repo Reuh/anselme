@@ -113,6 +113,16 @@ return {
 		end
 	},
 	{
+		"_!", "(s::is struct, key, default)",
+		function(state, s, k, default)
+			if s:has(k) then
+				return s:get(k)
+			else
+				return default
+			end
+		end
+	},
+	{
 		"has", "(s::is struct, key)",
 		function(state, s, k)
 			return Boolean:new(s:has(k))
@@ -135,6 +145,16 @@ return {
 		"_!", "(t::is table, key)",
 		function(state, t, key)
 			return t:get(state, key)
+		end
+	},
+	{
+		"_!", "(t::is table, key, default)",
+		function(state, t, key, default)
+			if t:has(state, key) then
+				return t:get(state, key)
+			else
+				return default
+			end
 		end
 	},
 	{

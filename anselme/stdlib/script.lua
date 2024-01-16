@@ -7,7 +7,7 @@ return [[
 	:resume target = ()
 
 	fn.:check = $(anchor::is anchor)
-		fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
+		fn.reached(anchor) = fn.reached(anchor, 0) + 1
 	fn.:checkpoint = $(anchor::is anchor, on resume=attached block(default=()))
 		:resuming = resuming(1) /* calling function is resuming */
 		if(on resume)
@@ -15,12 +15,12 @@ return [[
 			if(resume target == anchor | resuming)
 				on resume!
 			else!
-				fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
+				fn.reached(anchor) = fn.reached(anchor, 0) + 1
 				merge branch!
 		else!
 			fn.current checkpoint = anchor
 			if(resume target != anchor)
-				fn.reached(anchor) = (fn.reached(anchor) | 0) + 1
+				fn.reached(anchor) = fn.reached(anchor, 0) + 1
 				merge branch!
 
 	:f = $
