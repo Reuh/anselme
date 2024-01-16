@@ -23,7 +23,7 @@ Issue: dispatch is decided before evaluating default values.
 
 ---
 
-Multiline comments?
+Comment syntax, not sure about using -- for inline and /* for multiline.
 
 # Can be done later
 

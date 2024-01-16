@@ -36,7 +36,8 @@ return primary {
 		local rem = source:consume(str:match("^("..self.start_pattern..")(.-)$"))
 
 		local string_pattern = "^([^%{%\\"..stop_pattern..(self.allow_implicit_stop and "\n" or "").."]*)(.-)$"
-		while not rem:match("^"..stop_pattern) do
+		local at_stop_pattern = "^"..stop_pattern
+		while not rem:match(at_stop_pattern) do
 			local text_source = source:clone()
 			local text
 			text, rem = rem:match(string_pattern) -- get all text until something potentially happens
@@ -71,7 +72,7 @@ return primary {
 				rem = self.stop_char .. rem
 				source:increment(-1)
 			-- no end token after the comment
-			elseif not rem:match("^"..stop_pattern) then
+			elseif not rem:match(at_stop_pattern) then
 				error(("unexpected %q at end of "..self.type):format(rem:match("^[^\n]*")), 0)
 			end
 		end
