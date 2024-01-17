@@ -73,12 +73,12 @@ local function process(content)
 end
 
 local function generate_file(input, output)
-	local f = io.open(input, "r")
+	local f = assert(io.open(input, "r"))
 	local content = f:read("a")
 	f:close()
 
-	local out = process(content, output)
-	f = io.open(output, "w")
+	local out = process(content)
+	f = assert(io.open(output, "w"))
 	f:write(out)
 	f:close()
 end
