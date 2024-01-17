@@ -79,10 +79,6 @@ Then again, performance has never been a goal of Anselme.
 
 ---
 
-Redesign the Node hierarchy to avoid cycles.
-
----
-
 Macros.
 
 Could be implemented by creating functions to build AST nodes from Anselme that can also take quotes as arguments.

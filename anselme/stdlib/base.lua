@@ -2,9 +2,6 @@ local ast = require("anselme.ast")
 local Nil, String = ast.Nil, ast.String
 
 return {
-	{ "_;_", "(left, right)", function(state, left, right) return right end },
-	{ "_;", "(left)", function(state, left) return Nil:new() end },
-
 	{
 		"print", "(a)",
 		function(state, a)

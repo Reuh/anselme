@@ -39,11 +39,9 @@ local common = {
 			{ "%", 11 },
 		},
 		suffixes = {
-			{ ";", 1 },
 			{ "!", 12 }
 		},
 		infixes = {
-			{ ";", 1 },
 			{ "#", 2 }, { "->", 2 },
 			{ "=", 3 },
 			{ "&", 5 }, { "|", 5 },
@@ -58,6 +56,8 @@ local common = {
 	},
 	-- list of all operators and their priority
 	operator_priority = {
+		["_;"] = 1,
+		["_;_"] = 1,
 		[";_"] = 1,
 		["$_"] = 2,
 		["_,_"] = 2,
