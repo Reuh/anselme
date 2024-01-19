@@ -57,6 +57,7 @@ return {
 	{ "_%_", "(a::is number, b::is number)", function(state, a, b) return Number:new(a.number % b.number) end },
 	{ "_^_", "(a::is number, b::is number)", function(state, a, b) return Number:new(a.number ^ b.number) end },
 	{ "-_", "(a::is number)", function(state, a) return Number:new(-a.number) end },
+	{ "+_", "(a::is number)", function(state, a) return a end },
 
 	{ "rand", "(min::is number, max::is number)", function(state, min, max) return Number:new(math.random(min.number, max.number)) end },
 	{ "rand", "(max::is number)", function(state, max) return Number:new(math.random(max.number)) end },
