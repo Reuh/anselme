@@ -1,10 +1,11 @@
 local ast = require("anselme.ast")
 local ArgumentTuple
+local Event = ast.abstract.Event
 
 local operator_priority = require("anselme.common").operator_priority
 
 local Choice
-Choice = ast.abstract.Runtime {
+Choice = ast.abstract.Runtime(Event) {
 	type = "choice",
 
 	text = nil,

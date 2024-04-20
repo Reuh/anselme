@@ -2,7 +2,7 @@ local primary = require("anselme.parser.expression.primary.primary")
 
 local Identifier = require("anselme.ast.Identifier")
 
-local disallowed_set = ("\n.~`^+-=<>/[]*{}|\\_!?,;:()\"@&$#%"):gsub("[^%w]", "%%%1")
+local disallowed_set = ("\n+-*/%^=<>[]{}()|\\_.,`!?;:~\"@&$#"):gsub("[^%w]", "%%%1")
 local identifier_pattern = "[ \t]*[^0-9%s'"..disallowed_set.."][^"..disallowed_set.."]*"
 
 local common = require("anselme.common")

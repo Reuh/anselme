@@ -31,7 +31,7 @@ return {
 
 	-- choice
 	{
-		"write choice", "(text::is text, fn=attached block(keep return=true))",
+		"write choice", "(text::is text, fn=attached block(keep return=true, default=($()())))",
 		function(state, text, func)
 			if func:contains_current_resume_target(state) then
 				func:call(state, ArgumentTuple:new())
