@@ -1,6 +1,7 @@
 : x = "x"!script($_)
 	|a
-	if(run == 0, $|seen only once)
+	if(run == 0)
+		|seen only once
 	|b
 
 x!

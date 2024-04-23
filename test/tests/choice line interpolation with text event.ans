@@ -2,7 +2,8 @@
 	return(1 # | A)
 
 :$ move axis
-	1 # | left
+	1 #
+		| left
 	return(" joystick")
 
 *| Press {jump button!} to jump.

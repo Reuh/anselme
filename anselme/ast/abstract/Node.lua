@@ -106,6 +106,11 @@ Node = class {
 			error(format_error(state, self, r), 0)
 		end
 	end,
+	-- same as eval but called on the top node of a statement (i.e. a line of a block)
+	-- redefine if the statement behavior should be different
+	eval_statement = function(self, state)
+		return self:eval(state)
+	end,
 	_evaluated = false, -- if true, node is assumed to be already evaluated and :eval will be the identity function
 	-- evaluate this node and return the result
 	-- by default assume the node can't be evaluated further and return itself; redefine for everything else, probably

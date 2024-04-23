@@ -1,7 +1,7 @@
 local class = require("anselme.lib.class")
 
 local ast = require("anselme.ast")
-local Table, Identifier
+local Table, Identifier, Translatable
 
 local translations_identifier, translations_symbol
 
@@ -65,12 +65,16 @@ local translation_manager = class {
 		end
 
 		-- no matching translation
-		return original.expression:eval(state)
+		if Translatable:is(original) then
+			return original.expression:eval(state)
+		else
+			return original:eval(state)
+		end
 	end,
 }
 
 package.loaded[...] = translation_manager
-Table, Identifier = ast.Table, ast.Identifier
+Table, Identifier, Translatable = ast.Table, ast.Identifier, ast.Translatable
 
 translations_identifier = Identifier:new("_translations") -- Table of { Translatable = Table{ Struct context = translated node, ... }, ... }
 translations_symbol = translations_identifier:to_symbol()

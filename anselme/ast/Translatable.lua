@@ -42,6 +42,10 @@ local Translatable = ast.abstract.Node {
 	_eval = function(self, state)
 		return translation_manager:eval(state, self.context, self)
 	end,
+	-- pass on eval_statement state to the translated node
+	eval_statement = function(self, state)
+		return translation_manager:eval(state, self.context, self):eval_statement(state)
+	end,
 
 	list_translatable = function(self, t)
 		t = t or {}

@@ -2,4 +2,4 @@
 
 :b = ("b":"c" # | world and { "x":"y" # |friends })
 
-a+b
+(a+b)!

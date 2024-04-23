@@ -1,7 +1,8 @@
 local ast = require("anselme.ast")
-local AutoCall, Event, Runtime = ast.abstract.AutoCall, ast.abstract.Event, ast.abstract.Runtime
+local Event, Runtime = ast.abstract.Event, ast.abstract.Runtime
+local ArgumentTuple
 
-return Runtime(AutoCall, Event) {
+local Text = Runtime(Event) {
 	type = "text",
 
 	list = nil, -- { { String, tag Table }, ... }
@@ -28,9 +29,19 @@ return Runtime(AutoCall, Event) {
 		return ("| %s |"):format(table.concat(t, " "))
 	end,
 
+	-- autocall when used directly as a statement
+	eval_statement = function(self, state)
+		return self:call(state, ArgumentTuple:new())
+	end,
+
 	-- Text comes from TextInterpolation which already evals the contents
 
 	to_event_data = function(self)
 		return self
 	end
 }
+
+package.loaded[...] = Text
+ArgumentTuple = ast.ArgumentTuple
+
+return Text

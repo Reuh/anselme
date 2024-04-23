@@ -1,5 +1,6 @@
 :$ f
-	1 # | lol
+	1 #
+		| lol
 
 	return(2 # |d)
 

@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Nil, Return, AutoCall, ArgumentTuple, Flush
+local Nil, Return, Flush
 
 local resume_manager = require("anselme.state.resume_manager")
 
@@ -43,10 +43,7 @@ local Block = ast.abstract.Node {
 			for _, e in ipairs(self.expressions) do
 				if e:contains_resume_target(target) then resumed = true end
 				if resumed then
-					r = e:eval(state)
-					if AutoCall:issub(r) then
-						r = r:call(state, ArgumentTuple:new())
-					end
+					r = e:eval_statement(state)
 					if Return:is(r) then
 						break -- pass on to parent block until we reach a function boundary
 					end
@@ -54,10 +51,7 @@ local Block = ast.abstract.Node {
 			end
 		else
 			for _, e in ipairs(self.expressions) do
-				r = e:eval(state)
-				if AutoCall:issub(r) then
-					r = r:call(state, ArgumentTuple:new())
-				end
+				r = e:eval_statement(state)
 				if Return:is(r) then
 					break -- pass on to parent block until we reach a function boundary
 				end
@@ -69,6 +63,6 @@ local Block = ast.abstract.Node {
 }
 
 package.loaded[...] = Block
-Nil, Return, AutoCall, ArgumentTuple, Flush = ast.Nil, ast.Return, ast.abstract.AutoCall, ast.ArgumentTuple, ast.Flush
+Nil, Return, Flush = ast.Nil, ast.Return, ast.Flush
 
 return Block

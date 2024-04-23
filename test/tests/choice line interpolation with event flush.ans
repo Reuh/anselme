@@ -1,7 +1,8 @@
 :@choice=1
 
 :$ jump button
-	1 # | a
+	1 #
+		| a
 
 	return("SPLIT")
 
