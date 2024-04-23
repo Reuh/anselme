@@ -65,13 +65,17 @@ local function run_loop(run_state, write_output, interactive)
 end
 
 -- create execution state
-local global_state = anselme:new()
-global_state:load_stdlib()
-global_state:define("interrupt", "(code::is string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
-global_state:define("interrupt", "()", function(state) state:interrupt() return ast.Nil:new() end, true)
-global_state:define("wait", "(duration::is number)", function(duration) coroutine.yield("wait", duration) end)
-global_state:define("serialize", "(value)", function(state, value) return ast.String:new(value:serialize(state)) end, true)
-global_state:define("deserialize", "(str::is string)", function(state, str) return ast.abstract.Node:deserialize(state, str.string) end, true)
+local global_state
+local function reload_state()
+	global_state = anselme:new()
+	global_state:load_stdlib()
+	global_state:define("interrupt", "(code::is string)", function(state, code) state:interrupt(code:to_lua(state), "interrupt") return ast.Nil:new() end, true)
+	global_state:define("interrupt", "()", function(state) state:interrupt() return ast.Nil:new() end, true)
+	global_state:define("wait", "(duration::is number)", function(duration) coroutine.yield("wait", duration) end)
+	global_state:define("serialize", "(value)", function(state, value) return ast.String:new(value:serialize(state)) end, true)
+	global_state:define("deserialize", "(str::is string)", function(state, str) return ast.abstract.Node:deserialize(state, str.string) end, true)
+end
+reload_state()
 
 -- run a test file and return the result
 local function run(path, interactive)
@@ -217,6 +221,7 @@ if not arg[1] or arg[1] == "update" then
 						if expected then failure = failure - 1
 						else notfound = notfound - 1
 						end
+						reload_state()
 					end
 				end
 				print("")

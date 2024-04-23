@@ -14,7 +14,7 @@ return string {
 		local start_source = source:clone()
 		local interpolation, rem = string.parse(self, source, options, str)
 
-		-- remove terminal space
+		-- remove final space
 		local last = interpolation.list[#interpolation.list]
 		if String:is(last) then last.string = last.string:gsub("[ \t]$", "") end
 
