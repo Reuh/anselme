@@ -34,6 +34,21 @@ return {
 	},
 
 	{
+		"call", "(func::is callable, args::is tuple)",
+		function(state, fn, args)
+			return fn:call(state, args:to_argument_tuple())
+		end
+	},
+	{
+		"call", "(func::is callable, args::is tuple) = v",
+		function(state, fn, args, v)
+			local argumenttuple = args:to_argument_tuple()
+			argumenttuple:add_assignment(v)
+			return fn:call(state, argumenttuple)
+		end
+	},
+
+	{
 		"_._", "(c::is function, s::is string)",
 		function(state, c, s)
 			local identifier = s:to_identifier()

@@ -1,4 +1,5 @@
 local ast = require("anselme.ast")
+local unpack = table.unpack or unpack
 
 local operator_priority = require("anselme.common").operator_priority
 
@@ -54,6 +55,10 @@ Tuple = ast.abstract.Node {
 			table.insert(l, e:to_lua(state))
 		end
 		return l
+	end,
+
+	to_argument_tuple = function(self)
+		return ast.ArgumentTuple:new(unpack(self.list))
 	end,
 
 	get = function(self, index)

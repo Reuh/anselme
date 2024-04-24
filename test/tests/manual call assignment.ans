@@ -1,0 +1,4 @@
+:$func(x, y) = v
+	x + y + v
+
+func!call[2, 3] = 10

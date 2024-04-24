@@ -1,0 +1,4 @@
+:$func(x, y)
+	x + y
+
+func!call[2, 3]
