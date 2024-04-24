@@ -47,7 +47,7 @@ local ScopeStack = class {
 	-- for lua functions: define_lua("name", "(x, y, z=5)", function(x, y, z) ... end), where arguments and return values of the function are automatically converted between anselme and lua values
 	-- for other lua values: define_lua("name", value)
 	-- for anselme AST: define_lua("name", value)
-	-- name can be prefixed with symbol modifiers, for example ":name" for a constant variable
+	-- name can be prefixed with symbol modifiers, for example "@name" for an exported variable
 	-- if `raw_mode` is true, no anselme-to/from-lua conversion will be performed in the function
 	-- the function will receive the state followed by AST nodes as arguments, and is expected to return an AST node
 	define_lua = function(self, name, value, func, raw_mode)

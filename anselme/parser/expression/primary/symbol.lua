@@ -8,18 +8,17 @@ local Nil = ast.Nil
 
 return primary {
 	match = function(self, str)
-		if str:match("^%::?&?@?") then
+		if str:match("^%:&?@?") then
 			return identifier:match(str:match("^%::?&?@?(.-)$"))
 		end
 		return false
 	end,
 
 	parse = function(self, source, options, str)
-		local mod_const, mod_alias, mod_export, rem = source:consume(str:match("^(%:(:?)(&?)(@?))(.-)$"))
-		local constant, alias, value_check_exp, exported
+		local mod_alias, mod_export, rem = source:consume(str:match("^(%:(&?)(@?))(.-)$"))
+		local alias, value_check_exp, exported
 
 		-- get modifier
-		if mod_const == ":" then constant = true end
 		if mod_alias == "&" then alias = true end
 		if mod_export == "@" then exported = true end
 
@@ -35,6 +34,6 @@ return primary {
 			value_check_exp = exp.arguments.positional[2]
 		end
 
-		return ident:to_symbol{ constant = constant, alias = alias, exported = exported, value_check = value_check_exp }:set_source(source), rem
+		return ident:to_symbol{ alias = alias, exported = exported, value_check = value_check_exp }:set_source(source), rem
 	end
 }

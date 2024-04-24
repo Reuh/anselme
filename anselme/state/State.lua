@@ -104,7 +104,7 @@ State = class {
 	-- * for other lua values: `define("name", value)`
 	-- * for anselme AST: `define("name", value)`
 	--
-	-- `name` can be prefixed with symbol modifiers, for example ":name" for a constant variable.
+	-- `name` can be prefixed with symbol modifiers, for example "@name" for an exported variable.
 	--
 	-- If `raw_mode` is true, no anselme-to/from-lua conversion will be performed in the function.
 	-- The function will receive the state followed by AST nodes as arguments, and is expected to return an AST node.

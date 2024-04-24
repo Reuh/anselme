@@ -1,4 +1,4 @@
-::a = [1:2]
+:a::constant = [1:2]
 
 |false = {a == [5:2]}
 
@@ -6,7 +6,7 @@
 
 |true = {a == [1:2]}
 
-::b = [1,2,3]
+:b::constant = [1,2,3]
 
 |false = {b == a}
 
@@ -24,6 +24,6 @@
 
 |true = {c!to tuple == b}
 
-::d = [1,2,3]
+:d::constant = [1,2,3]
 
 |true = {d == b}

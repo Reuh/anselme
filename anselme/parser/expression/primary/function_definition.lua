@@ -159,19 +159,18 @@ end
 
 return primary {
 	match = function(self, str)
-		return str:match("^%::?&?@?%$")
+		return str:match("^%:&?@?%$")
 	end,
 
 	parse = function(self, source, options, str)
 		local source_start = source:clone()
-		local mod_const, mod_alias, mod_exported, rem = source:consume(str:match("^(%:(:?)(&?)(@?)%$)(.-)$"))
+		local mod_alias, mod_exported, rem = source:consume(str:match("^(%:(&?)(@?)%$)(.-)$"))
 
 		-- get modifiers
-		local constant, exported, alias
-		if mod_const == ":" then constant = true end
+		local exported, alias
 		if mod_alias == "&" then alias = true end
 		if mod_exported == "@" then exported = true end
-		local modifiers = { constant = constant, exported = exported, alias = alias }
+		local modifiers = { exported = exported, alias = alias }
 
 		-- search for a valid signature
 		local symbol, parameters

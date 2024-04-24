@@ -8,7 +8,6 @@ Symbol = ast.abstract.Node {
 	type = "symbol",
 
 	string = nil,
-	constant = nil, -- bool
 	alias = nil, -- bool
 	exported = nil, -- bool
 	value_check = nil, -- exp
@@ -18,7 +17,6 @@ Symbol = ast.abstract.Node {
 	init = function(self, str, modifiers)
 		modifiers = modifiers or {}
 		self.string = str
-		self.constant = modifiers.constant
 		self.value_check = modifiers.value_check
 		self.alias = modifiers.alias
 		self.confined_to_branch = modifiers.confined_to_branch
@@ -26,7 +24,7 @@ Symbol = ast.abstract.Node {
 	end,
 	with = function(self, modifiers)
 		modifiers = modifiers or {}
-		for _, k in ipairs{"constant", "value_check", "alias", "exported", "confined_to_branch"} do
+		for _, k in ipairs{"value_check", "alias", "exported", "confined_to_branch"} do
 			if modifiers[k] == nil then
 				modifiers[k] = self[k]
 			end
@@ -48,9 +46,6 @@ Symbol = ast.abstract.Node {
 
 	_hash = function(self)
 		local prefix = ""
-		if self.constant then
-			prefix = prefix .. ":"
-		end
 		if self.alias then
 			prefix = prefix .. "&"
 		end
@@ -66,9 +61,6 @@ Symbol = ast.abstract.Node {
 
 	_format = function(self, state, prio, ...)
 		local s = ":"
-		if self.constant then
-			s = s .. ":"
-		end
 		if self.alias then
 			s = s .. "&"
 		end

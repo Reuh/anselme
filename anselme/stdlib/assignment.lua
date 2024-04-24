@@ -3,6 +3,13 @@ local Nil, Boolean, LuaCall, ParameterTuple, FunctionParameter, Identifier, Over
 
 return {
 	{
+		"constant", "(exp)",
+		function(state, exp)
+			return Boolean:new(false)
+		end
+	},
+
+	{
 		"is tuple", "(exp)",
 		function(state, exp)
 			return Boolean:new(exp.type == "tuple")
