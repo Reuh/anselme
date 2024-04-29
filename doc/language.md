@@ -58,7 +58,7 @@ List of operators and their precedence:
 5: _&_ _|_ _:_
 6: _==_ _!=_ _>=_ _<=_ _<_ _>_
 7: _+_ _-_
-8: _//_ _/_ _*_ _%_
+8: _/_ _*_ _%_
 9: _implicit*_
 10: _^_
 11: _::_  !_  -_ +_  *_  %_
@@ -117,7 +117,7 @@ function(1, 2, 3)
 
 The operators described in this section are defined using regular Anselme functions and can be redefined or overloaded. For example, `1+1` is equivalent `_+_(1, 1)`. For a detailled description of what these operators do by default, look at the [standard library](standard_library.md) documentation.
 
-`_+_`, `_-_`, `_*_`, `_/_`, `_//_`, `_%_`, `_^_` are intended to be used as addition, substraction, multiplication, division, integer division, modulo, and exponentiation respectively.
+`_+_`, `_-_`, `_*_`, `_/_`, `_%_`, `_^_` are intended to be used as addition, substraction, multiplication, division, modulo, and exponentiation respectively.
 
 `-_` and `+_` are intended to be used as the negation and positive prefixes.
 

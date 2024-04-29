@@ -23,7 +23,6 @@ local secondaries = {
 	r("infix.addition"),
 	r("infix.substraction"),
 	r("infix.multiplication"),
-	r("infix.integer_division"),
 	r("infix.division"),
 	r("infix.modulo"),
 	r("infix.implicit_multiplication"),

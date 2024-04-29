@@ -45,7 +45,7 @@ return {
 	{ "_*_", "(a::is number, b::is number)", function(state, a, b) return Number:new(a.number * b.number) end },
 	{ "_/_", "(a::is number, b::is number)", function(state, a, b) return Number:new(a.number / b.number) end },
 	{
-		"_//_", "(a::is number, b::is number)", function(state, a, b)
+		"div", "(a::is number, b::is number)", function(state, a, b)
 			local r = a.number / b.number
 			if r < 0 then
 				return Number:new(math.ceil(r))
