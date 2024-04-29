@@ -19,12 +19,12 @@ Each line can be prefixed with indentation, consisting of spaces or tabs. The nu
 TODO Empty lines
 
 ```
-1 -- expression on line 1
-42 -- expression on line 2
-5 + _ -- _ will be replaced with the children block
+1 // expression on line 1
+42 // expression on line 2
+5 + _ // _ will be replaced with the children block
 	print("in children block")
 	5
-1 + _ -- can be nested indefinitely
+1 + _ // can be nested indefinitely
 	2 + _
 		3
 ```
@@ -44,8 +44,8 @@ In the rest of the document, prefix operators are referred using `op_` where `op
 Each operator has an associated precedence number. An operation with a higher precedence will be computed before an operation with a lower precedence. When precedences are the same, operations are performed left-to-right.
 
 ```
-1+2*2 -- parsed as 1+(2*2)
-1*2*3 -- parsed as (1*2)*3
+1+2*2 // parsed as 1+(2*2)
+1*2*3 // parsed as (1*2)*3
 ```
 
 List of operators and their precedence:
@@ -78,9 +78,9 @@ The operators described in this section can not be overloaded or redefined in an
 `;_` returns the given expression.
 
 ```
-5; -- returns a block containing 5; ()
-2; 3 -- returns a block containing 2; 3
-;4 -- returns 4
+5; // returns a block containing 5; ()
+2; 3 // returns a block containing 2; 3
+;4 // returns 4
 ```
 
 `$_` creates a new function. See [function literals](#functions) for details.
@@ -88,15 +88,15 @@ The operators described in this section can not be overloaded or redefined in an
 `_,_` creates a new tuple with the two given expressions. Additionnal `_,_` can be chained and will add items to to the same tuple.
 
 ```
-1,2,3,4 -- returns a new tuple [1,2,3,4]
+1,2,3,4 // returns a new tuple [1,2,3,4]
 ```
 
 `_implicit*_` is invoked when an expression is immediately followed by an identifier, and will call the `_*_` multiplication operator.
 
 ```
 :x = 3
-2x -- returns 6
-1/2x -- _implicit*_ has a higher precedence than _/_, so this returns 1/(2*x) = 1/6
+2x // returns 6
+1/2x // _implicit*_ has a higher precedence than _/_, so this returns 1/(2*x) = 1/6
 ```
 
 `_!_` calls the expression on the right with the left expression as an argument. If a `_()` parenthesis call appear immediately after the right expression, the expressions in the parentheses is added to the argument list.
@@ -105,11 +105,11 @@ The operators described in this section can not be overloaded or redefined in an
 
 ```
 print("hello world")
--- is the same as
+// is the same as
 "hello world"!print
 
 function(1, 2, 3)
--- is the same as
+// is the same as
 1!function(2, 3)
 ```
 
@@ -141,7 +141,7 @@ The operators described in this section are defined using regular Anselme functi
 
 ```
 var(1, 2)
--- is the same as
+// is the same as
 _!(var, 1, 2)
 ```
 
@@ -156,14 +156,14 @@ _!(var, 1, 2)
 An expression can be wrapped in parentheses to bypass usual precedence rules.
 
 ```
-2*2+1 -- 5
-2*(2+1) -- 6
+2*2+1 // 5
+2*(2+1) // 6
 ```
 
 Newlines are allowed inside parentheses, so parentheses can also be used to write an expression that span several lines:
 
 ```
-2 * ( -- indentation is ignored inside the parentheses
+2 * ( // indentation is ignored inside the parentheses
 	2 +
 	1
 )
@@ -195,13 +195,13 @@ If a value check function is set, it will be called with the associated argument
 When calling an overload (which contains a list of functions, see the [overload documentation](#overloads)), Anselme will try to dispatch to all of the functions defined in the overload, and then select the function with the highest dispatch priority among all of those with a succesful dispatch.
 
 ```
-:f = $(x, y) 1 -- dispatch priority: 0
-:f = $(x::is number, y) 2 -- dispatch priority: 1
-:f = $(x::is number, y::is number) 3 -- dispatch priority: 2
+:f = $(x, y) 1 // dispatch priority: 0
+:f = $(x::is number, y) 2 // dispatch priority: 1
+:f = $(x::is number, y::is number) 3 // dispatch priority: 2
 
-f("x", "y") -- returns 1
-f(1, "y") -- returns 2
-f(1, 2) -- returns 3
+f("x", "y") // returns 1
+f(1, "y") // returns 2
+f(1, 2) // returns 3
 ```
 
 #### Value checking
@@ -211,8 +211,8 @@ Value checking callables can be used to ensure constraint on values at run-time.
 ```
 :is positive = $(x::is number) x > 0
 
-5::is positive -- no error
--5::is positive -- error
+5::is positive // no error
+-5::is positive // error
 ```
 
 #### Implicit block identifier
@@ -222,7 +222,7 @@ If an expression is needed but the end of line is reached instead, an implicit b
 ```
 1 +
 	2
--- is the same as
+// is the same as
 1 + _
 	2
 ```
@@ -231,13 +231,13 @@ If an expression is needed but the end of line is reached instead, an implicit b
 
 Comments can appear anywhere in an expression in an expression and are ignored by Anselme.
 
-Inline comments starts with `--` and are terminaed either by another `--` or the end of the line or expression.
+Inline comments starts with `//` and are terminaed either by another `//` or the end of the line or expression.
 
 Multiline comments starts with `/*` and are terminated with `*/`. They can be nested, and can also appear in inline comments.
 
 ```
--- inline comment
--- inline comment, explicit end --
+// inline comment
+// inline comment, explicit end //
 /*
 multiline
 comment
@@ -275,7 +275,7 @@ Numbers literals can be written with a integer part, a fractional part, or both.
 0
 0.0
 .0
--- are all equal to 0
+// are all equal to 0
 ```
 
 ### String
@@ -343,7 +343,7 @@ A variable defined using a symbol with value checking will perform the value che
 :&@alias exported symbol
 
 :positive::is positive
-:constant symbol::constant -- constant is a special value checking function that always fail, thus preventing reassignment
+:constant symbol::constant // constant is a special value checking function that always fail, thus preventing reassignment
 ```
 
 ### Identifiers
@@ -384,13 +384,13 @@ When one of the lines of a block consist only of a text literal, it is automatic
 ```
 | text
 | text with explicit terminator |
-| text with explicit terminator |! -- equivalent to the previous line
+| text with explicit terminator |! // equivalent to the previous line
 | 1+1={1+1}
 
 1 #
 	| tagged 1 {2 # | tagged 2}
 
-fn(| Text) -- the text literal is not automatically called when it is not the main expression of the line
+fn(| Text) // the text literal is not automatically called when it is not the main expression of the line
 ```
 
 #### Return
@@ -407,7 +407,7 @@ Return values can be created using the `return` function from the standard libra
 :a = $
 	return(5)
 	12
-a! -- a! is 5
+a! // a! is 5
 ```
 
 The `break` and `continue` functions from the standard library also return return values, with additionnal metadata to allow special behavior when returned from [control flow functions](standard_library.md#control_flow).
@@ -433,9 +433,9 @@ Tuples can also be build using the `_,_` operator, without enclosing them in bra
 ```
 [1,2,"3","4"]
 1,2,"3","4"
-[] -- empty tuple
+[] // empty tuple
 [ 1, 2,
-	3 ] -- can span several lines
+	3 ] // can span several lines
 ```
 
 ### Structs
@@ -449,11 +449,11 @@ A struct literal starts with `{` and is terminated with `}`. Structs elements ar
 
 ```
 {1:"a", "key":"value", 3:"b"}
--- is the same as
+// is the same as
 {"a", "key":"value", "b"}
-{} -- empty struct
+{} // empty struct
 { 1, 2,
-	3 } -- can span several lines
+	3 } // can span several lines
 ```
 
 ### List and tables
@@ -475,8 +475,8 @@ A custom type can be obtained using the `type(value, custom type)` function from
 
 ```
 :var = type(10, "$")
-var!type -- returns "$"
-var!value -- returns 10
+var!type // returns "$"
+var!value // returns 10
 ```
 
 When trying to convert the custom type to a string, for example in a string interpolation, the `format(custom type)` function call will be tried. If the function can be called, its return value will be used as the string representation of the value.
@@ -485,7 +485,7 @@ When trying to convert the custom type to a string, for example in a string inte
 :var = type(10, "$")
 :$format(x::is("$"))
 	"${x!value}"
-print("{var}") -- prints "$10"
+print("{var}") // prints "$10"
 ```
 
 ### Functions
@@ -502,8 +502,8 @@ Any expression can be made translatable using the `%_` operator. A translatable 
 
 ```
 %"hello" -> "bonjour"
-%"hello" -- returns "bonjour"
-%"world" -- returns "world"
+%"hello" // returns "bonjour"
+%"world" // returns "world"
 ```
 
 TODO contexts

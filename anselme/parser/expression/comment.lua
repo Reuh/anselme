@@ -3,7 +3,7 @@ local primary = require("anselme.parser.expression.primary.primary")
 local comment
 comment = primary {
 	match = function(self, str)
-		return str:match("^%/%*") or str:match("^%-%-")
+		return str:match("^%/%*") or str:match("^%/%/")
 	end,
 	parse = function(self, source, options, str)
 		local limit_pattern = options.limit_pattern
@@ -16,12 +16,12 @@ comment = primary {
 			rem = source:consume(str:match("^(%/%*)(.*)$"))
 		else
 			allow_implicit_stop = true
-			stop_str = "--"
-			stop_pattern = "%-%-"
-			rem = source:consume(str:match("^(%-%-)(.*)$"))
+			stop_str = "//"
+			stop_pattern = "%/%/"
+			rem = source:consume(str:match("^(%/%/)(.*)$"))
 		end
 
-		local comment_pattern = "^([^%/%*%-"..(allow_implicit_stop and "\n" or "").."]*)(.-)$"
+		local comment_pattern = "^([^%/%*"..(allow_implicit_stop and "\n" or "").."]*)(.-)$"
 		local at_stop_pattern = "^"..stop_pattern
 
 		local content_list = {}
@@ -54,10 +54,10 @@ comment = primary {
 				source:increment(-2)
 			-- no end token after the comment
 			elseif not rem:match(at_stop_pattern) then
-				-- non-end *, /, or -, keep on commentin'
-				if rem:match("^[%*%/%-]") then
+				-- non-end * or /, keep on commentin'
+				if rem:match("^[%*%/]") then
 					local s
-					s, rem = source:count(rem:match("^([%*%/%-])(.-)$"))
+					s, rem = source:count(rem:match("^([%*%/])(.-)$"))
 					table.insert(content_list, s)
 				-- anything else
 				else
