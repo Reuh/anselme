@@ -2,6 +2,7 @@
 --- text ---
 | {}"No checkpoint:" |
 | {}"x" |
+--- text ---
 | {}"b" |
 --- text ---
 | {}"From checkpoint:" |
@@ -10,6 +11,7 @@
 --- text ---
 | {}"Force no checkpoint:" |
 | {}"x" |
+--- text ---
 | {}"b" |
 --- return ---
 ()

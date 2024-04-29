@@ -184,7 +184,7 @@ State = class {
 		assert(not self:active(), "a script is already active")
 		self._coroutine = coroutine.create(function()
 			local r = assert0(self:eval_local(code, source))
-			event_manager:final_flush(self)
+			event_manager:complete_flush(self)
 			if Return:is(r) then r = r.expression end
 			return "return", r
 		end)
@@ -228,7 +228,7 @@ State = class {
 		if code then
 			self._coroutine = coroutine.create(function()
 				local r = assert0(self:eval_local(code, source))
-				event_manager:final_flush(self)
+				event_manager:complete_flush(self)
 				self.scope:reset() -- scope stack is probably messed up after the switch
 				if Return:is(r) then r = r.expression end
 				return "return", r

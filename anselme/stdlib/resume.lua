@@ -2,6 +2,7 @@ local ast = require("anselme.ast")
 local ArgumentTuple, Boolean, Nil = ast.ArgumentTuple, ast.Boolean, ast.Nil
 
 local resume_manager = require("anselme.state.resume_manager")
+local event_manager = require("anselme.state.event_manager")
 local calling_environment_manager = require("anselme.state.calling_environment_manager")
 
 return {
@@ -34,8 +35,11 @@ return {
 		end
 	},
 	{
-		"merge branch", "()",
-		function(state)
+		"merge branch", "(complete flush=true)",
+		function(state, complete_flush)
+			if complete_flush:truthy() then
+				event_manager:complete_flush(state)
+			end
 			state:merge()
 			return Nil:new()
 		end
