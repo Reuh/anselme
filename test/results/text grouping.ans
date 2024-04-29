@@ -1,0 +1,45 @@
+--# run #--
+--- text ---
+| {}"A" |
+| {}"A" |
+| {}"A" |
+--- text ---
+| {"group":1}"B" |
+| {"group":1}"B" |
+| {"group":1}"B" |
+--- text ---
+:: group ::
+| {"group":1}"C" |
+| {"group":1}"C" |
+:: group ::
+| {"group":3}"D" |
+--- text ---
+:: group ::
+| {"group":1}"E" |
+:: group ::
+| {"group":"j"}"F" |
+:: group ::
+| {"group":1}"G" |
+--- text ---
+:: group ::
+| {"group":1}"H" |
+:: group ::
+| {}"I" |
+:: group ::
+| {"group":1}"J" |
+--- text ---
+:: group ::
+| {"group":1}"K" |
+:: group ::
+| {}"L" |
+| {"not group":1}"L" |
+--- text ---
+:: group ::
+| {}"M" |
+:: group ::
+| {"group":"j"}"N" |
+| {"group":"j"}"N" |
+--- return ---
+()
+--# saved #--
+{}

@@ -1,8 +1,16 @@
+local class = require("anselme.lib.class")
 local ast = require("anselme.ast")
 local ArgumentTuple
 local Event = ast.abstract.Event
 
 local operator_priority = require("anselme.common").operator_priority
+
+local ChoiceEventData = class {
+	_selected = nil,
+	choose = function(self, choice)
+		self._selected = choice
+	end
+}
 
 local Choice
 Choice = ast.abstract.Runtime(Event) {
@@ -26,12 +34,7 @@ Choice = ast.abstract.Runtime(Event) {
 	end,
 
 	build_event_data = function(self, state, event_buffer)
-		local l = {
-			_selected = nil,
-			choose = function(self, choice)
-				self._selected = choice
-			end
-		}
+		local l = ChoiceEventData:new()
 		for _, c in event_buffer:iter(state) do
 			table.insert(l, c.text)
 		end

@@ -3,7 +3,7 @@
 --
 -- usage:
 --
--- local class = require("anselme.lib.class")
+-- local class = require("class")
 -- local Vehicle = class {
 -- 	type = "vehicle", -- class name, optional
 --
@@ -28,7 +28,7 @@
 -- local car = Car:new("red") -- instancing
 -- print(car:is_stable(), car.color) -- true, "red"
 --
--- the default class returned by require("anselme.lib.class") contains a few other default methods that will be inherited by all subclasses
+-- the default class returned by require("class") contains a few other default methods that will be inherited by all subclasses
 -- see line 99 and further for details & documentation
 --
 -- design philosophy:
@@ -70,9 +70,9 @@ local function add_to_set(set, val)
 end
 
 --# class creation logic #--
-local class_mt
+local new_class, class_mt
 
-local function new_class(...)
+new_class = function(...)
 	local class = {}
 	local include = {...}
 	for i=1, #include do

@@ -1,11 +1,38 @@
+local class = require("anselme.lib.class")
 local ast = require("anselme.ast")
 local Event, Runtime = ast.abstract.Event, ast.abstract.Runtime
 local ArgumentTuple
 
+local to_anselme = require("anselme.common.to_anselme")
+
+local TextEventData
+TextEventData = class {
+	-- returns a list of TextEventData where the first element of each text of each TextEventData has the same value for the tag tag_name
+	group_by = function(self, tag_name)
+		local l = {}
+		local current_group
+		local tag_key = to_anselme(tag_name)
+		local last_value
+		for _, event in ipairs(self) do
+			local list = event.list
+			if #list > 0 then
+				local value = list[1][2]:get_strict(tag_key)
+				if (not current_group) or (last_value == nil and value) or (last_value and value == nil) or (last_value and value and last_value:hash() ~= value:hash()) then -- new group
+					current_group = TextEventData:new()
+					table.insert(l, current_group)
+					last_value = value
+				end
+				table.insert(current_group, event) -- add to current group
+			end
+		end
+		return l
+	end,
+}
+
 local Text = Runtime(Event) {
 	type = "text",
 
-	list = nil, -- { { String, tag Table }, ... }
+	list = nil, -- { { String, tag Struct }, ... }
 
 	init = function(self)
 		self.list = {}
@@ -36,9 +63,13 @@ local Text = Runtime(Event) {
 
 	-- Text comes from TextInterpolation which already evals the contents
 
-	to_event_data = function(self)
-		return self
-	end
+	build_event_data = function(self, state, event_buffer)
+		local l = TextEventData:new()
+		for _, event in event_buffer:iter(state) do
+			table.insert(l, event)
+		end
+		return l
+	end,
 }
 
 package.loaded[...] = Text

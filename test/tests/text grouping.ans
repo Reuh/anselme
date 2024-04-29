@@ -1,0 +1,39 @@
+| A
+| A
+| A
+
+"group": 1 #
+	| B
+	| B
+	| B
+
+"group": 1 #
+	| C
+"group": 1 #
+	| C
+"group": 3 #
+	| D
+
+"group": 1 #
+	| E
+"group": "j" #
+	| F
+"group": 1 #
+	| G
+
+"group": 1 #
+	| H
+| I
+"group": 1 #
+	| J
+
+"group": 1 #
+	| K
+| L
+"not group": 1 #
+	| L
+
+| M
+"group": "j" #
+	| N
+	| N

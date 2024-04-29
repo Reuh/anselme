@@ -33,8 +33,13 @@ local function run_loop(run_state, write_output, interactive)
 		local e, data = run_state:step()
 		write_output("--- "..e.." ---")
 		if e == "text" then
-			for _, l in ipairs(data) do
-				write_output(l:format(run_state))
+			local grouped = data:group_by("group")
+			local groups = #grouped > 1
+			for _, v in ipairs(grouped) do
+				if groups then write_output(":: group ::") end
+				for _, l in ipairs(v) do
+					write_output(l:format(run_state))
+				end
 			end
 		elseif e == "choice" then
 			local choice
