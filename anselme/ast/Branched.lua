@@ -7,7 +7,7 @@ local ast = require("anselme.ast")
 local Branched
 Branched = ast.abstract.Runtime {
 	type = "branched",
-	mutable = true,
+	mutable = true, -- 🥳
 
 	value = nil, -- { [branch name] = value, ... }
 

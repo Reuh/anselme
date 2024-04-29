@@ -16,15 +16,6 @@ Standard library.
 	- retag/add tags
 * And in general, clean up everything.
 
----
-
-Default arguments and initial variables values should pass the value check associated with the variable / parameter.
-Issue: dispatch is decided before evaluating default values.
-
----
-
-Comment syntax, not sure about using -- for inline and /* for multiline.
-
 # Can be done later
 
 Translation.
@@ -47,14 +38,11 @@ Return system.
 
 Could be reused for exception handling or other purposes if accessible by the user.
 
+Also, named break for nested loops.
+
 ---
 
 Custom function for building text/string interpolation.
-
----
-
-Reduce the number of AST node types ; try to merge similar node and make simpler individuals nodes if possible by composing them.
-Won't help with performance but make me feel better, and easier to extend. Anselme should be more minimal is possible.
 
 ---
 
@@ -79,14 +67,7 @@ Then again, performance has never been a goal of Anselme.
 
 ---
 
-Macros.
-
-Could be implemented by creating functions to build AST nodes from Anselme that can also take quotes as arguments.
-That should be easy, but I don't remember why I wanted macros in the first place, so until I want them again, shrug.
-
----
-
-High concept ideas / stuff that sounds cool but maybe not worth it.
+High concept ideas / stuff that sounds cool but likely not worth it.
 
 * Instead of using a bunch of sigils as operators, accept fancy unicode caracters.
 	Easy to parse, but harder to write.

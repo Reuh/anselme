@@ -39,7 +39,7 @@ return class {
 				state.scope:set(discard_next_events_identifier, Nil:new()) -- fake flush the discarded events
 			end
 		end
-		-- flush until no event or same type
+		-- flush until no event of same type
 		repeat
 			local current_type = state.scope:get(last_event_type_identifier):to_lua(state)
 			if current_type ~= nil and current_type ~= event.type then
