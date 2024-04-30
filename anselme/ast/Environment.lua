@@ -57,6 +57,7 @@ local VariableMetadata = ast.abstract.Runtime {
 	end,
 
 	_merge = function(self, state, cache)
+		self.symbol:merge(state, cache)
 		if not self.symbol.confined_to_branch then
 			self.branched:merge(state, cache)
 		end

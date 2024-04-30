@@ -288,10 +288,11 @@ Node = class {
 		if not cache[self] then
 			cache[self] = true
 			self:_merge(state, cache)
-			self:traverse(traverse.merge, state, cache)
 		end
 	end,
-	_merge = function(self, state, cache) end,
+	_merge = function(self, state, cache)
+		self:traverse(traverse.merge, state, cache)
+	end,
 
 	-- return string that uniquely represent this node
 	-- the actual hash is computed in :_hash, don't redefine :hash directly

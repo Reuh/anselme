@@ -37,8 +37,8 @@ Branched = ast.abstract.Runtime {
 		if val and state.source_branch then
 			self.value[state.source_branch.branch_id] = val
 			self.value[state.branch_id] = nil
-			val:merge(state, cache)
 		end
+		self:get(state):merge(state, cache)
 	end,
 
 	_format = function(self, state, ...)
