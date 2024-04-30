@@ -20,5 +20,5 @@ merge branch!
 l = 4
 
 |4: {l}
-
+---
 error("cancel merge")

@@ -2,7 +2,6 @@
 --- text ---
 | {}"kk" |
 | {}"ko" |
---- text ---
 | {}"" {}"42" {}"" |
 --- error ---
 [0m[31m[0m[31m[0m[31midentifier "z" is undefined in branch test/tests/exported variable nested.ans - run[0m

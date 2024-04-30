@@ -1,63 +1,34 @@
 --# run #--
 --- text ---
 | {}"new list each time:" |
---- text ---
 | {}"start: " {}"*[]" {}"" |
---- text ---
 | {}"before recursion " {}"1" {}": " {}"*[1]" {}"" |
---- text ---
 | {}"start: " {}"*[]" {}"" |
---- text ---
 | {}"before recursion " {}"2" {}": " {}"*[2]" {}"" |
---- text ---
 | {}"start: " {}"*[]" {}"" |
---- text ---
 | {}"before recursion " {}"3" {}": " {}"*[3]" {}"" |
---- text ---
 | {}"start: " {}"*[]" {}"" |
---- text ---
 | {}"before recursion " {}"4" {}": " {}"*[4]" {}"" |
---- text ---
 | {}"start: " {}"*[]" {}"" |
---- text ---
 | {}"before recursion " {}"5" {}": " {}"*[5]" {}"" |
---- text ---
 | {}"after recursion " {}"4" {}": " {}"*[4]" {}"" |
---- text ---
 | {}"after recursion " {}"3" {}": " {}"*[3]" {}"" |
---- text ---
 | {}"after recursion " {}"2" {}": " {}"*[2]" {}"" |
---- text ---
 | {}"after recursion " {}"1" {}": " {}"*[1]" {}"" |
---- text ---
 | {}"pass list:" |
---- text ---
 | {}"start: " {}"*[]" {}"" |
---- text ---
 | {}"before recursion " {}"1" {}": " {}"*[1]" {}"" |
---- text ---
 | {}"start: " {}"*[1]" {}"" |
---- text ---
 | {}"before recursion " {}"2" {}": " {}"*[1, 2]" {}"" |
---- text ---
 | {}"start: " {}"*[1, 2]" {}"" |
---- text ---
 | {}"before recursion " {}"3" {}": " {}"*[1, 2, 3]" {}"" |
---- text ---
 | {}"start: " {}"*[1, 2, 3]" {}"" |
---- text ---
 | {}"before recursion " {}"4" {}": " {}"*[1, 2, 3, 4]" {}"" |
---- text ---
 | {}"start: " {}"*[1, 2, 3, 4]" {}"" |
---- text ---
 | {}"before recursion " {}"5" {}": " {}"*[1, 2, 3, 4, 5]" {}"" |
---- text ---
 | {}"after recursion " {}"4" {}": " {}"*[1, 2, 3, 4, 5]" {}"" |
---- text ---
 | {}"after recursion " {}"3" {}": " {}"*[1, 2, 3, 4, 5]" {}"" |
---- text ---
 | {}"after recursion " {}"2" {}": " {}"*[1, 2, 3, 4, 5]" {}"" |
---- text ---
 | {}"after recursion " {}"1" {}": " {}"*[1, 2, 3, 4, 5]" {}"" |
 --- return ---
 ()

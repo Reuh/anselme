@@ -1,7 +1,6 @@
 --# run #--
 --- text ---
 | {}"" {}"type(5, \"kg\")" {}"" |
---- text ---
 | {}"" {}"type(12, \"kg\")" {}"" |
 --- error ---
 [0m[31m[0m[31mcan not set weigh = 32; $(x) type(x) == t value check failed[0m

@@ -1,7 +1,6 @@
 --# run #--
 --- text ---
 | {}"" {}"pierre" {}" is french" |
---- text ---
 | {}"" {}"idk" {}" is esperanto" |
 --- error ---
 [0m[31m[0m[31mcan't call overload a: no function match arguments (value), possible functions were:

@@ -1,9 +1,7 @@
 --# run #--
 --- text ---
 | {}"" {}"-5" {}"" |
---- text ---
 | {}"" {}"minus lol" {}"" |
---- text ---
 | {}"" {}"generic minus" {}"" |
 --- return ---
 ()

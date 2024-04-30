@@ -3,11 +3,9 @@
 | {}"Force run from checkpoint:" |
 | {}"a" |
 | {}"b" |
---- text ---
 | {}"From checkpoint:" |
 | {}"a" |
 | {}"b" |
---- text ---
 | {}"Force no checkpoint:" |
 | {}"x" |
 --- text ---

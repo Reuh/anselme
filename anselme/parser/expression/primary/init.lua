@@ -19,6 +19,7 @@ local primaries = {
 	r("implicit_block_identifier"),
 	r("tuple"),
 	r("struct"),
+	r("flush"),
 
 	-- prefixes
 	r("prefix.semicolon"),

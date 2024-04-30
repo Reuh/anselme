@@ -1,9 +1,8 @@
 --# run #--
---- text ---
-| {}"before: " {}"2" {}"" |
 --- interrupt ---
 nil
 --- text ---
+| {}"before: " {}"2" {}"" |
 | {}"in interrupt: " {}"2" {}"" |
 --- return ---
 ()

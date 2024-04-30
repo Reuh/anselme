@@ -10,5 +10,5 @@
 a("pierre"!type(french name))
 
 a("idk"!type(esperanto name))
-
+---
 a(5!type("nope"))

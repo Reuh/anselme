@@ -1,9 +1,7 @@
 --# run #--
 --- text ---
 | {}"Hello" |
---- text ---
 | {}"Bonjour" |
---- text ---
 | {}"Hello" |
 --- return ---
 ()

@@ -1,7 +1,7 @@
 local expression_to_ast = require("anselme.parser.expression.to_ast")
 
 local ast = require("anselme.ast")
-local PartialScope, Block, Flush, Call, Identifier = ast.PartialScope, ast.Block, ast.Flush, ast.Call, ast.Identifier
+local PartialScope, Block, Call, Identifier = ast.PartialScope, ast.Block, ast.Call, ast.Identifier
 
 local function block(source, options, str)
 	local start_source = source:clone()
@@ -15,7 +15,6 @@ local function block(source, options, str)
 	local current_level = levels[#levels]
 
 	local rem = str
-	local last_line_empty
 	while rem:match("^\n") do
 		local line = source:consume(rem:match("^(\n)(.*)$"))
 		local new_indentation = utf8.len(line:match("^([ \t]*)"))
@@ -23,7 +22,6 @@ local function block(source, options, str)
 		-- (consecutive empty lines are merged into one)
 		if line:match("^\n") then
 			rem = line
-			last_line_empty = true
 		elseif line:match("[^%s]") then
 			-- raise indentation
 			if new_indentation > current_level.indentation then
@@ -48,17 +46,13 @@ local function block(source, options, str)
 			s, exp, rem = pcall(expression_to_ast, source, options, line)
 			if not s then error(("invalid expression in block: %s"):format(exp), 0) end
 
-			-- single implicit _: line was empty (e.g. single comment in the line)
+			-- single implicit _: line was effectively empty (e.g. single comment in the line)
 			if Call:is(exp) and not exp.explicit and Identifier:is(exp.func) and exp.func.name == "_" then
-				exp = Flush:new()
+				-- skip, empty line
+			else
+				-- add line
+				current_level.block:add(exp)
 			end
-
-			-- add line
-			if last_line_empty then
-				current_level.block:add(Flush:new())
-				last_line_empty = nil
-			end
-			current_level.block:add(exp)
 		else -- end-of-file
 			rem = ""
 		end

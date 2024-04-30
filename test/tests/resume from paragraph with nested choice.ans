@@ -11,7 +11,7 @@
 	*| b
 		|-> b
 	choice = 2
-
+	---
 	*| c
 		|-> c
 	choice=1

@@ -1,11 +1,8 @@
 --# run #--
 --- text ---
 | {}"expression " {}"a" {}"" |
---- text ---
 | {}"quote " {}"\"" {}"" |
---- text ---
 | {}"other codes " {}"\n" {}" " {}"\" {}" " {}"\t" {}" " {}"{" {}"braces}" |
---- text ---
 | {}"" {}"escaping expressions abc and {stuff} \ and quotes \"" {}"" |
 --- return ---
 ()

@@ -3,7 +3,7 @@
 	| no
 *| ne
 	| ok
-
+---
 choice = 1
 *| ho
 	| plop

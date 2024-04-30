@@ -11,7 +11,7 @@
 *| No
 	|ko
 :@choice = 1
-
+---
 *| Other
 	|ok
 *| Use {move axis!} to move.

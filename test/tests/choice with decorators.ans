@@ -4,31 +4,31 @@ if(1)
 *| b
 	| -> b
 :@choice = 1
-
+---
 if(1, $*| a)
 	| -> a
 *| b
 	| -> b
 choice = 2
-
+---
 if((), $*| a)
 	| -> a
 *| b
 	| -> b
 choice = 1
-
+---
 *| a
 	| -> a
 25 # *| b
 	| -> b
 choice = 2
-
+---
 12 # if((), $*| a)
 	| -> a
 3 # *| b
 	| -> b
 choice = 1
-
+---
 12 # if(1, $*| a)
 	| -> a
 3 # *| b

@@ -1,15 +1,15 @@
 :$ jump button
 	1 #
 		| A
-
+	---
 	return!
 
 :$ move axis
 	1 #
 		| left
-
+	---
 	return(" joystick")
 
 | Press {jump button!} to jump.
-
+---
 | Use {move axis!} to move.

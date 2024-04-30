@@ -2,7 +2,6 @@
 --- text ---
 | {}"c=" {}"2" {}" (2)" |
 | {}"l=" {}"*[1, 2, 3]" {}" (*[1,2,3])" |
---- text ---
 | {}"d=" {}"2" {}" (2)" |
 --- error ---
 [0m[31m[0m[31mcan not set d = 5; constant value check failed[0m

@@ -1,13 +1,9 @@
 --# run #--
 --- text ---
 | {}"expression " {}"{" {}"a}" |
---- text ---
 | {}"quote " {}"\"" {}"" |
---- text ---
 | {}"other codes " {}"\n" {}" " {}"\" {}" " {}"\t" {}"" |
---- text ---
 | {}"decorators " {}"#" {}" tag " {}"~" {}" condition " {}"$" {}" fn" |
---- text ---
 | {}"sub " {}"[" {}"text]" |
 --- return ---
 ()

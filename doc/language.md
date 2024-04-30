@@ -15,8 +15,7 @@ Anselme files are UTF-8 encoded text files.
 Anselme will try to parse the file as a block expression. A block is a list of expression, each on a separate line.
 
 Each line can be prefixed with indentation, consisting of spaces or tabs. The number of spaces or tabs is the indentation level. Lines with a higher level of indentation than the previous line will create a new block; this new block will be evaluated wherever the `_` block identifier appear in the previous line.
-
-TODO Empty lines
+Empty lines are ignored with regard to indentation.
 
 ```
 1 // expression on line 1
@@ -397,7 +396,7 @@ fn(| Text) // the text literal is not automatically called when it is not the ma
 
 Return values consist of a an arbitrary value.
 
-When a return value appear as one of the lines of a block, the block is stopped and immediately return the return value.
+When a return value is returned by one of the lines of a block, the block is stopped and immediately return the return value.
 
 When a return value is returned from a function call, the value associated with the return value is returned instead.
 

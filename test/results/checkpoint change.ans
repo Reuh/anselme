@@ -4,40 +4,27 @@
 | {}"x" |
 --- text ---
 | {}"d" |
---- text ---
 | {}"From p checkpoint:" |
 | {}"a" |
 --- text ---
 | {}"c" |
---- text ---
 | {}"d" |
---- text ---
 | {}"From q checkpoint:" |
 | {}"b" |
---- text ---
 | {}"c" |
---- text ---
 | {}"d" |
---- text ---
 | {}"From q checkpoint again:" |
 | {}"b" |
---- text ---
 | {}"c" |
---- text ---
 | {}"d" |
---- text ---
 | {}"Go to p again by setting checkpoint manually:" |
 | {}"a" |
 --- text ---
 | {}"c" |
---- text ---
 | {}"d" |
---- text ---
 | {}"From q again:" |
 | {}"b" |
---- text ---
 | {}"c" |
---- text ---
 | {}"d" |
 --- return ---
 ()

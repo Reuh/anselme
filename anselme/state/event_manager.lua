@@ -76,6 +76,6 @@ return class {
 	end,
 	-- keep flushing until nothing is left (a flush may re-fill the buffer during its execution)
 	complete_flush = function(self, state)
-		while state.scope:get(last_event_type_identifier):to_lua(state) do self:flush(state) end
+		while state.scope:get(last_event_type_identifier):truthy() do self:flush(state) end
 	end
 }

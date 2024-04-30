@@ -7,5 +7,5 @@
 	return(" joystick")
 
 | Press {jump button!} to jump.
-
+---
 | Use {move axis!} to move.

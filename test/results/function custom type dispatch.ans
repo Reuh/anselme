@@ -1,9 +1,7 @@
 --# run #--
 --- text ---
 | {}"" {}"bob" {}" is english or generic" |
---- text ---
 | {}"" {}"pierre" {}" is french" |
---- text ---
 | {}"" {}"idk" {}" is english or generic" |
 --- return ---
 ()

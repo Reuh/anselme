@@ -1,6 +1,4 @@
 --# run #--
---- text ---
-| {}"before: " {}"2" {}"" |
 --# parallel script #--
 --- text ---
 | {}"parallel: " {}"5" {}"" |
@@ -8,13 +6,15 @@
 ()
 --# main script #--
 --- text ---
-| {}"after: " {}"2" {}"" |
+| {}"before: " {}"2" {}"" |
 --# parallel script #--
 --- text ---
 | {}"parallel: " {}"2" {}"" |
 --- return ---
 ()
 --# main script #--
+--- text ---
+| {}"after: " {}"2" {}"" |
 --- return ---
 ()
 --# saved #--
