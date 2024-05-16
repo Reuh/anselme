@@ -12,10 +12,10 @@ Source = class {
 		self.line = line
 		self.position = position
 	end,
-	increment = function(self, n, ...)
+	increment = function(self, n)
 		self.position = self.position + n
 	end,
-	increment_line = function(self, n, ...)
+	increment_line = function(self, n)
 		self.line = self.line + n
 	end,
 	count = function(self, capture, ...)

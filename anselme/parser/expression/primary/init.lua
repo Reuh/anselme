@@ -36,6 +36,7 @@ return {
 	-- returns exp, rem if expression found
 	-- returns nil if no expression found
 	search = function(self, source, options, str)
+		local start_source = source:clone()
 		str = source:consume_leading_whitespace(options, str)
 		-- if there is a comment, restart the parsing after the comment ends
 		local c, c_rem = comment:search(source, options, str)
@@ -45,5 +46,7 @@ return {
 			local exp, rem = primary:search(source, options, str)
 			if exp then return exp, rem end
 		end
+		-- nothing found, revert state change
+		source:set(start_source)
 	end
 }
