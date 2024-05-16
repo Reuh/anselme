@@ -34,18 +34,32 @@ return {
 	},
 
 	{
-		"call", "(func::is callable, args::is tuple)",
+		"call", "(func, args::is tuple)",
 		function(state, fn, args)
 			return fn:call(state, args:to_argument_tuple())
 		end
 	},
 	{
-		"call", "(func::is callable, args::is tuple) = v",
+		"call", "(func, args::is tuple) = v",
 		function(state, fn, args, v)
 			local argumenttuple = args:to_argument_tuple()
 			argumenttuple:add_assignment(v)
 			return fn:call(state, argumenttuple)
 		end
+	},
+	{
+		"can dispatch", "(func, args::is tuple)",
+		function(state, fn, args)
+			return Boolean:new(not not fn:dispatch(state, args:to_argument_tuple()))
+		end,
+	},
+	{
+		"can dispatch", "(func, args::is tuple) = v",
+		function(state, fn, args, v)
+			local argumenttuple = args:to_argument_tuple()
+			argumenttuple:add_assignment(v)
+			return Boolean:new(not not fn:dispatch(state, argumenttuple))
+		end,
 	},
 
 	{

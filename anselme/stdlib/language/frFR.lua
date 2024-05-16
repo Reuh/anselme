@@ -60,7 +60,6 @@ return [[
 :@est un booléen = stdlib.is boolean
 :@est vrai = stdlib.is true
 :@est faux = stdlib.is false
-:@est appelable = stdlib.is callable
 :@est une fonction = stdlib.is function
 :@est une liste = stdlib.is list
 :@est un dictionnaire = stdlib.is map

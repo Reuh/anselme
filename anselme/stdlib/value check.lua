@@ -25,5 +25,4 @@ return [[
 
 :@is function = is("function")
 :@is overload = is("overload")
-:@is callable = $(x) x!type == "overload" | x!type == "function" | x!type == "quote"
 ]]
