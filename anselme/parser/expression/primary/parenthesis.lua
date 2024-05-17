@@ -3,7 +3,7 @@
 local primary = require("anselme.parser.expression.primary.primary")
 
 local ast = require("anselme.ast")
-local Nil = ast.Nil
+local Nil, Identifier = ast.Nil, ast.Identifier
 
 local expression_to_ast = require("anselme.parser.expression.to_ast")
 
@@ -27,6 +27,9 @@ return primary {
 			if not s then error("invalid expression inside parentheses: "..exp, 0) end
 			rem = source:consume_leading_whitespace(opts, rem)
 			if not rem:match("^%)") then error(("unexpected %q at end of parenthesis"):format(rem:match("^[^\n]*")), 0) end
+			if Identifier:is(exp) then
+				exp.parenthesied = true
+			end
 		end
 		rem = source:consume(rem:match("^(%))(.*)$"))
 

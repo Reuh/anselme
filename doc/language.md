@@ -415,10 +415,15 @@ The `break` and `continue` functions from the standard library also return retur
 
 Pairs associate two arbitrary values.
 
-Pairs are built using the `_:_` identifier, with the left argument giving the name and the right the value of the pair.
+Pairs are built using the `_:_` identifier, with the left argument giving the name and the right the value of the pair. If the left argument is an identifier, it will be converted to a string for convenience.
 
 ```
-"name":"value"
+"name":"value" -- is the same as
+name:"value"
+
+-- if you need to use the value associated with the `name` variable instead, the identifier can be wrapped in parentheses
+:name = "key"
+(name):"value"
 ```
 
 ### Tuple

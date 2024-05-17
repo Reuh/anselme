@@ -4,6 +4,7 @@ local Symbol, String
 local Identifier
 Identifier = ast.abstract.Node {
 	type = "identifier",
+	parenthesied = false, -- true if identifier was wrapped in parentheses
 
 	name = nil,
 
