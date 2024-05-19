@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local Identifier, Number
+local Number
 
 local operator_priority = require("anselme.common").operator_priority
 
@@ -25,8 +25,7 @@ ArgumentTuple = ast.abstract.Node {
 		self.arity = self.arity + 1
 		self.positional[self.arity] = val
 	end,
-	add_named = function(self, identifier, val) -- only for construction
-		local name = identifier.name
+	add_named = function(self, name, val) -- only for construction
 		assert(not (self.named[name] or self.assignment))
 		self.arity = self.arity + 1
 		self.named[name] = val
@@ -82,7 +81,7 @@ ArgumentTuple = ast.abstract.Node {
 			if self.positional[i] then
 				r:add_positional(self.positional[i]:eval(state))
 			elseif self.named[i] then
-				r:add_named(Identifier:new(self.named[i]), self.named[self.named[i]]:eval(state))
+				r:add_named(self.named[i], self.named[self.named[i]]:eval(state))
 			else
 				r:add_assignment(self.assignment:eval(state))
 			end
@@ -98,7 +97,7 @@ ArgumentTuple = ast.abstract.Node {
 			if self.positional[i] then
 				r:add_positional(self.positional[i])
 			elseif self.named[i] then
-				r:add_named(Identifier:new(self.named[i]), self.named[self.named[i]])
+				r:add_named(self.named[i], self.named[self.named[i]])
 			else
 				r:add_assignment(self.assignment)
 			end
@@ -112,7 +111,7 @@ ArgumentTuple = ast.abstract.Node {
 			if self.positional[i] then
 				r:add_positional(self.positional[i])
 			elseif self.named[i] then
-				r:add_named(Identifier:new(self.named[i]), self.named[self.named[i]])
+				r:add_named(self.named[i], self.named[self.named[i]])
 			else
 				r:add_assignment(self.assignment) -- welp it'll error below anyway
 			end
@@ -208,6 +207,6 @@ ArgumentTuple = ast.abstract.Node {
 }
 
 package.loaded[...] = ArgumentTuple
-Identifier, Number = ast.Identifier, ast.Number
+Number = ast.Number
 
 return ArgumentTuple

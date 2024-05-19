@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local unpack = table.unpack or unpack
+local ArgumentTuple, String, Pair
 
 local operator_priority = require("anselme.common").operator_priority
 
@@ -58,7 +58,15 @@ Tuple = ast.abstract.Node {
 	end,
 
 	to_argument_tuple = function(self)
-		return ast.ArgumentTuple:new(unpack(self.list))
+		local args = ArgumentTuple:new()
+		for _, v in self:iter() do
+			if Pair:is(v) and String:is(v.name) then
+				args:add_named(v.name.string, v.value)
+			else
+				args:add_positional(v)
+			end
+		end
+		return args
 	end,
 
 	get = function(self, index)
@@ -86,5 +94,8 @@ Tuple = ast.abstract.Node {
 		return nil
 	end
 }
+
+package.loaded[...] = Tuple
+ArgumentTuple, String, Pair = ast.ArgumentTuple, ast.String, ast.Pair
 
 return Tuple

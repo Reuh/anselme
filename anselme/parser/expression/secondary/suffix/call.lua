@@ -46,7 +46,7 @@ return secondary {
 		for _, v in ipairs(exp.list) do
 			if Call:is(v) and v:is_simple_assignment() then
 				local pos = v.arguments.positional
-				args:add_named(pos[1].expression, pos[2])
+				args:add_named(pos[1].expression.name, pos[2])
 			else
 				args:add_positional(v)
 			end
