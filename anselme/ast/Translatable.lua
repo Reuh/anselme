@@ -17,7 +17,7 @@ local Translatable = ast.abstract.Node {
 		self.context = Struct:new()
 		self.context:set(String:new("source"), String:new(self.expression.source))
 		self.context:set(String:new("file"), String:new(self.expression.source:match("^([^%:]*)")))
-		-- TODO: add parent script/function to context
+		-- TODO: add parent script/function name to context - should be more stable than source position
 	end,
 
 	_format = function(self, ...)

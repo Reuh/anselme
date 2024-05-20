@@ -28,6 +28,12 @@ return {
 			return Nil:new()
 		end
 	},
+	{
+		"tag", "(txt::is text, tags::is struct)",
+		function(state, text, tags)
+			return text:with_tags(tags)
+		end
+	},
 
 	-- choice
 	{

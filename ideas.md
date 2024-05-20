@@ -9,14 +9,6 @@ Documentation:
 * tutorial
 * standard library
 
----
-
-Standard library.
-
-* Text and string manipulation would make sense, but that would require a full UTF-8/Unicode support library like https://github.com/starwing/luautf8. -> might favor bad practices for translation
-	- retag/add tags
-* And in general, clean up everything.
-
 # Can be done later
 
 Translation.

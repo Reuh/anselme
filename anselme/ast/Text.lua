@@ -1,7 +1,7 @@
 local class = require("anselme.lib.class")
 local ast = require("anselme.ast")
 local Event, Runtime = ast.abstract.Event, ast.abstract.Runtime
-local ArgumentTuple
+local ArgumentTuple, Struct
 
 local to_anselme = require("anselme.common.to_anselme")
 
@@ -29,7 +29,8 @@ TextEventData = class {
 	end,
 }
 
-local Text = Runtime(Event) {
+local Text
+Text = Runtime(Event) {
 	type = "text",
 
 	list = nil, -- { { String, tag Struct }, ... }
@@ -39,6 +40,17 @@ local Text = Runtime(Event) {
 	end,
 	insert = function(self, str, tags) -- only for construction
 		table.insert(self.list, { str, tags })
+	end,
+
+	with_tags = function(self, tags)
+		local r = Text:new()
+		for _, e in ipairs(self.list) do
+			local t = Struct:new()
+			t:include(e[2])
+			t:include(tags)
+			self:insert(e[1], t)
+		end
+		return r
 	end,
 
 	traverse = function(self, fn, ...)
@@ -73,6 +85,6 @@ local Text = Runtime(Event) {
 }
 
 package.loaded[...] = Text
-ArgumentTuple = ast.ArgumentTuple
+ArgumentTuple, Struct = ast.ArgumentTuple, ast.Struct
 
 return Text
