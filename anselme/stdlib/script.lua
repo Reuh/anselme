@@ -1,5 +1,5 @@
 return [[
-:@script = $(name, fn=attached block!)
+:@ script = $(name, fn=attached block!)
 	fn.:&current checkpoint => "{name}.checkpoint"!persist(false)
 	fn.:&reached => "{name}.reached"!persist(*{})
 	fn.:&run => "{name}.run"!persist(0)
@@ -46,10 +46,10 @@ return [[
 :@$_._(s::is script, k::is symbol) = val
 	(s!value).fn.(k) = val
 
-:@$from(s::is script, a::is anchor)
+:@$ from(s::is script, a::is anchor)
 	s.current checkpoint = a
 	return(s!)
-:@$from(s::is script)
+:@$ from(s::is script)
 	s.current checkpoint = ()
 	return(s!)
 

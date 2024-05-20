@@ -76,4 +76,22 @@ return {
 			end
 		end
 	},
+
+	{ "sqrt", "(x::is number)", function(state, x) return Number:new(math.sqrt(x.number)) end },
+
+	{ "abs", "(x::is number)", function(state, x) return Number:new(math.abs(x.number)) end },
+
+	{ "exp", "(x::is number)", function(state, x) return Number:new(math.exp(x.number)) end },
+	{ "log", "(x::is number)", function(state, x) return Number:new(math.log(x.number)) end },
+	{ "log", "(x::is number, base::is number)", function(state, x, base) return Number:new(math.log(x.number, base.number)) end },
+
+	{ "deg", "(x::is number)", function(state, x) return Number:new(math.deg(x.number)) end },
+	{ "rad", "(x::is number)", function(state, x) return Number:new(math.rad(x.number)) end },
+	{ "cos", "(x::is number)", function(state, x) return Number:new(math.cos(x.number)) end },
+	{ "sin", "(x::is number)", function(state, x) return Number:new(math.sin(x.number)) end },
+	{ "tan", "(x::is number)", function(state, x) return Number:new(math.tan(x.number)) end },
+	{ "acos", "(x::is number)", function(state, x) return Number:new(math.acos(x.number)) end },
+	{ "asin", "(x::is number)", function(state, x) return Number:new(math.asin(x.number)) end },
+	{ "atan", "(x::is number)", function(state, x) return Number:new(math.atan(x.number)) end },
+	{ "atan", "(y::is number, x::is number)", function(state, y, x) return Number:new((math.atan2 or math.atan)(y.number, x.number)) end },
 }

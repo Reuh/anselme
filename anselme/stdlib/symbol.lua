@@ -1,5 +1,4 @@
 return {
-
 	{
 		"to string", "(symbol::is symbol)",
 		function(state, sym)
