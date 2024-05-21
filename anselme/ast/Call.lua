@@ -78,6 +78,9 @@ Call = ast.abstract.Node {
 	is_simple_assignment = function(self)
 		return self:is_infix("_=_") and Quote:is(self.arguments.positional[1]) and Identifier:is(self.arguments.positional[1].expression)
 	end,
+	is_implicit_block_identifier = function(self)
+		return Identifier:is(self.func) and self.func.name == "_" and self.explicit == false
+	end,
 
 	traverse = function(self, fn, ...)
 		fn(self.func, ...)

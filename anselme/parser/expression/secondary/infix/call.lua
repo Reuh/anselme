@@ -1,4 +1,4 @@
-local infix = require("anselme.parser.expression.secondary.infix.infix")
+local infix_or_suffix = require("anselme.parser.expression.secondary.infix.infix_or_suffix")
 local escape = require("anselme.common").escape
 local identifier = require("anselme.parser.expression.primary.identifier")
 
@@ -7,15 +7,14 @@ local operator_priority = require("anselme.common").operator_priority
 local ast = require("anselme.ast")
 local Call, ArgumentTuple = ast.Call, ast.ArgumentTuple
 
-return infix {
+return infix_or_suffix {
 	operator = "!",
 	identifier = "_!_",
 	priority = operator_priority["_!_"],
 
 	match = function(self, str, current_priority, primary)
 		local escaped = escape(self.operator)
-		-- TODO: doesn't support newline between ! and identifier, even in multiline expression
-		return self.priority > current_priority and str:match("^"..escaped) and identifier:match(str:match("^"..escaped.."[ \t]*(.-)$"))
+		return self.priority > current_priority and str:match("^"..escaped) and identifier:match(str:match("^"..escaped.."[ \t\n]*(.-)$"))
 	end,
 
 	build_ast = function(self, left, right)
