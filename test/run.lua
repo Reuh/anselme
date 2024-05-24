@@ -133,6 +133,11 @@ end
 
 -- run!
 if not arg[1] or arg[1] == "update" then
+	-- version information
+	local lua_version = type(jit) == "table" and tostring(jit.version) or tostring(_VERSION)
+	local anselme_version = ("%s (L%s/S%s/A%s)"):format(anselme.version, anselme.versions.language, anselme.versions.save, anselme.versions.api)
+	print("Running Anselme "..anselme_version.." test suite on "..lua_version)
+
 	-- display an animated loading indicator
 	local loading = {
 		loop = { "⣷", "⣯", "⣟", "⡿", "⢿", "⣻", "⣽", "⣾" },
@@ -235,7 +240,6 @@ if not arg[1] or arg[1] == "update" then
 	end
 
 	loading:clear()
-	print("#### Results ####")
 	local successes = total-failure-notfound-errored
 	print(("%s successes, %s failures, %s errors, %s missing result files, out of %s tests"):format(successes, failure, errored, notfound, total))
 	if successes < total then os.exit(1) end
