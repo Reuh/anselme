@@ -5,7 +5,6 @@ Loosely ordered by willingness to implement.
 # To do or discard before stable release
 
 Documentation:
-* language reference
 * tutorial
 * standard library
 

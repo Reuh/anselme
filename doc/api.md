@@ -56,7 +56,7 @@ Anselme expects that `require("anselme.module")` will try loading both `anselme/
 
 Global version string. Follow semver.
 
-_defined at line 57 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-beta",`
+_defined at line 57 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-beta2",`
 
 ### .versions
 
@@ -68,19 +68,19 @@ _defined at line 60 of [anselme/init.lua](../anselme/init.lua):_ `versions = {`
 
 Version number for language and standard library changes.
 
-_defined at line 62 of [anselme/init.lua](../anselme/init.lua):_ `language = 29,`
+_defined at line 62 of [anselme/init.lua](../anselme/init.lua):_ `language = 30,`
 
 #### .save
 
 Version number for save/AST format changes.
 
-_defined at line 64 of [anselme/init.lua](../anselme/init.lua):_ `save = 6,`
+_defined at line 64 of [anselme/init.lua](../anselme/init.lua):_ `save = 7,`
 
 #### .api
 
 Version number for Lua API changes.
 
-_defined at line 66 of [anselme/init.lua](../anselme/init.lua):_ `api = 9`
+_defined at line 66 of [anselme/init.lua](../anselme/init.lua):_ `api = 10`
 
 ### .parse (code, source)
 
@@ -111,7 +111,7 @@ _defined at line 90 of [anselme/init.lua](../anselme/init.lua):_ `new = function
 
 
 ---
-_file generated at 2024-01-17T13:39:30Z_
+_file generated at 2024-05-25T12:52:49Z_
 
 # State
 
@@ -299,4 +299,4 @@ Otherwise, each Node has its own module file defined in the [ast/](../ast) direc
 
 
 ---
-_file generated at 2024-01-17T13:39:30Z_
+_file generated at 2024-05-25T12:52:49Z_

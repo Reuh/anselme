@@ -2,7 +2,27 @@
 
 The overengineered dialog scripting system.
 
-TODO Introduction: what Anselme is and isn't
+Anselme is a dynamically typed scripting language intended to be embedded in game engines, focusing on making writing complex branching dialogues and interactions easier.
+
+Anselme attemps to provide:
+
+* first-class support for game dialog scripting, providing support for dialog blocks and choices along with flexible rich text metadata using tags;
+* syntax that focuses on staying close to natural language, allowing for spaces in identifiers, full translation of the standard library, significant indentation;
+* familiar enough constructs to be easily picked up by someone familiar with existing imperative and functional languages;
+* be easily extensible and abusable by designing the language around simple but composable constructs.
+
+Anselme does not attemps to provide:
+
+* a general purpose language;
+* speed or any kind of efficiency, as it is only aimed at dialogs and not general game scripting;
+* and ultimately, Anselme was originally designed as a specific solution to a specific problem I had while making games without thinking about much else. I'd be flatterred if someone else ends up using it though.
+
+Notable features:
+
+* dynamic dispatch using user-definable type checking functions and function overloading;
+* first-class functions with closures;
+* can run several scripts in parallel and independently;
+* built-in variable persistence with checkpoints.
 
 This file is indented to be a description of the language. If you are rather looking for an introduction, you might want to look at the [tutorial](tutorial.md) instead.
 
@@ -98,7 +118,22 @@ The operators described in this section can not be overloaded or redefined in an
 1/2x // _implicit*_ has a higher precedence than _/_, so this returns 1/(2*x) = 1/6
 ```
 
-`_!_` calls the expression on the right with the left expression as an argument. If a `_()` parenthesis call appear immediately after the right expression, the expressions in the parentheses is added to the argument list.
+`_!_`, where the right expression is an identifier, calls the expression on the right with the left expression as an argument. If a `_()` parenthesis call appear immediately after the right expression, the expressions in the parentheses is added to the argument list.
+
+```
+"hello"!len
+// is the same as
+len(hello)
+
+[1]!insert(2)
+// is the same as
+insert([1], 2)
+
+// If the right expression is not an identifier, the ! is interpreted as a _! operator, i.e. calling the left expression without arguments.
+fn!-5
+// is the same as
+fn() - 5
+```
 
 `_()` is used when calling a callable with parentheses, eventually containing arguments. See the [calling callables](#calling_callables) documentation for more details.
 
@@ -170,14 +205,43 @@ Newlines are allowed inside parentheses, so parentheses can also be used to writ
 
 #### Calling callables
 
-Callables are values that can be called. This includes functions, overloads, and any other value for which a compatible `_!` operator is defined.
+Callables are values that can be called. This includes functions, overloads, and any other value for which a compatible `_!` function is defined.
 
 There are four different ways to call a value:
 
-* `val!` to call `val` with no arguments;
-* `val(list of arguments)` to call `val` with the given list of arguments (can be empty) (example: `val(1, 2, option=3)`);
+* `function!` to call `function` with no arguments;
+* `function(list of arguments)` to call `function` with the given list of arguments (can be empty) (example: `function(1, 2, option=3)`);
 * `val!function` to call `function` with a single argument `val`;
 * `val!function(list of arguments)` to call `function` with the first argument `val` followed by the given list of arguments (can be empty).
+
+For all of these syntax, an assignment argument can optionally be given by following the call with a `=` followed by the assignment argument expression.
+
+```
+:$no argument
+no argument!
+no argument()
+
+:$with argument(x)
+with argument(42)
+42!with argument
+42!with argument()
+
+:$with arguments(x, y)
+with arguments(42, 24)
+42!with arguments(24)
+
+:$with assignment(x="default") = v
+with assignment! = 42
+with assignment() = 42
+"x"!with assignment = 42
+"x"!with assignment() = 42
+```
+
+There are three ways to associate an argument to a function parameter:
+
+* named arguments: using the argument name followed by the `=` operator and the argument expression (ex: `argument name=value`), the expression will be assoctaed with the parameter with the same name;
+* positional arguments: the i-th argument in the argument list is associated with the i-th parameter in the function definition parameter list;
+* the assignment argument is always associated with the assignment parameter.
 
 ##### Dynamic dispatch
 
@@ -244,9 +308,144 @@ comment
 */
 ```
 
+### Variables
+
+Variables can be defined and assigned using the `_=_` operator.
+
+To define a variable, the left expression must be a [symbol](#symbol), for an assignment, an identifier. The left expression can also be a tuple for multiple assignments.
+
+```
+:x = 3 // definition
+
+x = 12 // assignment
+
+:y = 2
+(x, y) = (y, x) // multiple assignment (value swap)
+```
+
+When defining a variable, the symbol can have additionnal metadata (value check, exported, and alias) that affect the variable definition behavior.
+
+#### Variable value checking
+
+If the symbol has a [value checking](#value_checking) function associated, the defined variable will perform the value check every time it is re-assigned. Note that the value check is only done for re-assignment and not the initial variable declaration.
+
+```
+:$is positive(x) x > 0
+:x::is positive = 0
+x = 5 // ok
+x = -4 // value checking error!
+
+:constant symbol::constant = 12 // constant is a special value checking function that always fail, thus preventing reassignment
+constant symbol = 13 // value checking error!
+```
+
+#### Exported variables
+
+If the symbol has an export flag, the variable will be defined in the [export scope](#export_scope) instead of the current scope, i.e. will be defined for the whole file and be made accessible from outside files. See [export scope](#export_scope) for details.
+
+#### Alias variables
+
+If the symbol has an alias flag, the variable will be an alias. Instead of directly accessing the value of the variable, the variable will:
+
+* when get, call its value with no argument and returns the result;
+* whet set, call its value with an assignment argument and returns the result.
+
+```
+:&x = overload [
+	$() "variable read"
+	$() = v; "variable set to {v}"
+]
+x // "variable read"
+x = 42 // "variable set to 42"
+
+:&y = 	$() "variable read"
+x // "variable read"
+x = 42 // error, since function can't be called with an assignment argument
+```
+
+The `>_` wrap operator is intended to be used alongside aliases. The `>_` operator will wrap the expression on the right in a function, so that it is evaluated when called without arguments, and evaluated with an added assignement (if possible) when called with an assignment argument.
+
+```
+:&x => persist("x")
+// is the same as
+:&x = overload [
+	$() persist("x"),
+	$() = v; persist("x") = v
+]
+```
+
 ### Scoping rules
 
-TODO
+A variable is only accessible in the scope it was defined in and its children scopes.
+
+Once a variable is defined in a scope, it cannot be redefined in this scope. Trying to access a variable that is not defined or accessible in a scope raises and error.
+
+A new scope is defined:
+
+* for the whole file;
+* for each code block, as a child of the scope the block appears in;
+* and for a function body, when it is defined and then each time is is called.
+
+```
+// define in the whole file scope
+:a = "accessible in the whole script"
+
+a // refer to the whole file scope
+
+if(true)
+	a // refer to the whole file scope
+
+	// redefine in a child block scope
+	:a = "accessible in this block"
+
+	a // refer to the block scope
+
+a // we exited the block, refer to the whole file scope again
+```
+
+For functions, a new scope is created when the function is defined, where upvalue definitions are linked with their initial definitions.
+
+Then, each time the function is called, a new call scope is crated as a child of the function scope when running the function body.
+
+```
+// define in the whole file scope
+:a = 2
+
+:$f(x)
+	a = 3 // refer to the function definition scope (upvalue linked with the whole file scope)
+
+	// redefine in function call scope
+	:a = [x, a]
+
+	a // refer to the function call scope
+
+f(1) // [1, 3]
+
+a // 3
+```
+
+The function definition scope can be accessed using the `_._` operator if there is a need to define custom variables in it. As the function definition scope is not recreated on each call, this can be used to store function state accross calls.
+
+```
+:$f() a
+f.:a = 6
+
+f! // 6
+```
+
+#### Export scope
+
+Exported variables, unlike regular variables, are not defined in the current scope but the closest export scope. An export scope is defined for each file, so any exported variable will be defined for the whole file.
+
+Additionnaly, when loading a file using the `load` function, the loaded file's export scope is returned and can thus be accessed from other files.
+
+```
+// in first.ans
+:@exported = "hello"
+
+// in second.ans
+load("first.ans").exported
+```
 
 ## Types and literals
 
@@ -323,7 +522,7 @@ Anchor literals consist of a `#` followed by any valid identifier, that will be 
 ### Symbols
 
 Symbols consist of an identifier and additionnal metadata, and are intended to be used in variable definitions.
-See the [assignment operators](#assignments) documentation for details on how they are used.
+See the [variable definition](#variables) documentation for details on how they are used.
 
 Symbols literals consist of a `:` followed by optional metadata flags, and then any valid identifier. Valid metadata flags are:
 
@@ -333,7 +532,6 @@ Symbols literals consist of a `:` followed by optional metadata flags, and then 
 Several metadata flags can be used at the same time, as long as they always appear in the order above.
 
 Following the identifier, the `::` operator can optionnaly be used. See [value checking](#value_checking) for information on the `::` operator.
-A variable defined using a symbol with value checking will perform the value check every time the variable is re-assigned. Note that the value check is only done for re-assignment and not the initial variable declaration. See the [assignment operators](#assignments) documentation for details.
 
 ```
 :symbol
@@ -342,7 +540,6 @@ A variable defined using a symbol with value checking will perform the value che
 :&@alias exported symbol
 
 :positive::is positive
-:constant symbol::constant // constant is a special value checking function that always fail, thus preventing reassignment
 ```
 
 ### Identifiers
@@ -392,7 +589,7 @@ When one of the lines of a block consist only of a text literal, it is automatic
 fn(| Text) // the text literal is not automatically called when it is not the main expression of the line
 ```
 
-#### Return
+### Return
 
 Return values consist of a an arbitrary value.
 
@@ -494,15 +691,116 @@ print("{var}") // prints "$10"
 
 ### Functions
 
-TODO incl func def
+Functions can be created using the function literal starting with the `$_` operator.
+
+The `$_` operator has two forms:
+
+* if it is followed by a opening parenthesis `(`, it expects the `(` to start a parameter list; then the function expression is expected;
+* otherwise, the function expression is expected right after and the function will take no parameter.
+
+The function expression is the expression run when the function is called.
+
+The parameter list is a comma separated list of identifier (the parameter name). Each parameter name can be optionally followed by either or both of, in this order:
+
+* `::` followed by a [value checking](#value_checking) function;
+* `=` followed by a default value. The default value will be evaluated and used as the parameter value each time the function is called without the associated argument.
+
+After the `)` closing the parameter list, an assignment parameter can optionally be given after a `=` operator. The assignment parameter follows the same syntax as other parameters otherwise.
+
+See [calling callabales](#calling_callables) to see how arguments are passed to functions and [dynamic dispatch](#dynamic_dispatch) to see how function parameters influence function dispatch.
+
+When evaluated, the function literal will evaluate its parameter list, create a new scope for the function, link the scope with the function's upvalue, and returns an evaluated function (a closure).
+
+```
+// no parameter
+$5+2
+// is the same as
+$() 5+2
+
+// single parameter
+$(x) x*x
+
+// several parameters
+$(x, y) x*y
+
+// optional parameter
+$(x, multiply by=2) x*multiply by
+
+// assignment parameter
+$() = v; v
+$(x) = v; x*v
+
+// note: $_ has an operator precedence of 2, so the body will continue until an operator of lower or equal precedence is used in the expression
+$1, $2 // same as ($1), ($2) as _,_ has a precedence of 2
+```
+
+#### Function definition
+
+A variable can be defined and assigned a new function quickly using the function definition syntax.
+
+The function definition syntax consist of a modified [symbol literal](#symbol) with a `$` right before the symbol name, followed by either a parameter list and expression or the function expression directly, in the same way as the [`$_` operator](#functions) described above.
+
+When evaluated, the function definition will create a new function and define a new variable set to this function.
+
+```
+:$f(x) x
+// is the same as
+:f = $(x) x
+
+:$f
+	42
+```
+
+Additionally, special forms of the function definition syntax exists for operator functions:
+
+* for prefix operators, the operator followed by the parameter can be used (e.g., `-x` for `-_` with an `x` parameter);
+* for infix operators, the operator followed by the parameter can be used (e.g., `x+y` for `_+_` with an `x` and `y` parameters);
+* for suffix operators, the operator followed by the parameter can be used (e.g., `x!` for `_!` with an `x` parameter).
+
+For these forms, the parameters can optionally be wrapped in parentheses in case of operator precedence conflicts.
+
+```
+:$-x
+// is the same as
+:$-_(x)
+
+:$x+y
+// is the same as
+:$_+_(x, y)
+
+:$x!
+// is the same as
+:$_!(x)
+
+// _::_ has a lower precedence than _._, parentheses are needed or this would be parsed as a::(is number.b)
+:$(a::is number).b
+```
 
 ### Overloads
 
-TODO
+Overloads consist of a list of arbitrary values. Each value should be [callable](#calling_callables).
+
+An overload can be created using the `overload(tuple)` function. An overload is also automatically created when redefining a variable that contains a callable value.
+
+```
+:f = $(x) x
+:f = $(x, y) x, y
+f!type // f is now an overload containing the two functions defined above
+
+// and this is the same as
+:g = overload [
+	$(x)(x),
+	$(x, y)(x, y)
+]
+```
+
+When called, the call arguments will be checked against each element of the overload for dispatchability. The dispatchable element with the highest dispatch priority will then be called. See [dynamic dispatch](#dynamic_dispatch) for details on the dispatch process.
 
 ### Translatables
 
 Any expression can be made translatable using the `%_` operator. A translatable expression, when evaluated, will return the translation associated with the expression, or the unchanged expression if no translation is defined.
+
+Translations can be defined using the `_->_` operator.
 
 ```
 %"hello" -> "bonjour"
@@ -510,20 +808,101 @@ Any expression can be made translatable using the `%_` operator. A translatable 
 %"world" // returns "world"
 ```
 
-TODO contexts
+When searching for a translation, the translation context will also be checked. The translation context is a struct; for the translation to be used, the elements of the context of the translated expression must match the context of the translatable expression. If there are several translation that match the translatable context, the one with the most matching contexts elements is selected.
+
+Each translatable expression has the following context elements defined in its context struct:
+
+* `source`, the full source string (e.g. `file.ans:5:6`, from file.ans, line 5, column 6)
+* `file`, the path of the file the script is from (e.g. `file.ans`).
+
+When defining a translation using the `_->_` operator, the translation context is obtained from the current tags.
+
+```
+file: "first.ans" #
+	%"hello" -> "bonjour"
+
+// in first.ans
+%"hello" // returns "bonjour"
+
+// in second.ans
+%"hello" // returns "hello"
+```
 
 ## Events
 
-TODO
+Events are message passed from Anselme to the host game. For example, a text event can be sent to indicate to the game that it should display some text. Each event consist of an event type (a string) and associated data (arbitrary value).
 
-### Tags
+Events are buffered; i.e. when an Anselme script write a new event, it is not immediately sent to the host game but added to a buffer list until a flush occurs. Flushs are trigerred when:
 
-TODO
+* an event of a different type from the one currently stored in the buffer is writtent;
+* on a manual flush.
+
+Manual flush can be trigerred using the `---` keyword.
+
+Additionally, when the end of the currently running script is reached, Anselme will flush the event buffer repeately until it is empty (flushes can have side-effects, including writing new events to the buffer, thus requiring further flushing).
+
+```
+| Write a text event to the buffer.
+| Another text event.
+
+*| Write a choice event, trigerring a flush (the list of buffered text events is sent to the host game) since event type changed.
+
+--- // manual flush, choice event is sent to the host game
+
+*| Write a choice event to a new buffer.
+
+// end-of-script, last choice event is sent to the host game
+```
 
 ### Texts
 
-TODO
+Text events are intended represent a line of text, dialog, or other textual information to be shown in the host game.
+
+A text event value can be created using the [text literal](#text). A text is written to the buffer when it is called. When a text literal appear alone as a line of a block, it is automatically called.
+
+```
+| Write a text event.
+
+:text = | Text
+text!
+```
 
 ### Choices
 
-TODO
+Choice events are intended to represent a player choice in the host game. Each choice event in the buffer list is intended to represent a distinct choice.
+
+A choice consist of a text value and a function; when the choice is selected, the function is run.
+
+A choice event can be written to the buffer using the `*_` operator on a text event value. The attached block will be used as the associated function.
+
+```
+*| Choice A
+	| Choice A has been selected.
+*| Choice B
+	| Choice B has been selected.
+```
+
+### Tags
+
+Text and choice events can also carry metadata through tags. Tags are stored as a [struct](#struct).
+
+When evaluated, text literals retrieve the current tags and associate them to the text. Tags are also evaluated for each text interpolation that is part of the text separately.
+
+Tags can be set using the `_#_` operator: the tags elements from the left expression (either a single value, a list of values, a struct or table) are added to the current tag struct while evaluation the right expression. If a tag element in the left expression is already set in the current tag struct, it is redefined.
+
+```
+| No tags
+
+"one" # | Tags: {1:"one"}
+
+color:"red", from:"Alex" #
+	| Tags: {color:"red", from:"Alex"}
+
+	size:"humongous" #
+		| Tags: {color:"red", from:"Alex", size:"humongous"}
+
+	from:"You" #
+		| Tags: {color:"red", from:"You"}
+
+| To assign different tags to different parts of the text, {color:"red" #| text interpolations} can be used.
+```

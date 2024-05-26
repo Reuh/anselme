@@ -1,6 +1,6 @@
 # Anselme
 
-The overengineered dialog scripting system in pure Lua.
+The overengineered game dialog scripting system in pure Lua.
 
 This is version 2, a full rewrite. **Currently not stable.**
 
@@ -37,10 +37,14 @@ Anselme is licensed under the ISC license, meaning you can basically use it for 
 
 ## Documentation
 
-* [Lua API documentation](doc/api.md)
-* [Tutorial](doc/tutorial.md)
-* [Standard library](doc/standard_library.md)
-* [Language reference](doc/language.md)
+* [Tutorial](doc/tutorial.md) for a collection of code examples
+* [Lua API documentation](doc/api.md) for how to use Anselme in your game
+* [Standard library](doc/standard_library.md) for a description of all built-in functions
+* [Language reference](doc/language.md) for a description of all language features
+
+## Related projects
+
+* [sublime-anselme](https://github.com/Reuh/sublime-anselme) for syntax highlighting of Anselme scripts in Sublime Text 4.
 
 ## Development
 
