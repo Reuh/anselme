@@ -110,9 +110,6 @@ Return a new [State](#state).
 _defined at line 90 of [anselme/init.lua](../anselme/init.lua):_ `new = function()`
 
 
----
-_file generated at 2024-05-25T12:52:49Z_
-
 # State
 
 Contains all state relative to an Anselme interpreter. Each State is fully independant from each other.
@@ -299,4 +296,4 @@ Otherwise, each Node has its own module file defined in the [ast/](../ast) direc
 
 
 ---
-_file generated at 2024-05-25T12:52:49Z_
+_file generated at 2024-05-28T16:12:56Z_
