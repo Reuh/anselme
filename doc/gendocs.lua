@@ -17,9 +17,32 @@ end
 
 local title_extractors = {
 	-- anselme luafunction definition
-	{ "\"(.-)\",%s*\"(.-)\",", function(name, params)
-		return ("%s %s"):format(unescape(name), unescape(params))
+	{ "{?%s*\"(.-)\",%s*\"(.-)\",", function(name, params)
+		name, params = unescape(name), unescape(params)
+		-- assignment
+		local assignment = ""
+		if params:match("=[%w%s]+$") then
+			params, assignment = params:match("^(.-)%s*=%s*([%w%s]+)%s*$")
+			assignment = " = "..assignment
+		end
+		-- infix
+		if name:match("^_[^%w]+_$") and params:match("^%(.-,.-%)$") then
+			local left, right = params:match("^%(%s*(.-)%s*,%s*(.-)%s*%)$")
+			return ("%s %s %s%s"):format(left, name:match("^_([^%w]+)_$"), right, assignment)
+		-- suffix
+		elseif name:match("^_[^%w]+$") and params:match("^%(.-%)$") then
+			local left = params:match("^%(%s*(.-)%s*%)$")
+			return ("%s %s%s"):format(left, name:match("^_([^%w]+)$"), assignment)
+		-- prefix
+		elseif name:match("^[^%w]+_$") and params:match("^%(.-%)$") then
+			local right = params:match("^%(%s*(.-)%s*%)$")
+			return ("%s %s%s"):format(name:match("^([^%w]+)_$"), right, assignment)
+		end
+		-- normal function
+		return ("%s %s%s"):format(name, params, assignment)
 	end },
+	-- anselme field definition
+	{ "{%s*\"(.-)\",", "%1"},
 
 	-- methods
 	{ "(.-)%s*=%s*function%s*%(%s*self%s*%)", ":%1 ()" },
@@ -46,7 +69,7 @@ local valid_tags = { title = true, defer = true }
 local function process(content)
 	local deferred = {}
 
-	return content:gsub("{{(.-)}}", function(lua_file)
+	local out = content:gsub("{{(.-)}}", function(lua_file)
 		-- deferred doc comments
 		if lua_file:match("^:") then
 			local defer = lua_file:match("^:(.-)$")
@@ -59,7 +82,7 @@ local function process(content)
 			end
 		-- lua file
 		else
-			local f = io.open(lua_file, "r")
+			local f = assert(io.open(lua_file, "r"))
 			local c = f:read("a")
 			f:close()
 
@@ -79,7 +102,7 @@ local function process(content)
 						if comment:match("^%s*@") then
 							local tag, data = comment:match("^%s*@%s*([^%s]*)%s*(.-)$")
 							if valid_tags[tag] then comment_block[tag] = data
-							else print(("unknown documentation tag @%s, at %s:%s"):format(tag, lua_file, line_no)) end
+							else print(("[warning] unknown documentation tag @%s, at %s:%s"):format(tag, lua_file, line_no)) end
 						else
 							table.insert(comment_block, comment)
 						end
@@ -114,6 +137,12 @@ local function process(content)
 			return table.concat(output, "\n")
 		end
 	end) .. ("\n---\n_file generated at %s_"):format(os.date("!%Y-%m-%dT%H:%M:%SZ"))
+
+	for k in pairs(deferred) do
+		print("[warning] unused defer "..tostring(k))
+	end
+
+	return out
 end
 
 local function generate_file(input, output)
