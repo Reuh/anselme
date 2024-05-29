@@ -1,6 +1,6 @@
 --# run #--
 --- text ---
-| {}"" {}"\"Name: Darmanin\nAge: 38\"" {}"" |
+| {}"" {}"Name: Darmanin\nAge: 38" {}"" |
 --- return ---
 ()
 --# saved #--

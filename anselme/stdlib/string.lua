@@ -9,5 +9,11 @@ return {
 		function(state, s)
 			return Number:new(utf8.len(s.string))
 		end
+	},
+	{
+		"format", "(val::is string)",
+		function(state, val)
+			return val
+		end
 	}
 }

@@ -36,10 +36,10 @@ local StringInterpolation = ast.abstract.Node {
 		local t = {}
 		for _, e in ipairs(self.list) do
 			local r = e:eval(state)
-			if String:is(r) then
-				r = r.string
-			else
-				r = r:format(state)
+			if String:is(e) then -- raw string
+				r = e.string
+			else -- interpolation
+				r = e:format_custom(state)
 			end
 			table.insert(t, r)
 		end

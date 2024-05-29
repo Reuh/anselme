@@ -14,10 +14,10 @@ local unpack = table.unpack or unpack
 
 local uuid = require("anselme.common").uuid
 
-local Call, Identifier, Struct, Tuple, String, Pair
+local Call, Identifier, Struct, Tuple, String, Pair, ArgumentTuple
 local resume_manager
 
-local custom_call_identifier
+local custom_call_identifier, custom_format_identifier
 
 local context_max_length = 50
 local function cutoff_text(str)
@@ -372,6 +372,18 @@ Node = class {
 	_format_priority_cache = nil, -- cached priority
 	from_symbol = nil, -- last symbol this node was retrived from
 
+	-- return a human-readable, string representation of the node
+	-- this works by calling the `format(node)` anselme method (if the method returns a non-string value, it is converted to a string using :format)
+	format_custom = function(self, state)
+		local custom_format = custom_format_identifier:eval(state)
+		local r = custom_format:call(state, ArgumentTuple:new(self))
+		if String:is(r) then
+			return r.string
+		else
+			return r:format(state)
+		end
+	end,
+
 	-- return Lua value
 	-- this should probably be only called on a Node that is already evaluated
 	-- redefine if you want, probably only for nodes that are already evaluated
@@ -430,8 +442,9 @@ Node = class {
 	-- Thus, any require here that may require other Nodes shall be done here. This method is called in anselme.lua after everything else is required.
 	_i_hate_cycles = function(self)
 		local ast = require("anselme.ast")
-		Call, Identifier, Struct, Tuple, String, Pair = ast.Call, ast.Identifier, ast.Struct, ast.Tuple, ast.String, ast.Pair
+		Call, Identifier, Struct, Tuple, String, Pair, ArgumentTuple = ast.Call, ast.Identifier, ast.Struct, ast.Tuple, ast.String, ast.Pair, ast.ArgumentTuple
 		custom_call_identifier = Identifier:new("_!")
+		custom_format_identifier = Identifier:new("format")
 
 		resume_manager = require("anselme.state.resume_manager")
 	end,

@@ -5,12 +5,18 @@ return {
 	{
 		"print", "(a)",
 		function(state, a)
-			print(a:format(state))
+			print(a:format_custom(state))
 			return Nil:new()
 		end
 	},
 	{
 		"hash", "(a)",
+		"format", "(val)",
+		function(state, val)
+			return String:new(val:format(state))
+		end
+	},
+	{
 		function(state, a)
 			return String:new(a:hash())
 		end

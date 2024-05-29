@@ -39,14 +39,14 @@ local TextInterpolation = ast.abstract.Node {
 		local tags = tag_manager:get(state)
 		for _, e in ipairs(self.list) do
 			local r = e:eval(state)
-			if String:is(r) then
+			if String:is(e) then -- raw string
 				t:insert(r, tags)
-			elseif Text:is(r) then
+			elseif Text:is(r) then -- interpolation
 				for _, v in ipairs(r.list) do
 					t:insert(v[1], v[2])
 				end
 			else
-				t:insert(String:new(r:format(state)), tags)
+				t:insert(String:new(r:format_custom(state)), tags)
 			end
 		end
 		return t

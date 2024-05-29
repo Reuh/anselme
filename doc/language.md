@@ -485,7 +485,7 @@ Strings literal starts with a `"` and end with a `"`. Specials characters, inclu
 * `\n` is replaced with a newline
 * `\t` is replaced with a tab character
 
-Non-escaped `{` in the string start an interpolated expression; any expression can then follow, but a closing `}` is expected after it. When the string literal is evaluated, each interpolated expression will be evaluated, the returned value will be formatted to a string and appear in the string where the `{` expression `}` appeared in the literal.
+Non-escaped `{` in the string start an interpolated expression; any expression can then follow, but a closing `}` is expected after it. When the string literal is evaluated, each interpolated expression will be evaluated, the returned value will be converted to a string using `format` and appear in the string where the `{` expression `}` appeared in the literal.
 
 Strings can contain newlines.
 
@@ -680,7 +680,7 @@ var!type // returns "$"
 var!value // returns 10
 ```
 
-When trying to convert the custom type to a string, for example in a string interpolation, the `format(custom type)` function call will be tried. If the function can be called, its return value will be used as the string representation of the value.
+When trying to convert the custom type to a string, for example in a string interpolation, the `format(custom type)` function will be called. How custom types appear in strings can therefore be changed by overloading the `format` function.
 
 ```
 :var = type(10, "$")
