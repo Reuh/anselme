@@ -1,5 +1,5 @@
 local ast = require("anselme.ast")
-local ArgumentTuple, String, Typed = ast.ArgumentTuple, ast.String, ast.Typed
+local ArgumentTuple, String, Typed, Boolean = ast.ArgumentTuple, ast.String, ast.Typed, ast.Boolean
 
 return {
 	{
@@ -14,6 +14,12 @@ return {
 		end
 	},
 
+	{
+		"is typed", "(value)",
+		function(state, v)
+			return Boolean:new(v.type == "typed")
+		end,
+	},
 	{
 		"type", "(value)",
 		function(state, v)
