@@ -50,4 +50,4 @@ Anselme is licensed under the ISC license, meaning you can basically use it for 
 
 * Generate documentation: `lua doc/gendocs.lua`
 * Run test for the current Lua version: `lua test/run.lua` (require luafilesystem `luarocks install luautf8`)
-* Run test for every supported Lua version: `./run_tests.sh` (require luafilesystem for LuaJIT, Lua 5.3 and Lua 5.4)
+* Run test for every supported Lua version: `sh test/run_all.sh` (require luafilesystem for LuaJIT, Lua 5.3 and Lua 5.4)
