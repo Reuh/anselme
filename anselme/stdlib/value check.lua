@@ -1,6 +1,6 @@
 ---# Value checking
 --
--- See the [language reference](language.md#value_checking) for information on how value checking functions works.
+-- See the [language reference](language.md#value-checking) for information on how value checking functions works.
 -- @titlelevel 3
 
 --- Returns a function `$(x)` that returns true if `x` is of type `t`, false otherwise.

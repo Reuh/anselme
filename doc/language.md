@@ -50,7 +50,7 @@ Empty lines are ignored with regard to indentation.
 
 ### Expression
 
-An expression consist of a [literal or identifier](#types_and_literals) and optional [operators](#operators). Operators can be:
+An expression consist of a [literal or identifier](#types-and-literals) and optional [operators](#operators). Operators can be:
 
 * prefix operators that appear before the expression on which it operates, for example the `-` in `-5`;
 * suffix operators that appear after the expression on which it operates, for example the `!` in `fn!`;
@@ -135,7 +135,7 @@ fn!-5
 fn() - 5
 ```
 
-`_()` is used when calling a callable with parentheses, eventually containing arguments. See the [calling callables](#calling_callables) documentation for more details.
+`_()` is used when calling a callable with parentheses, eventually containing arguments. See the [calling callables](#calling-callables) documentation for more details.
 
 ```
 print("hello world")
@@ -161,7 +161,7 @@ The operators described in this section are defined using regular Anselme functi
 
 `_&_` and `_|_`, and `!_` are intended to be used as the boolean short circuiting _and_, boolean short circuiting _or_, and boolean _not_ respectively.
 
-`*_` is intended to be used as the mutability and choice operator. See [list and tables](#list_and_tables) and [choices](#choices) documentation for details.
+`*_` is intended to be used as the mutability and choice operator. See [list and tables](#list-and-tables) and [choices](#choices) documentation for details.
 
 `_:_` is intended to be used to create pairs. See [pairs](#pairs) documentation for details.
 
@@ -171,7 +171,7 @@ The operators described in this section are defined using regular Anselme functi
 
 `>_` returns a function without parameters that evaluates and return the right expression when called. If the right expression is an identifier or a call, this returns an overload instead which contains the previous function as well as a `() = arg` setter function that set the value associated to the identifier or call the call with an additionnal assignement argument respectively.
 
-`_!` is called when trying to call an expression. It receives the call arguments after the called expression. See the [calling callables](#calling_callables) documentation for more details.
+`_!` is called when trying to call an expression. It receives the call arguments after the called expression. See the [calling callables](#calling-callables) documentation for more details.
 
 ```
 var(1, 2)
@@ -181,7 +181,7 @@ _!(var, 1, 2)
 
 `_._` is intended to be used to access the variable associated with the right expression into the left expression. If the right expression is an identifier, it will be replaced by a string containing the identifier name.
 
-`_::_` is intended to check the left expression using the right callable expression, and raise an error if its returns a false value. See the [value checking](#value_checking) documentation for more details.
+`_::_` is intended to check the left expression using the right callable expression, and raise an error if its returns a false value. See the [value checking](#value-checking) documentation for more details.
 
 `_=_` is intended to assign the value on the right to the identifier or symbols on the left.
 
@@ -283,7 +283,7 @@ f(1, 2) // returns 3
 
 #### Value checking
 
-Value checking callables can be used to ensure constraint on values at run-time. A value checking function takes a single value as an argument and returns a value. If it returns a false value, the test is considered to be failed, it it returns anything else it is considered to be a success. A value checking variable returning a number have a special meaning when using to check function parameters, see [dynamic dispatch](#dynamic_dispatch) for details. Value checking callables can otherwise appear in [symbol literals](#symbols) and as the right argument of the `_::_` operator.
+Value checking callables can be used to ensure constraint on values at run-time. A value checking function takes a single value as an argument and returns a value. If it returns a false value, the test is considered to be failed, it it returns anything else it is considered to be a success. A value checking variable returning a number have a special meaning when using to check function parameters, see [dynamic dispatch](#dynamic-dispatch) for details. Value checking callables can otherwise appear in [symbol literals](#symbols) and as the right argument of the `_::_` operator.
 
 ```
 :is positive = $(x::is number) x > 0
@@ -341,7 +341,7 @@ When defining a variable, the symbol can have additionnal metadata (value check,
 
 #### Variable value checking
 
-If the symbol has a [value checking](#value_checking) function associated, the defined variable will perform the value check every time it is re-assigned. Note that the value check is only done for re-assignment and not the initial variable declaration.
+If the symbol has a [value checking](#value-checking) function associated, the defined variable will perform the value check every time it is re-assigned. Note that the value check is only done for re-assignment and not the initial variable declaration.
 
 ```
 :$is positive(x) x > 0
@@ -355,7 +355,7 @@ constant symbol = 13 // value checking error!
 
 #### Exported variables
 
-If the symbol has an export flag, the variable will be defined in the [export scope](#export_scope) instead of the current scope, i.e. will be defined for the whole file and be made accessible from outside files. See [export scope](#export_scope) for details.
+If the symbol has an export flag, the variable will be defined in the [export scope](#export-scope) instead of the current scope, i.e. will be defined for the whole file and be made accessible from outside files. See [export scope](#export-scope) for details.
 
 #### Alias variables
 
@@ -545,7 +545,7 @@ Symbols literals consist of a `:` followed by optional metadata flags, and then 
 
 Several metadata flags can be used at the same time, as long as they always appear in the order above.
 
-Following the identifier, the `::` operator can optionnaly be used. See [value checking](#value_checking) for information on the `::` operator.
+Following the identifier, the `::` operator can optionnaly be used. See [value checking](#value-checking) for information on the `::` operator.
 
 ```
 :symbol
@@ -620,7 +620,7 @@ Return values can be created using the `return` function from the standard libra
 a! // a! is 5
 ```
 
-The `break` and `continue` functions from the standard library also return return values, with additionnal metadata to allow special behavior when returned from [control flow functions](standard_library.md#control_flow).
+The `break` and `continue` functions from the standard library also return return values, with additionnal metadata to allow special behavior when returned from [control flow functions](standard_library.md#control-flow).
 
 ### Pairs
 
@@ -716,12 +716,12 @@ The function expression is the expression run when the function is called.
 
 The parameter list is a comma separated list of identifier (the parameter name). Each parameter name can be optionally followed by either or both of, in this order:
 
-* `::` followed by a [value checking](#value_checking) function;
+* `::` followed by a [value checking](#value-checking) function;
 * `=` followed by a default value. The default value will be evaluated and used as the parameter value each time the function is called without the associated argument.
 
 After the `)` closing the parameter list, an assignment parameter can optionally be given after a `=` operator. The assignment parameter follows the same syntax as other parameters otherwise.
 
-See [calling callabales](#calling_callables) to see how arguments are passed to functions and [dynamic dispatch](#dynamic_dispatch) to see how function parameters influence function dispatch.
+See [calling callabales](#calling-callables) to see how arguments are passed to functions and [dynamic dispatch](#dynamic-dispatch) to see how function parameters influence function dispatch.
 
 When evaluated, the function literal will evaluate its parameter list, create a new scope for the function, link the scope with the function's upvalue, and returns an evaluated function (a closure).
 
@@ -798,7 +798,7 @@ An environment can, for example, be obtained using `load(path)`, which returns t
 
 ### Overloads
 
-Overloads consist of a list of arbitrary values. Each value should be [callable](#calling_callables).
+Overloads consist of a list of arbitrary values. Each value should be [callable](#calling-callables).
 
 An overload can be created using the `overload(tuple)` function. An overload is also automatically created when redefining a variable that contains a callable value.
 
@@ -814,7 +814,7 @@ f!type // f is now an overload containing the two functions defined above
 ]
 ```
 
-When called, the call arguments will be checked against each element of the overload for dispatchability. The dispatchable element with the highest dispatch priority will then be called. See [dynamic dispatch](#dynamic_dispatch) for details on the dispatch process.
+When called, the call arguments will be checked against each element of the overload for dispatchability. The dispatchable element with the highest dispatch priority will then be called. See [dynamic dispatch](#dynamic-dispatch) for details on the dispatch process.
 
 ### Translatables
 

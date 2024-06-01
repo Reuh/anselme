@@ -2,7 +2,7 @@
 --
 -- Theses functions store and retrieve data from persistent storage.
 -- Persistent storage is a key-value store intended to be saved and loaded alongside the host game's save files.
--- See the [relatied Lua API methods](api.md#saving_and_loading_persistent_variables) for how to retrieve and load the persistent data.
+-- See the [relatied Lua API methods](api.md#saving-and-loading-persistent-variables) for how to retrieve and load the persistent data.
 --
 -- A persistent value can be accessed like a regular variable using aliases and the warp operator:
 -- ```

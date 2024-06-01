@@ -68,7 +68,7 @@ _defined at line 86 of [anselme/stdlib/assignment.lua](../anselme/stdlib/assignm
 
 # Value checking
 
-See the [language reference](language.md#value_checking) for information on how value checking functions works.
+See the [language reference](language.md#value-checking) for information on how value checking functions works.
 
 ### is (t)
 
@@ -1223,7 +1223,7 @@ _defined at line 56 of [anselme/stdlib/typed.lua](../anselme/stdlib/typed.lua):_
 
 Theses functions store and retrieve data from persistent storage.
 Persistent storage is a key-value store intended to be saved and loaded alongside the host game's save files.
-See the [relatied Lua API methods](api.md#saving_and_loading_persistent_variables) for how to retrieve and load the persistent data.
+See the [relatied Lua API methods](api.md#saving-and-loading-persistent-variables) for how to retrieve and load the persistent data.
 
 A persistent value can be accessed like a regular variable using aliases and the warp operator:
 ```
@@ -1336,4 +1336,4 @@ _defined at line 14 of [anselme/stdlib/wrap.lua](../anselme/stdlib/wrap.lua):_ `
 
 
 ---
-_file generated at 2024-06-01T11:51:03Z_
+_file generated at 2024-06-01T12:26:47Z_
