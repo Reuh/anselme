@@ -1,3 +1,6 @@
+--- # Tagging
+-- @titlelevel 3
+
 local ast = require("anselme.ast")
 local Tuple, Table, Struct, ArgumentTuple, Nil = ast.Tuple, ast.Table, ast.Struct, ast.ArgumentTuple, ast.Nil
 
@@ -5,6 +8,15 @@ local tag_manager = require("anselme.state.tag_manager")
 
 return {
 	{
+		--- Add the tags from `tags` to the tag stack while calling `expression`.
+		--
+		-- `tags` can be:
+		--
+		-- * a tuple of tags
+		-- * a struct of tags
+		-- * a table of tags
+		-- * nil, for no new tags
+		-- * any other value, for a single tag
 		"_#_", "(tags, expression)",
 		function(state, tags, expression)
 			local tags_struct

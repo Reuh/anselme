@@ -243,6 +243,20 @@ There are three ways to associate an argument to a function parameter:
 * positional arguments: the i-th argument in the argument list is associated with the i-th parameter in the function definition parameter list;
 * the assignment argument is always associated with the assignment parameter.
 
+If the function only takes a single tuple or struct as an argument, the parentheses can be omitted.
+
+```
+:$fn(x)
+
+fn[1,2,3]
+// is the same as
+fn([1,2,3])
+
+fn{1:2,3}
+// is the same as
+fn({1:2,3})
+```
+
 ##### Dynamic dispatch
 
 Anselme uses [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), meaning it determine which function should be called at run-time. The dispatch is performed using all of the function parameters.
@@ -775,6 +789,12 @@ For these forms, the parameters can optionally be wrapped in parentheses in case
 // _::_ has a lower precedence than _._, parentheses are needed or this would be parsed as a::(is number.b)
 :$(a::is number).b
 ```
+
+### Environments
+
+Environments consist of a scope, and can be used to get, set, and define variable in a scope that isn't the current one.
+
+An environment can, for example, be obtained using `load(path)`, which returns the exported scope of the file `path`.
 
 ### Overloads
 

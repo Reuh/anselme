@@ -7,12 +7,12 @@
 		expected 3 arguments, received 2
 	• $(s::is script, k::is string) (from stdlib/script.ans:41:1):
 		value check failure for parameter s
-	• $(c::is function, s::is symbol) = v (from stdlib/for.ans:2:1):
+	• $(fn::is function, var::is symbol) = v (from stdlib/for.ans:2:1):
 		expected 3 arguments, received 2
-	• $(c::is function, s::is string) = v (from stdlib/for.ans:2:1):
+	• $(fn::is function, var::is string) = v (from stdlib/for.ans:2:1):
 		expected 3 arguments, received 2
-	• $(c::is function, s::is string) (from stdlib/for.ans:2:1):
-		value check failure for parameter c
+	• $(fn::is function, var::is string) (from stdlib/for.ans:2:1):
+		value check failure for parameter fn
 	• $(c::is environment, s::is symbol) = v (from stdlib/for.ans:2:1):
 		expected 3 arguments, received 2
 	• $(c::is environment, s::is string) = v (from stdlib/for.ans:2:1):

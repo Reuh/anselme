@@ -1,3 +1,5 @@
+-- TODO: doc in other language
+
 return [[
 :@bloc attaché = stdlib.attached block
 

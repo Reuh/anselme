@@ -65,23 +65,14 @@ local function extract_block_title(line)
 	return title
 end
 
-local valid_tags = { title = true, defer = true }
+local valid_tags = { title = true, defer = true, titlelevel = true }
 local function process(content)
 	local deferred = {}
+	local titlelevel
 
+	-- process lua files
 	local out = content:gsub("{{(.-)}}", function(lua_file)
-		-- deferred doc comments
-		if lua_file:match("^:") then
-			local defer = lua_file:match("^:(.-)$")
-			if deferred[defer] then
-				local output = table.concat(deferred[defer], "\n")
-				deferred[defer] = nil
-				return output
-			else
-				return ""
-			end
-		-- lua file
-		else
+		if not lua_file:match("^:") then
 			local f = assert(io.open(lua_file, "r"))
 			local c = f:read("a")
 			f:close()
@@ -108,15 +99,18 @@ local function process(content)
 						end
 					-- end doc comment
 					else
+						local detected_indent = 0
 						if line:match("[^%s]") then
 							local indent, code = line:match("^(%s*)(.-)$")
-							if not comment_block.indent then comment_block.indent = utf8.len(indent) end
+							detected_indent = utf8.len(indent)
 							if not comment_block.title then comment_block.title = extract_block_title(code) end
 							table.insert(comment_block, ("\n_defined at line %s of [%s](%s):_ `%s`"):format(line_no, lua_file, source_link_prefix..lua_file, code))
 						end
+						if comment_block.titlelevel then titlelevel = comment_block.titlelevel end
 						if comment_block.title then
+							local level = titlelevel or base_header_level+detected_indent
 							table.insert(comment_block, 1, ("%s %s\n"):format(
-								("#"):rep(base_header_level+(comment_block.indent or 0)),
+								("#"):rep(level),
 								comment_block.title
 							))
 						end
@@ -136,13 +130,23 @@ local function process(content)
 
 			return table.concat(output, "\n")
 		end
-	end) .. ("\n---\n_file generated at %s_"):format(os.date("!%Y-%m-%dT%H:%M:%SZ"))
+	end)
 
+	-- process deferred doc comments
+	out = out:gsub("{{:(.-)}}", function(defer)
+		if deferred[defer] then
+			local output = table.concat(deferred[defer], "\n")
+			deferred[defer] = nil
+			return output
+		else
+			return ""
+		end
+	end)
 	for k in pairs(deferred) do
 		print("[warning] unused defer "..tostring(k))
 	end
 
-	return out
+	return out .. ("\n---\n_file generated at %s_"):format(os.date("!%Y-%m-%dT%H:%M:%SZ"))
 end
 
 local function generate_file(input, output)

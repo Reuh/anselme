@@ -1,3 +1,6 @@
+---# Variable assignment
+-- @titlelevel 3
+
 local ast = require("anselme.ast")
 local Nil, Boolean, LuaCall, ParameterTuple, FunctionParameter, Identifier, Overloadable, Overload, Call, Quote = ast.Nil, ast.Boolean, ast.LuaCall, ast.ParameterTuple, ast.FunctionParameter, ast.Identifier, ast.abstract.Overloadable, ast.Overload, ast.Call, ast.Quote
 
@@ -46,6 +49,9 @@ return {
 
 	{
 		--- Assign `value` to the variable `identifier`.
+		-- ```
+		-- var = 42
+		-- ```
 		-- @title identifier = value
 		"_=_", "(quote::is quoted(\"identifier\"), value)",
 		function(state, quote, value)
@@ -55,6 +61,9 @@ return {
 	},
 	{
 		--- Define the variable using the symbol `symbol` with the initial value `value`.
+		-- ```
+		-- :var = 42
+		-- ```
 		-- @title symbol::is symbol = value
 		"_=_", "(quote::is quoted(\"symbol\"), value)",
 		function(state, quote, value)
@@ -69,6 +78,10 @@ return {
 	},
 	{
 		--- For each `variable` element of the variable tuple and associated `value` element of the value tuple, call `variable = value`.
+		-- ```
+		-- (:a, :b) = (24, 42)
+		-- (a, b) = (b, a)
+		-- ```
 		-- @title variable tuple::is tuple = value tuple::is tuple
 		"_=_", "(quote::is quoted(\"tuple\"), value::is tuple)",
 		function(state, quote, tuple)

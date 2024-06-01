@@ -6,7 +6,6 @@ Loosely ordered by willingness to implement.
 
 Documentation:
 * tutorial
-* standard library
 
 # Can be done later
 

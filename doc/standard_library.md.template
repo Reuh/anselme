@@ -1,17 +1,45 @@
-TODO
+This document describes the functions defined by default by Anselme. These are accessible from any Anselme script.
 
-# Variable assignment
+This document is generated automatically from the source files in [anselme/stdlib](../anselme/stdlib).
 
-TODO intro
+{{anselme/stdlib/base.lua}}
 
 {{anselme/stdlib/assignment.lua}}
 
-# Value checking
-
-TODO
-
+{{anselme/stdlib/value check.lua}}
 {{:value checking}}
 
-# Control flow
+{{anselme/stdlib/boolean.lua}}
 
-TODO
+{{anselme/stdlib/conditionals.lua}}
+{{anselme/stdlib/for.lua}}
+
+{{anselme/stdlib/number.lua}}
+
+{{anselme/stdlib/string.lua}}
+
+{{anselme/stdlib/text.lua}}
+
+{{anselme/stdlib/symbol.lua}}
+
+{{anselme/stdlib/pair.lua}}
+
+{{anselme/stdlib/structures.lua}}
+{{:structures}}
+
+{{anselme/stdlib/function.lua}}
+{{anselme/stdlib/resume.lua}}
+
+{{anselme/stdlib/script.lua}}
+
+{{anselme/stdlib/environment.lua}}
+
+{{anselme/stdlib/typed.lua}}
+
+{{anselme/stdlib/persist.lua}}
+
+{{anselme/stdlib/attached block.lua}}
+
+{{anselme/stdlib/tag.lua}}
+
+{{anselme/stdlib/wrap.lua}}
