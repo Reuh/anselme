@@ -2,11 +2,6 @@ Various ideas and things that may or may not be done. It's like GitHub issues, b
 
 Loosely ordered by willingness to implement.
 
-# To do or discard before stable release
-
-Documentation:
-* tutorial
-
 # Can be done later
 
 Translation.

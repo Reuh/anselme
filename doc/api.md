@@ -56,31 +56,31 @@ Anselme expects that `require("anselme.module")` will try loading both `anselme/
 
 Global version string. Follow semver.
 
-_defined at line 57 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-beta2",`
+_defined at line 58 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-beta2",`
 
 ### .versions
 
 Table containing per-category version numbers. Incremented by one for any change that may break compatibility.
 
-_defined at line 60 of [anselme/init.lua](../anselme/init.lua):_ `versions = {`
+_defined at line 61 of [anselme/init.lua](../anselme/init.lua):_ `versions = {`
 
 #### .language
 
 Version number for language and standard library changes.
 
-_defined at line 62 of [anselme/init.lua](../anselme/init.lua):_ `language = 30,`
+_defined at line 63 of [anselme/init.lua](../anselme/init.lua):_ `language = 30,`
 
 #### .save
 
 Version number for save/AST format changes.
 
-_defined at line 64 of [anselme/init.lua](../anselme/init.lua):_ `save = 7,`
+_defined at line 65 of [anselme/init.lua](../anselme/init.lua):_ `save = 7,`
 
 #### .api
 
 Version number for Lua API changes.
 
-_defined at line 66 of [anselme/init.lua](../anselme/init.lua):_ `api = 10`
+_defined at line 67 of [anselme/init.lua](../anselme/init.lua):_ `api = 10`
 
 ### .parse (code, source)
 
@@ -94,20 +94,35 @@ local ast = anselme.parse("1 + 2", "test")
 ast:eval(state)
 ```
 
-_defined at line 78 of [anselme/init.lua](../anselme/init.lua):_ `parse = function(code, source)`
+_defined at line 79 of [anselme/init.lua](../anselme/init.lua):_ `parse = function(code, source)`
 
 ### .parse_file (path)
 
-Same as `:parse`, but read the code from a file.
+Same as `:parse`, but reads the code from a file.
 `source` will be set as the file path.
 
-_defined at line 83 of [anselme/init.lua](../anselme/init.lua):_ `parse_file = function(path)`
+_defined at line 84 of [anselme/init.lua](../anselme/init.lua):_ `parse_file = function(path)`
+
+### .generate_translation_template (code, source)
+
+Generates and return Anselme code (as a string) that can be used as a base for a translation file.
+This will include every translatable element found in this code.
+`source` is an optional string; it will be used as the code source name in translation contexts.
+
+_defined at line 93 of [anselme/init.lua](../anselme/init.lua):_ `generate_translation_template = function(code, source)`
+
+### .generate_translation_template_file (path)
+
+Same as `:generate_translation_template`, but reads the code from a file.
+`source` will be set as the file path.
+
+_defined at line 98 of [anselme/init.lua](../anselme/init.lua):_ `generate_translation_template_file = function(path)`
 
 ### .new ()
 
 Return a new [State](#state).
 
-_defined at line 90 of [anselme/init.lua](../anselme/init.lua):_ `new = function()`
+_defined at line 102 of [anselme/init.lua](../anselme/init.lua):_ `new = function()`
 
 
 # State
@@ -296,4 +311,4 @@ Otherwise, each Node has its own module file defined in the [ast/](../ast) direc
 
 
 ---
-_file generated at 2024-06-01T12:26:47Z_
+_file generated at 2024-06-02T20:52:37Z_

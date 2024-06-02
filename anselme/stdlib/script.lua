@@ -29,7 +29,7 @@
 -- Some variables are defined into the script/`fn` scope. They are all stored from persistent storage, using the script name as part of their persistent key:
 --
 -- * `current checkpoint` is the currently set checkpoint (an anchor);
--- * `reached` is a table of *{ #anchor = number, ... } which associates to an anchor the number of times it was reached (see `check` and `checkpoint`);
+-- * `reached` is a table of `*{ #anchor = number, ... }` which associates to an anchor the number of times it was reached (see `check` and `checkpoint`);
 -- * `run` is the number of times the script was successfully called.
 --
 -- As well as functions defined in the script scope:

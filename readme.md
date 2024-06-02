@@ -12,18 +12,18 @@ This is version 2, a full rewrite. **Currently not stable.**
 	| Hi, what can I do for you?
 
 *| a latte with a bunch of sugar and a pretty sprinkles please
-	"from": "barista" #
+	from: "barista" #
 		| Good choice. Here you go. Have a colorful day.
 	money -= 10
 *| triple expresso
-	"from": "barista" #
+	from: "barista" #
 		| Here. Have a nice day.
 	money -= 2
 *| a slap
-	"from": "barista" #
+	from: "barista" #
 		| With pleasure.
 
-	"type": "sfx" #
+	type: "sfx" #
 		| SLAP
 	health points -= 2
 
