@@ -52,7 +52,8 @@
 
 local parser, State
 
-local anselme = {
+local anselme
+anselme = {
 	--- Global version string. Follow semver.
 	version = "2.0.0-beta2",
 
@@ -78,13 +79,24 @@ local anselme = {
 	parse = function(code, source)
 		return parser(code, source)
 	end,
-	--- Same as `:parse`, but read the code from a file.
+	--- Same as `:parse`, but reads the code from a file.
 	-- `source` will be set as the file path.
 	parse_file = function(path)
 		local f = assert(io.open(path, "r"))
 		local block = parser(f:read("a"), path)
 		f:close()
 		return block
+	end,
+	--- Generates and return Anselme code (as a string) that can be used as a base for a translation file.
+	-- This will include every translatable element found in this code.
+	-- `source` is an optional string; it will be used as the code source name in translation contexts.
+	generate_translation_template = function(code, source)
+		return anselme.parse(code, source):generate_translation_template()
+	end,
+	--- Same as `:generate_translation_template`, but reads the code from a file.
+	-- `source` will be set as the file path.
+	generate_translation_template_file = function(path)
+		return anselme.parse_file(path):generate_translation_template()
 	end,
 	--- Return a new [State](#state).
 	new = function()
