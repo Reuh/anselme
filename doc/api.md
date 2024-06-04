@@ -56,7 +56,7 @@ Anselme expects that `require("anselme.module")` will try loading both `anselme/
 
 Global version string. Follow semver.
 
-_defined at line 58 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-beta2",`
+_defined at line 58 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-rc1",`
 
 ### .versions
 
@@ -68,7 +68,7 @@ _defined at line 61 of [anselme/init.lua](../anselme/init.lua):_ `versions = {`
 
 Version number for language and standard library changes.
 
-_defined at line 63 of [anselme/init.lua](../anselme/init.lua):_ `language = 30,`
+_defined at line 63 of [anselme/init.lua](../anselme/init.lua):_ `language = 31,`
 
 #### .save
 
@@ -311,4 +311,4 @@ Otherwise, each Node has its own module file defined in the [ast/](../ast) direc
 
 
 ---
-_file generated at 2024-06-02T20:52:37Z_
+_file generated at 2024-06-04T14:22:53Z_

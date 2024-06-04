@@ -2,8 +2,6 @@
 
 The overengineered game dialog scripting system in pure Lua.
 
-This is version 2, a full rewrite. **Currently not stable.**
-
 ```
 :money = 10
 :health points = 5
@@ -29,6 +27,8 @@ This is version 2, a full rewrite. **Currently not stable.**
 
 	| Thanks, I feel much better.
 ```
+
+This is version 2, a full rewrite. Version 1 is still available in the v1 branch.
 
 Supported: Lua 5.4, Lua 5.3, LuaJIT (LuaJIT requires the utf8 module: `luarocks --lua-version=5.1 install luautf8`).
 Otherwise all needed files are included in the `anselme` directory.

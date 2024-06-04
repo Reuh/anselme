@@ -2,7 +2,7 @@ Various ideas and things that may or may not be done. It's like GitHub issues, b
 
 Loosely ordered by willingness to implement.
 
-# Can be done later
+---
 
 Translation.
 
