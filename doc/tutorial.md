@@ -225,7 +225,7 @@ else!
 
 ```
 :i = 0
-while(i < 5)
+while($i < 5)
 	i += 1
 	if(i == 4)
 		break!
@@ -240,7 +240,7 @@ for(:x, range(10))
 
 # Persistence
 
-_For more detailled information on this, look at [persistence](standard_library.md#persistence-helpers), [alias variables](#api.md#alias-variables)._
+_For more detailled information on this, look at [persistence](standard_library.md#persistence-helpers), [alias variables](language.md#alias-variables)._
 
 Variables that needs to be saved and loaded alongside the game's save files can be stored in persistent storage.
 
@@ -333,4 +333,4 @@ Text and any value preceded by a `%` prefix will be replaced with its translatio
 %"red" // "rouge"
 ```
 
-An Anselme script containing a ready-to-translate list of all translatables elements of a file can be obtained using the [translation template generator Lua API methods](#api.md#generate-translation-template). The template can then be loaded as a regular Anselme file for all the translations to be applied.
+An Anselme script containing a ready-to-translate list of all translatables elements of a file can be obtained using the [translation template generator Lua API methods](api.md#generate-translation-template). The template can then be loaded as a regular Anselme file for all the translations to be applied.

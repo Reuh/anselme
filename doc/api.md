@@ -199,6 +199,7 @@ _defined at line 117 of [anselme/state/State.lua](../anselme/state/State.lua):_ 
 
 ### :defined (name)
 
+Returns true if `name` (string) is defined in the global scope.
 Returns false otherwise.
 
 _defined at line 122 of [anselme/state/State.lua](../anselme/state/State.lua):_ `defined = function(self, name)`
@@ -311,4 +312,4 @@ Otherwise, each Node has its own module file defined in the [ast/](../ast) direc
 
 
 ---
-_file generated at 2024-06-04T14:22:53Z_
+_file generated at 2024-11-09T17:00:43Z_

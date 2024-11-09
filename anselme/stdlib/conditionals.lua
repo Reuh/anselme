@@ -109,7 +109,7 @@ return {
 		--
 		-- ```
 		-- :i = 1
-		-- while(i <= 5)
+		-- while($i <= 5)
 		-- 	print(i)
 		-- 	i += 1
 		-- // 1, 2, 3, 4, 5
@@ -117,7 +117,7 @@ return {
 		--
 		-- ```
 		-- :i = 1
-		-- while(i <= 5)
+		-- while($i <= 5)
 		-- 	if(i == 3, break)
 		-- 	print(i)
 		-- 	i += 1
@@ -126,7 +126,7 @@ return {
 		--
 		-- ```
 		-- :i = 1
-		-- while(i <= 5)
+		-- while($i <= 5)
 		-- 	if(i == 3, continue)
 		-- 	print(i)
 		-- 	i += 1
@@ -135,7 +135,7 @@ return {
 		--
 		-- ```
 		-- :i = 10
-		-- while(i <= 5)
+		-- while($i <= 5)
 		-- 	print(i)
 		-- 	i += 1
 		-- else!

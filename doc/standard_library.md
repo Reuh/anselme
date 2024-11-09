@@ -296,7 +296,7 @@ If a `break` happens in the loop, the whole loop is stopped.
 
 ```
 :i = 1
-while(i <= 5)
+while($i <= 5)
 	print(i)
 	i += 1
 // 1, 2, 3, 4, 5
@@ -304,7 +304,7 @@ while(i <= 5)
 
 ```
 :i = 1
-while(i <= 5)
+while($i <= 5)
 	if(i == 3, break)
 	print(i)
 	i += 1
@@ -313,7 +313,7 @@ while(i <= 5)
 
 ```
 :i = 1
-while(i <= 5)
+while($i <= 5)
 	if(i == 3, continue)
 	print(i)
 	i += 1
@@ -322,7 +322,7 @@ while(i <= 5)
 
 ```
 :i = 10
-while(i <= 5)
+while($i <= 5)
 	print(i)
 	i += 1
 else!
@@ -1336,4 +1336,4 @@ _defined at line 14 of [anselme/stdlib/wrap.lua](../anselme/stdlib/wrap.lua):_ `
 
 
 ---
-_file generated at 2024-06-04T14:22:53Z_
+_file generated at 2024-11-09T16:02:36Z_

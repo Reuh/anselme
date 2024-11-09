@@ -326,7 +326,7 @@ comment
 
 Variables can be defined and assigned using the `_=_` operator.
 
-To define a variable, the left expression must be a [symbol](#symbol), for an assignment, an identifier. The left expression can also be a tuple for multiple assignments.
+To define a variable, the left expression must be a [symbol](#symbols), for an assignment, an identifier. The left expression can also be a tuple for multiple assignments.
 
 ```
 :x = 3 // definition
@@ -355,11 +355,11 @@ constant symbol = 13 // value checking error!
 
 #### Exported variables
 
-If the symbol has an export flag, the variable will be defined in the [export scope](#export-scope) instead of the current scope, i.e. will be defined for the whole file and be made accessible from outside files. See [export scope](#export-scope) for details.
+If the symbol has an `@` export flag, the variable will be defined in the [export scope](#export-scope) instead of the current scope, i.e. will be defined for the whole file and be made accessible from outside files. See [export scope](#export-scope) for details.
 
 #### Alias variables
 
-If the symbol has an alias flag, the variable will be an alias. Instead of directly accessing the value of the variable, the variable will:
+If the symbol has an `&` alias flag, the variable will be an alias. Instead of directly accessing the value of the variable, the variable will:
 
 * when get, call its value with no argument and returns the result;
 * whet set, call its value with an assignment argument and returns the result.
@@ -752,7 +752,7 @@ $1, $2 // same as ($1), ($2) as _,_ has a precedence of 2
 
 A variable can be defined and assigned a new function quickly using the function definition syntax.
 
-The function definition syntax consist of a modified [symbol literal](#symbol) with a `$` right before the symbol name, followed by either a parameter list and expression or the function expression directly, in the same way as the [`$_` operator](#functions) described above.
+The function definition syntax consist of a modified [symbol literal](#symbols) with a `$` right before the symbol name, followed by either a parameter list and expression or the function expression directly, in the same way as the [`$_` operator](#functions) described above.
 
 When evaluated, the function definition will create a new function and define a new variable set to this function.
 

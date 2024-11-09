@@ -118,7 +118,7 @@ State = class {
 		self.scope:define_lua(name, value, func, raw_mode)
 	end,
 	--- Returns true if `name` (string) is defined in the global scope.
-	--- Returns false otherwise.
+	-- Returns false otherwise.
 	defined = function(self, name)
 		self.scope:push_global()
 		local r = self:defined_local(name)
