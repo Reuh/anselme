@@ -5,16 +5,101 @@ local ArgumentTuple, Struct
 
 local to_anselme = require("anselme.common.to_anselme")
 
+--- A Lua-friendly representation of an Anselme Text value.
+-- They appear in both TextEventData and ChoiceEventData to represent the text that has to be shown.
+--
+-- It contains a list of _text parts_, which are parts of a single text, each part potentially having differrent tags attached.
+-- A text will typically only consist of a single part unless it was built using text interpolation.
+--
+-- Each text part is a table containing `text` (string) and  `tags` (table) properties, for example: `{ text = "text part string", tags = { color = "red" } }`.
+-- @title LuaText
+-- @defer lua text
+local LuaText
+LuaText = class {
+	-- [1] = { text = "string", tags = { tag_name = value, ... } }, ...
+
+	_state = nil,
+
+	--- Anselme Text value this was created from. For advanced usage only. See the source file [Text.lua](anselme/ast/Text.lua) for more information.
+	-- @defer lua text
+	raw = nil,
+
+	init = function(self, text, state)
+		self._state = state
+		self.raw = text
+		for _, e in ipairs(text.list) do
+			table.insert(self, { text = e[1]:to_lua(state), tags = e[2]:to_lua(state) })
+		end
+	end,
+
+	--- Returns a text representation of the LuaText, using Anselme's default formatting. Useful for debugging.
+	--
+	-- Usage: `print(luatext)`
+	-- @defer lua text
+	__tostring = function(self)
+		return self.raw:format(self._state)
+	end
+}
+
+--- TextEventData represent the data returned by an event with the type `"text"`.
+-- See the [language documentation](language.md#texts) for more details on how to create a text event.
+--
+-- A TextEventData contains a list of [LuaText](#luatext), each LuaText representing a separate line of the text event.
+--
+-- For example, the following Anselme script:
+--
+-- ```
+-- | Hi!
+-- | My name's John.
+-- ```
+-- will return a text event containing two LuaTexts, the first containing the text "Hi!" and the second "My name's John.".
+--
+-- Usage:
+-- ```lua
+-- local event_type, event_data = run_state:step()
+-- if event_type == "text" then
+-- 	-- event_data is a TextEventData, i.e. a list of LuaText
+-- 	for _, luatext in ipairs(event_data) do
+--  		-- luatext is a list of text parts { text = "text string", tags = { ... } }
+-- 		for _, textpart in ipairs(luatext) do
+-- 			write_text_part_with_color(textpart.text, textpart.tags.color)
+-- 		end
+-- 		write_text("\n") -- for example, if we want a newline between each text line
+-- 	end
+-- else
+--	-- handle other event types...
+-- end
+-- ```
+-- @title TextEventData
 local TextEventData
 TextEventData = class {
-	-- returns a list of TextEventData where the first element of each text of each TextEventData has the same value for the tag tag_name
+	-- [1] = LuaText, ...
+
+	--- Returns a list of TextEventData where the first part of each LuaText of each TextEventData has the same value for the tag `tag_name`.
+	--
+	-- In other words, this groups all the LuaTexts contained in this TextEventData using the `tag_name` tag and returns a list containing these groups.
+	--
+	-- For example, with the following Anselme script:
+	-- ```
+	-- speaker: "John" #
+	-- 	| A
+	-- 	| B
+	-- speaker: "Lana" #
+	-- 	| C
+	-- speaker: "John" #
+	-- 	| D
+	-- ```
+	-- calling `text_event_data:group_by("speaker")` will return a list of three TextEventData:
+	-- * the first with the texts "A" and "B"; both with the tag `speaker="John"`
+	-- * the second with the text "C"; with the tag `speaker="Lana"`
+	-- * the last with the text "D"; wiith the tag `speaker="John"`
 	group_by = function(self, tag_name)
 		local l = {}
 		local current_group
 		local tag_key = to_anselme(tag_name)
 		local last_value
-		for _, event in ipairs(self) do
-			local list = event.list
+		for _, luatext in ipairs(self) do
+			local list = luatext.raw.list
 			if #list > 0 then
 				local value = list[1][2]:get_strict(tag_key)
 				if (not current_group) or (last_value == nil and value) or (last_value and value == nil) or (last_value and value and last_value:hash() ~= value:hash()) then -- new group
@@ -22,11 +107,11 @@ TextEventData = class {
 					table.insert(l, current_group)
 					last_value = value
 				end
-				table.insert(current_group, event) -- add to current group
+				table.insert(current_group, luatext) -- add to current group
 			end
 		end
 		return l
-	end,
+	end
 }
 
 local Text
@@ -68,6 +153,10 @@ Text = Runtime(Event) {
 		return ("| %s |"):format(table.concat(t, " "))
 	end,
 
+	to_lua = function(self, state)
+		return LuaText:new(self, state)
+	end,
+
 	-- autocall when used directly as a statement
 	eval_statement = function(self, state)
 		return self:call(state, ArgumentTuple:new())
@@ -77,8 +166,8 @@ Text = Runtime(Event) {
 
 	build_event_data = function(self, state, event_buffer)
 		local l = TextEventData:new()
-		for _, event in event_buffer:iter(state) do
-			table.insert(l, event)
+		for _, text in event_buffer:iter(state) do
+			table.insert(l, text:to_lua(state))
 		end
 		return l
 	end,

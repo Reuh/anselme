@@ -1,6 +1,6 @@
 This document describes how to use the main Anselme modules. This is generated automatically from the source files.
 
-Note that this file only describes the `anselme` and `state.State` modules, which are only a selection of what I consider to be the "public API" of Anselme that I will try to keep stable.
+Note that this file only describes the `anselme` and `state.State` modules, as well as the `TextEventData` and `ChoiceEventData` classes, which are only a selection of what I consider to be the "public API" of Anselme that I will try to keep stable.
 If you need more advanced control on Anselme, feel free to look into the other source files to find more; the most useful functions should all be reasonably commented.
 
 # anselme
@@ -15,25 +15,20 @@ local anselme = require("anselme")
 local state = anselme.new()
 state:load_stdlib()
 
--- read an anselme script file
-local f = assert(io.open("script.ans"))
-local script = anselme.parse(f:read("a"), "script.ans")
-f:close()
-
--- load the script in a new branch
+-- load an anselme script file in a new branch
 local run_state = state:branch()
-run_state:run(script)
+run_state:run_file("script.ans")
 
 -- run the script
 while run_state:active() do
 	local e, data = run_state:step()
 	if e == "text" then
 		for _, l in ipairs(data) do
-			print(l:format(run_state))
+			print(l)
 		end
 	elseif e == "choice" then
 		for i, l in ipairs(data) do
-			print(("%s> %s"):format(i, l:format(run_state)))
+			print(("%s> %s"):format(i, l))
 		end
 		local choice = tonumber(io.read("l"))
 		data:choose(choice)
@@ -56,31 +51,31 @@ Anselme expects that `require("anselme.module")` will try loading both `anselme/
 
 Global version string. Follow semver.
 
-_defined at line 58 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-rc1",`
+_defined at line 53 of [anselme/init.lua](../anselme/init.lua):_ `version = "2.0.0-rc1",`
 
 ### .versions
 
 Table containing per-category version numbers. Incremented by one for any change that may break compatibility.
 
-_defined at line 61 of [anselme/init.lua](../anselme/init.lua):_ `versions = {`
+_defined at line 56 of [anselme/init.lua](../anselme/init.lua):_ `versions = {`
 
 #### .language
 
 Version number for language and standard library changes.
 
-_defined at line 63 of [anselme/init.lua](../anselme/init.lua):_ `language = 31,`
+_defined at line 58 of [anselme/init.lua](../anselme/init.lua):_ `language = 31,`
 
 #### .save
 
 Version number for save/AST format changes.
 
-_defined at line 65 of [anselme/init.lua](../anselme/init.lua):_ `save = 7,`
+_defined at line 60 of [anselme/init.lua](../anselme/init.lua):_ `save = 7,`
 
 #### .api
 
 Version number for Lua API changes.
 
-_defined at line 67 of [anselme/init.lua](../anselme/init.lua):_ `api = 10`
+_defined at line 62 of [anselme/init.lua](../anselme/init.lua):_ `api = 10`
 
 ### .parse (code, source)
 
@@ -94,14 +89,14 @@ local ast = anselme.parse("1 + 2", "test")
 ast:eval(state)
 ```
 
-_defined at line 79 of [anselme/init.lua](../anselme/init.lua):_ `parse = function(code, source)`
+_defined at line 74 of [anselme/init.lua](../anselme/init.lua):_ `parse = function(code, source)`
 
 ### .parse_file (path)
 
 Same as `:parse`, but reads the code from a file.
 `source` will be set as the file path.
 
-_defined at line 84 of [anselme/init.lua](../anselme/init.lua):_ `parse_file = function(path)`
+_defined at line 79 of [anselme/init.lua](../anselme/init.lua):_ `parse_file = function(path)`
 
 ### .generate_translation_template (code, source)
 
@@ -109,20 +104,20 @@ Generates and return Anselme code (as a string) that can be used as a base for a
 This will include every translatable element found in this code.
 `source` is an optional string; it will be used as the code source name in translation contexts.
 
-_defined at line 93 of [anselme/init.lua](../anselme/init.lua):_ `generate_translation_template = function(code, source)`
+_defined at line 88 of [anselme/init.lua](../anselme/init.lua):_ `generate_translation_template = function(code, source)`
 
 ### .generate_translation_template_file (path)
 
 Same as `:generate_translation_template`, but reads the code from a file.
 `source` will be set as the file path.
 
-_defined at line 98 of [anselme/init.lua](../anselme/init.lua):_ `generate_translation_template_file = function(path)`
+_defined at line 93 of [anselme/init.lua](../anselme/init.lua):_ `generate_translation_template_file = function(path)`
 
 ### .new ()
 
 Return a new [State](#state).
 
-_defined at line 102 of [anselme/init.lua](../anselme/init.lua):_ `new = function()`
+_defined at line 97 of [anselme/init.lua](../anselme/init.lua):_ `new = function()`
 
 
 # State
@@ -275,7 +270,9 @@ Will error if no script is active.
 
 Returns `event type string, event data`.
 
-_defined at line 206 of [anselme/state/State.lua](../anselme/state/State.lua):_ `step = function(self)`
+See the [events](#events) section for details on event data types for built-in events.
+
+_defined at line 208 of [anselme/state/State.lua](../anselme/state/State.lua):_ `step = function(self)`
 
 ### :interrupt (code, source, tags)
 
@@ -289,7 +286,7 @@ The new script will then be started on the next `:step` and will preserve the cu
 
 If this is called from within a running script, this will raise an `interrupt` event in order to stop the current script execution.
 
-_defined at line 227 of [anselme/state/State.lua](../anselme/state/State.lua):_ `interrupt = function(self, code, source, tags)`
+_defined at line 229 of [anselme/state/State.lua](../anselme/state/State.lua):_ `interrupt = function(self, code, source, tags)`
 
 ### :eval (code, source, tags)
 
@@ -303,18 +300,188 @@ This can be called from outside a running script, but an error will be triggered
 * returns AST in case of success. Run `:to_lua(state)` on it to convert to a Lua value.
 * returns `nil, error message` in case of error.
 
-_defined at line 254 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval = function(self, code, source, tags)`
+_defined at line 256 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval = function(self, code, source, tags)`
 
 ### :eval_local (code, source, tags)
 
 Same as `:eval`, but evaluate the expression in the current scope.
 
-_defined at line 261 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval_local = function(self, code, source, tags)`
+_defined at line 263 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval_local = function(self, code, source, tags)`
 
 If you want to perform more advanced manipulation of the resulting AST nodes, look at the `ast` modules.
 In particular, every Node inherits the methods from [ast.abstract.Node](../ast/abstract/Node.lua).
 Otherwise, each Node has its own module file defined in the [ast/](../ast) directory.
 
 
+# Events
+
+Anselme scripts communicate with the game by sending events. See the [language documentation](language.md#events) for more details on events.
+
+Custom events can be defined; to do so, simply yield the coroutine with your custom event type (using `coroutine.yield("event type", event_data)`) from a function called in the anselme script.
+
+For example, to add a `wait` event that pauses the script for some time, you could do something along these lines:
+```lua
+state:define("wait", "(duration::is number)", function(duration) coroutine.yield("wait", duration) end)
+waiting = false
+
+-- and edit your Anselme event handler with something like:
+if not waiting then
+	local event_type, event_data = run_state = run_state:step()
+	if e == "wait" then
+		waiting = true
+		call_after_duration(event_data, function() waiting = false end)
+	else
+	-- handle other event types...
+	end
+end
+```
+
+And then from your Anselme script:
+```
+| Hello...
 ---
-_file generated at 2024-11-11T09:22:49Z_
+wait(5)
+| ...world !
+```
+
+## TextEventData
+
+TextEventData represent the data returned by an event with the type `"text"`.
+See the [language documentation](language.md#texts) for more details on how to create a text event.
+
+A TextEventData contains a list of [LuaText](#luatext), each LuaText representing a separate line of the text event.
+
+For example, the following Anselme script:
+
+```
+| Hi!
+| My name's John.
+```
+will return a text event containing two LuaTexts, the first containing the text "Hi!" and the second "My name's John.".
+
+Usage:
+```lua
+local event_type, event_data = run_state:step()
+if event_type == "text" then
+	-- event_data is a TextEventData, i.e. a list of LuaText
+	for _, luatext in ipairs(event_data) do
+ 		-- luatext is a list of text parts { text = "text string", tags = { ... } }
+		for _, textpart in ipairs(luatext) do
+			write_text_part_with_color(textpart.text, textpart.tags.color)
+		end
+		write_text("\n") -- for example, if we want a newline between each text line
+	end
+else
+-- handle other event types...
+end
+```
+
+_defined at line 74 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `local TextEventData`
+
+### :group_by (tag_name)
+
+Returns a list of TextEventData where the first part of each LuaText of each TextEventData has the same value for the tag `tag_name`.
+
+In other words, this groups all the LuaTexts contained in this TextEventData using the `tag_name` tag and returns a list containing these groups.
+
+For example, with the following Anselme script:
+```
+speaker: "John" #
+	| A
+	| B
+speaker: "Lana" #
+	| C
+speaker: "John" #
+	| D
+```
+calling `text_event_data:group_by("speaker")` will return a list of three TextEventData:
+* the first with the texts "A" and "B"; both with the tag `speaker="John"`
+* the second with the text "C"; with the tag `speaker="Lana"`
+* the last with the text "D"; wiith the tag `speaker="John"`
+
+_defined at line 96 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `group_by = function(self, tag_name)`
+
+
+## ChoiceEventData
+
+ChoiceEventData represent the data returned by an event with the type `"choice"`.
+See the [language documentation](language.md#choices) for more details on how to create a choice event.
+
+A ChoiceEventData contains a list of [LuaText](#luatext), each LuaText representing a separate choice of the choice event.
+
+For example, the following Anselme script:
+
+```
+*| Yes!
+*| No.
+```
+will return a choice event containing two LuaTexts, the first containing the text "Yes!" and the second "No.".
+
+Usage:
+```lua
+current_choice = nil
+waiting_for_choice = false
+
+-- in your anselem event handling loop:
+if not waiting_for_choice then
+	local event_type, event_data = run_state:step()
+	if event_type == "choice" then
+		-- event_data is a ChoiceEventData, i.e. a list of LuaText
+		for i, luatext in ipairs(event_data) do
+			write(("Choice number %s:"):format(i))
+ 			-- luatext is a list of text parts { text = "text string", tags = { ... } }
+			for _, textpart in ipairs(luatext) do
+				write_choice_part_with_color(textpart.text, textpart.tags.color)
+			end
+		else
+		-- handle other event types...
+		end
+		current_choice = event_data
+		waiting_for_choice = true
+	end
+end
+
+-- somewhere in your code where choices are selected
+current_choice:select(choice_number)
+waiting_for_choice = false
+```
+
+_defined at line 50 of [anselme/ast/Choice.lua](../anselme/ast/Choice.lua):_ `local ChoiceEventData = class {`
+
+### :choose (choice)
+
+Choose the choice at position `choice` (number).
+
+A choice must be selected after receiving a choice event and before calling `:step` again.
+
+_defined at line 58 of [anselme/ast/Choice.lua](../anselme/ast/Choice.lua):_ `choose = function(self, choice)`
+
+
+## LuaText
+
+A Lua-friendly representation of an Anselme Text value.
+They appear in both TextEventData and ChoiceEventData to represent the text that has to be shown.
+
+It contains a list of _text parts_, which are parts of a single text, each part potentially having differrent tags attached.
+A text will typically only consist of a single part unless it was built using text interpolation.
+
+Each text part is a table containing `text` (string) and  `tags` (table) properties, for example: `{ text = "text part string", tags = { color = "red" } }`.
+
+_defined at line 17 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `local LuaText`
+
+### .raw
+
+Anselme Text value this was created from. For advanced usage only. See the source file [Text.lua](anselme/ast/Text.lua) for more information.
+
+_defined at line 25 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `raw = nil,`
+
+### :__tostring ()
+
+Returns a text representation of the LuaText, using Anselme's default formatting. Useful for debugging.
+
+Usage: `print(luatext)`
+
+_defined at line 39 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `__tostring = function(self)`
+
+---
+_file generated at 2024-11-11T13:33:43Z_

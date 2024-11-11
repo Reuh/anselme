@@ -56,7 +56,7 @@ return [[
 :@arrondi = stdlib.round
 :@aléatoire = stdlib.rand
 
-:@égal = stdlib.equal
+:@est égal = stdlib.is equal
 :@est = stdlib.is
 :@est une ancre = stdlib.is anchor
 :@est un booléen = stdlib.is boolean

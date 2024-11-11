@@ -1,6 +1,6 @@
 This document describes how to use the main Anselme modules. This is generated automatically from the source files.
 
-Note that this file only describes the `anselme` and `state.State` modules, which are only a selection of what I consider to be the "public API" of Anselme that I will try to keep stable.
+Note that this file only describes the `anselme` and `state.State` modules, as well as the `TextEventData` and `ChoiceEventData` classes, which are only a selection of what I consider to be the "public API" of Anselme that I will try to keep stable.
 If you need more advanced control on Anselme, feel free to look into the other source files to find more; the most useful functions should all be reasonably commented.
 
 # anselme
@@ -10,3 +10,40 @@ If you need more advanced control on Anselme, feel free to look into the other s
 # State
 
 {{anselme/state/State.lua}}
+
+# Events
+
+Anselme scripts communicate with the game by sending events. See the [language documentation](language.md#events) for more details on events.
+
+Custom events can be defined; to do so, simply yield the coroutine with your custom event type (using `coroutine.yield("event type", event_data)`) from a function called in the anselme script.
+
+For example, to add a `wait` event that pauses the script for some time, you could do something along these lines:
+```lua
+state:define("wait", "(duration::is number)", function(duration) coroutine.yield("wait", duration) end)
+waiting = false
+
+-- and edit your Anselme event handler with something like:
+if not waiting then
+	local event_type, event_data = run_state = run_state:step()
+	if e == "wait" then
+		waiting = true
+		call_after_duration(event_data, function() waiting = false end)
+	else
+	-- handle other event types...
+	end
+end
+```
+
+And then from your Anselme script:
+```
+| Hello...
+---
+wait(5)
+| ...world !
+```
+
+{{anselme/ast/Text.lua}}
+
+{{anselme/ast/Choice.lua}}
+
+{{:lua text}}

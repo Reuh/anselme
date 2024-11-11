@@ -13,25 +13,20 @@
 -- local state = anselme.new()
 -- state:load_stdlib()
 --
--- -- read an anselme script file
--- local f = assert(io.open("script.ans"))
--- local script = anselme.parse(f:read("a"), "script.ans")
--- f:close()
---
--- -- load the script in a new branch
+-- -- load an anselme script file in a new branch
 -- local run_state = state:branch()
--- run_state:run(script)
+-- run_state:run_file("script.ans")
 --
 -- -- run the script
 -- while run_state:active() do
 -- 	local e, data = run_state:step()
 -- 	if e == "text" then
 -- 		for _, l in ipairs(data) do
--- 			print(l:format(run_state))
+-- 			print(l)
 -- 		end
 -- 	elseif e == "choice" then
 -- 		for i, l in ipairs(data) do
--- 			print(("%s> %s"):format(i, l:format(run_state)))
+-- 			print(("%s> %s"):format(i, l))
 -- 		end
 -- 		local choice = tonumber(io.read("l"))
 -- 		data:choose(choice)

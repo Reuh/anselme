@@ -887,6 +887,8 @@ A text event value can be created using the [text literal](#text). A text is wri
 text!
 ```
 
+How the data returned by a Text event is structured is detailled in the [API documentation](api.md#texteventdata).
+
 ### Choices
 
 Choice events are intended to represent a player choice in the host game. Each choice event in the buffer list is intended to represent a distinct choice.
@@ -901,6 +903,8 @@ A choice event can be written to the buffer using the `*_` operator on a text ev
 *| Choice B
 	| Choice B has been selected.
 ```
+
+How the data returned by a Text event is structured is detailled in the [API documentation](api.md#choiceeventdata).
 
 ### Tags
 

@@ -203,6 +203,8 @@ State = class {
 	-- Will error if no script is active.
 	--
 	-- Returns `event type string, event data`.
+	--
+	-- See the [events](#events) section for details on event data types for built-in events.
 	step = function(self)
 		assert(self:active(), "trying to step but no script is currently active")
 		local success, type, data = coroutine.resume(self._coroutine)

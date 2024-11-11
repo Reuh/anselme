@@ -38,14 +38,14 @@ local function run_loop(run_state, write_output, interactive)
 			for _, v in ipairs(grouped) do
 				if groups then write_output(":: group ::") end
 				for _, l in ipairs(v) do
-					write_output(l:format(run_state))
+					write_output(l.raw:format(run_state))
 				end
 			end
 		elseif e == "choice" then
 			local choice
 			if interactive then
 				for i, l in ipairs(data) do
-					write_output(("%s> %s"):format(i, l:format(run_state)))
+					write_output(("%s> %s"):format(i, l.raw:format(run_state)))
 				end
 				io.write(("Select choice (1-%s): "):format(#data))
 				choice = tonumber(io.read("l"))
@@ -53,9 +53,9 @@ local function run_loop(run_state, write_output, interactive)
 				choice = assert(run_state:eval_local("choice"), "no choice selected"):to_lua()
 				for i, l in ipairs(data) do
 					if i == choice then
-						write_output(("=> %s"):format(l:format(run_state)))
+						write_output(("=> %s"):format(l.raw:format(run_state)))
 					else
-						write_output((" > %s"):format(l:format(run_state)))
+						write_output((" > %s"):format(l.raw:format(run_state)))
 					end
 				end
 			end

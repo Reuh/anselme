@@ -102,7 +102,7 @@ Struct = ast.abstract.Runtime {
 
 	to_lua = function(self, state)
 		local l = {}
-		for _, e in ipairs(self.table) do
+		for _, e in pairs(self.table) do
 			l[e[1]:to_lua(state)] = e[2]:to_lua(state)
 		end
 		return l
