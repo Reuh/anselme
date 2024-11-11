@@ -249,22 +249,23 @@ Returns `"inactive"` if no script is loaded.
 
 _defined at line 171 of [anselme/state/State.lua](../anselme/state/State.lua):_ `state = function(self)`
 
-### :run (code, source)
+### :run (code, source, tags)
 
 Load a script in this branch. It will become the active script.
 
 `code` is the code string or AST to run. If `code` is a string, `source` is the source name string to show in errors (optional).
+`tags` is an optional Lua table; its content will be added to the tags for the duration of the script.
 
 Note that this will only load the script; execution will only start by using the `:step` method. Will error if a script is already active in this State.
 
-_defined at line 183 of [anselme/state/State.lua](../anselme/state/State.lua):_ `run = function(self, code, source)`
+_defined at line 184 of [anselme/state/State.lua](../anselme/state/State.lua):_ `run = function(self, code, source, tags)`
 
-### :run_file (path)
+### :run_file (path, tags)
 
 Same as `:run`, but read the code from a file.
 `source` will be set as the file path.
 
-_defined at line 194 of [anselme/state/State.lua](../anselme/state/State.lua):_ `run_file = function(self, path)`
+_defined at line 195 of [anselme/state/State.lua](../anselme/state/State.lua):_ `run_file = function(self, path, tags)`
 
 ### :step ()
 
@@ -274,37 +275,41 @@ Will error if no script is active.
 
 Returns `event type string, event data`.
 
-_defined at line 205 of [anselme/state/State.lua](../anselme/state/State.lua):_ `step = function(self)`
+_defined at line 206 of [anselme/state/State.lua](../anselme/state/State.lua):_ `step = function(self)`
 
-### :interrupt (code, source)
+### :interrupt (code, source, tags)
 
 Stops the currently active script.
 
 Will error if no script is active.
 
-If `code` is given, the script will not be disabled but instead will be immediately replaced with this new script.
+`code`, `source` and `tags` are all optional and have the same behaviour as in `:run`.
+If they are given, the script will not be disabled but instead will be immediately replaced with this new script.
 The new script will then be started on the next `:step` and will preserve the current scope. This can be used to trigger an exit function or similar in the active script.
 
 If this is called from within a running script, this will raise an `interrupt` event in order to stop the current script execution.
 
-_defined at line 225 of [anselme/state/State.lua](../anselme/state/State.lua):_ `interrupt = function(self, code, source)`
+_defined at line 227 of [anselme/state/State.lua](../anselme/state/State.lua):_ `interrupt = function(self, code, source, tags)`
 
-### :eval (code, source)
+### :eval (code, source, tags)
 
 Evaluate an expression in the global scope.
 
 This can be called from outside a running script, but an error will be triggered the expression raise any event other than return.
 
+`code` is the code string or AST to run. If `code` is a string, `source` is the source name string to show in errors (optional).
+`tags` is an optional Lua table; its content will be added to the tags for the duration of the expression.
+
 * returns AST in case of success. Run `:to_lua(state)` on it to convert to a Lua value.
 * returns `nil, error message` in case of error.
 
-_defined at line 249 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval = function(self, code, source)`
+_defined at line 254 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval = function(self, code, source, tags)`
 
-### :eval_local (code, source)
+### :eval_local (code, source, tags)
 
 Same as `:eval`, but evaluate the expression in the current scope.
 
-_defined at line 256 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval_local = function(self, code, source)`
+_defined at line 261 of [anselme/state/State.lua](../anselme/state/State.lua):_ `eval_local = function(self, code, source, tags)`
 
 If you want to perform more advanced manipulation of the resulting AST nodes, look at the `ast` modules.
 In particular, every Node inherits the methods from [ast.abstract.Node](../ast/abstract/Node.lua).
@@ -312,4 +317,4 @@ Otherwise, each Node has its own module file defined in the [ast/](../ast) direc
 
 
 ---
-_file generated at 2024-11-09T17:00:43Z_
+_file generated at 2024-11-11T09:22:49Z_

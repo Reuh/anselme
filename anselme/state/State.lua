@@ -7,11 +7,11 @@ local tag_manager = require("anselme.state.tag_manager")
 local event_manager = require("anselme.state.event_manager")
 local translation_manager = require("anselme.state.translation_manager")
 local persistent_manager = require("anselme.state.persistent_manager")
-local uuid = require("anselme.common").uuid
 local parser = require("anselme.parser")
 local binser = require("anselme.lib.binser")
-local assert0 = require("anselme.common").assert0
-local operator_priority = require("anselme.common").operator_priority
+local common = require("anselme.common")
+local uuid, assert0, operator_priority = common.uuid, common.assert0, common.operator_priority
+local to_anselme = require("anselme.common.to_anselme")
 local anselme
 local Identifier, Return, Node
 
@@ -178,12 +178,13 @@ State = class {
 	--- Load a script in this branch. It will become the active script.
 	--
 	-- `code` is the code string or AST to run. If `code` is a string, `source` is the source name string to show in errors (optional).
+	-- `tags` is an optional Lua table; its content will be added to the tags for the duration of the script.
 	--
 	-- Note that this will only load the script; execution will only start by using the `:step` method. Will error if a script is already active in this State.
-	run = function(self, code, source)
+	run = function(self, code, source, tags)
 		assert(not self:active(), "a script is already active")
 		self._coroutine = coroutine.create(function()
-			local r = assert0(self:eval_local(code, source))
+			local r = assert0(self:eval_local(code, source, tags))
 			event_manager:complete_flush(self)
 			if Return:is(r) then r = r.expression end
 			return "return", r
@@ -191,11 +192,11 @@ State = class {
 	end,
 	--- Same as `:run`, but read the code from a file.
 	-- `source` will be set as the file path.
-	run_file = function(self, path)
+	run_file = function(self, path, tags)
 		local f = assert(io.open(path, "r"))
 		local block = parser(f:read("a"), path)
 		f:close()
-		return self:run(block)
+		return self:run(block, nil, tags)
 	end,
 	--- When a script is active, will resume running it until the next event.
 	--
@@ -218,16 +219,17 @@ State = class {
 	--
 	-- Will error if no script is active.
 	--
-	-- If `code` is given, the script will not be disabled but instead will be immediately replaced with this new script.
+	-- `code`, `source` and `tags` are all optional and have the same behaviour as in `:run`.
+	-- If they are given, the script will not be disabled but instead will be immediately replaced with this new script.
 	-- The new script will then be started on the next `:step` and will preserve the current scope. This can be used to trigger an exit function or similar in the active script.
 	--
 	-- If this is called from within a running script, this will raise an `interrupt` event in order to stop the current script execution.
-	interrupt = function(self, code, source)
+	interrupt = function(self, code, source, tags)
 		assert(self:active(), "trying to interrupt but no script is currently active")
 		local called_from_script = self:state() == "running"
 		if code then
 			self._coroutine = coroutine.create(function()
-				local r = assert0(self:eval_local(code, source))
+				local r = assert0(self:eval_local(code, source, tags))
 				event_manager:complete_flush(self)
 				self.scope:reset() -- scope stack is probably messed up after the switch
 				if Return:is(r) then r = r.expression end
@@ -244,19 +246,24 @@ State = class {
 	--
 	-- This can be called from outside a running script, but an error will be triggered the expression raise any event other than return.
 	--
+	-- `code` is the code string or AST to run. If `code` is a string, `source` is the source name string to show in errors (optional).
+	-- `tags` is an optional Lua table; its content will be added to the tags for the duration of the expression.
+	--
 	-- * returns AST in case of success. Run `:to_lua(state)` on it to convert to a Lua value.
 	-- * returns `nil, error message` in case of error.
-	eval = function(self, code, source)
+	eval = function(self, code, source, tags)
 		self.scope:push_global()
-		local r, e = self:eval_local(code, source)
+		local r, e = self:eval_local(code, source, tags)
 		self.scope:pop()
 		return r, e
 	end,
 	--- Same as `:eval`, but evaluate the expression in the current scope.
-	eval_local = function(self, code, source)
+	eval_local = function(self, code, source, tags)
 		if type(code) == "string" then code = parser(code, source) end
 		local stack_size = self.scope:size()
+		if tags then tag_manager:push(self, to_anselme(tags)) end
 		local s, e = pcall(code.eval, code, self)
+		if tags then tag_manager:pop(self) end
 		if not s then
 			self.scope:reset(stack_size)
 			return nil, e

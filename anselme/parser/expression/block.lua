@@ -1,5 +1,6 @@
 local expression_to_ast = require("anselme.parser.expression.to_ast")
 
+local utf8 = utf8 or require("lua-utf8")
 local ast = require("anselme.ast")
 local PartialScope, Block, Call, Identifier = ast.PartialScope, ast.Block, ast.Call, ast.Identifier
 
