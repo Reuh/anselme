@@ -65,13 +65,16 @@ return class {
 		if last_type then
 			local last_buffer = state.scope:get(event_buffer_identifier)
 			local event_president = last_buffer:get(state, 1) -- elected representative of all concerned events
-			-- yield event data
+			-- build event data list
 			local data = event_president:build_event_data(state, last_buffer)
-			coroutine.yield(last_type, data)
 			-- clear room for the future
 			self:reset(state)
-			-- post callback
-			if event_president.post_flush_callback then event_president:post_flush_callback(state, last_buffer, data) end
+			for _, event_data in ipairs(data) do
+				-- yield event data
+				coroutine.yield(last_type, event_data)
+				-- post callback
+				if event_president.post_flush_callback then event_president:post_flush_callback(state, last_buffer, event_data) end
+			end
 		end
 	end,
 	-- keep flushing until nothing is left (a flush may re-fill the buffer during its execution)

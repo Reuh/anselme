@@ -30,7 +30,7 @@ The overengineered game dialog scripting system in pure Lua.
 
 This is version 2, a full rewrite. Version 1 is still available in the v1 branch.
 
-Supported: Lua 5.4, Lua 5.3, LuaJIT (LuaJIT requires the utf8 module: `luarocks --lua-version=5.1 install luautf8`).
+Supported: Lua 5.4, Lua 5.3, LÖVE, LuaJIT (LuaJIT requires the utf8 module: `luarocks --lua-version=5.1 install luautf8`).
 Otherwise all needed files are included in the `anselme` directory.
 
 Anselme is licensed under the ISC license, meaning you can basically use it for anything as long as you make the content of the [license file](license) appear somewhere. I would appreciate it if you don't use Anselme to commit war crimes though. If that's not enough for you or want better support, feel free to contact me, my integrity can be bought.

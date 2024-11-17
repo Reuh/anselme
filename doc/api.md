@@ -21,20 +21,20 @@ run_state:run_file("script.ans")
 
 -- run the script
 while run_state:active() do
-	local e, data = run_state:step()
-	if e == "text" then
+	local event, data = run_state:step()
+	if event == "text" then
 		for _, l in ipairs(data) do
 			print(l)
 		end
-	elseif e == "choice" then
+	elseif event == "choice" then
 		for i, l in ipairs(data) do
 			print(("%s> %s"):format(i, l))
 		end
 		local choice = tonumber(io.read("l"))
 		data:choose(choice)
-	elseif e == "return" then
+	elseif event == "return" then
 		run_state:merge()
-	elseif e == "error" then
+	elseif event == "error" then
 		error(data)
 	end
 end
@@ -146,7 +146,7 @@ _defined at line 76 of [anselme/state/State.lua](../anselme/state/State.lua):_ `
 
 ### .source_branch
 
-State this State was branched from.
+State this State was branched from. `nil` if this is the main branch.
 
 _defined at line 78 of [anselme/state/State.lua](../anselme/state/State.lua):_ `source_branch = nil,`
 
@@ -230,7 +230,7 @@ _defined at line 148 of [anselme/state/State.lua](../anselme/state/State.lua):_ 
 
 ### :active ()
 
-Indicate if a script is currently loaded in this branch.
+Returns true if a script is currently loaded in this branch, false otherwise.
 
 _defined at line 163 of [anselme/state/State.lua](../anselme/state/State.lua):_ `active = function(self)`
 
@@ -376,13 +376,13 @@ else
 end
 ```
 
-_defined at line 74 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `local TextEventData`
+_defined at line 87 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `local TextEventData`
 
-### :group_by (tag_name)
+### :group_by (tag_key)
 
-Returns a list of TextEventData where the first part of each LuaText of each TextEventData has the same value for the tag `tag_name`.
+Returns a list of TextEventData where the first part of each LuaText of each TextEventData has the same value for the tag `tag_key`.
 
-In other words, this groups all the LuaTexts contained in this TextEventData using the `tag_name` tag and returns a list containing these groups.
+In other words, this groups all the LuaTexts contained in this TextEventData using the `tag_key` tag and returns a list containing these groups.
 
 For example, with the following Anselme script:
 ```
@@ -399,7 +399,7 @@ calling `text_event_data:group_by("speaker")` will return a list of three TextEv
 * the second with the text "C"; with the tag `speaker="Lana"`
 * the last with the text "D"; wiith the tag `speaker="John"`
 
-_defined at line 96 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `group_by = function(self, tag_name)`
+_defined at line 109 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `group_by = function(self, tag_key)`
 
 
 ## ChoiceEventData
@@ -467,13 +467,13 @@ A text will typically only consist of a single part unless it was built using te
 
 Each text part is a table containing `text` (string) and  `tags` (table) properties, for example: `{ text = "text part string", tags = { color = "red" } }`.
 
-_defined at line 17 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `local LuaText`
+_defined at line 19 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `local LuaText`
 
 ### .raw
 
 Anselme Text value this was created from. For advanced usage only. See the source file [Text.lua](anselme/ast/Text.lua) for more information.
 
-_defined at line 25 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `raw = nil,`
+_defined at line 27 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `raw = nil,`
 
 ### :__tostring ()
 
@@ -481,7 +481,7 @@ Returns a text representation of the LuaText, using Anselme's default formatting
 
 Usage: `print(luatext)`
 
-_defined at line 39 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `__tostring = function(self)`
+_defined at line 41 of [anselme/ast/Text.lua](../anselme/ast/Text.lua):_ `__tostring = function(self)`
 
 ---
-_file generated at 2024-11-11T13:33:43Z_
+_file generated at 2024-11-17T15:00:50Z_

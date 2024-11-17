@@ -1,0 +1,72 @@
+Instead of the scripts running in the same Lua process as the one of your game, Anselme can run in a Client-Server mode. This allows:
+
+* Anselme to run in a separate thread and therefore not affect your game's frame times (Anselme is not very fast)
+* to use Anselme other game engine that don't use Lua
+
+The _server_ is the process that holds and process the Anselme state. Typically, the server would run in a separate process or thread that your game.
+
+The _client_ connects to a server and sends instructions to execute Anselmes scripts and receive the response. Typically, the client correspond to your game.
+
+For now, the whole system assumes that there is a single client per server - so you should not share a single server among serveral client.
+
+How the Client and Server communicate between each other is defined using a RPC object.
+Out-of-the-box, Anselme provides RPC objects that can communicate over [LÖVE](https://www.love2d.org/) threads, and over [JSON-RPC 2.0](https://www.jsonrpc.org/specification); these can be easily created using the functions in [anselme.server](#anselme_server).
+If you want to implement a custom RPC mechanism, you can look at the existing implementations in `anselme/server/rpc/`.
+
+Example usage in a LÖVE game:
+```lua
+local server = require("anselme.server")
+
+-- create a new client+server
+local client = server.new_love_thread()
+client:load_stdlib()
+
+-- load an anselme script file in a new branch
+local run_state = client:branch("block")
+run_state:run_file("script.ans")
+
+-- start script
+run_state:step(handle_event)
+
+-- callback to handle an anselme event
+function handle_event(event, data)
+	if event == "text" then
+		show_dialog_box {
+			lines = data,
+			on_dialog_box_closed = function()
+				run_state:step(handle_event) -- resume script
+			end
+		}
+	elseif event == "choice" then
+		show_choice_dialog_box {
+			choices = data,
+			on_dialog_box_closed = function(choice_number)
+				run_state:choose(choice_number)
+				run_state:step(handle_event)
+			end
+		}
+	elseif event == "return" then
+		run_state:merge()
+		run_state:remove() -- remove branch from server
+	elseif event == "error" then
+		print("error in anselme thread!", data)
+		run_state:remove()
+	end
+end
+
+function love.update()
+	client:process() -- handle messages coming from the server
+end
+```
+
+# anselme.server
+
+{{anselme/server/init.lua}}
+
+# Client
+
+{{anselme/server/Client.lua}}
+
+# Server
+
+{{anselme/server/Server.lua}}

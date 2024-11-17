@@ -74,7 +74,7 @@ State = class {
 
 	--- Name of the branch associated to this State.
 	branch_id = "main",
-	--- State this State was branched from.
+	--- State this State was branched from. `nil` if this is the main branch.
 	source_branch = nil,
 
 	--- Return a new branch of this State.
@@ -159,7 +159,7 @@ State = class {
 	-- Currently active script
 	_coroutine = nil,
 
-	--- Indicate if a script is currently loaded in this branch.
+	--- Returns true if a script is currently loaded in this branch, false otherwise.
 	active = function(self)
 		return not not self._coroutine
 	end,

@@ -1,5 +1,5 @@
 local class = require("anselme.lib.class")
-local utf8 = utf8 or require("lua-utf8")
+local utf8 = utf8 or (love and require("utf8") or require("lua-utf8"))
 
 local Source
 Source = class {

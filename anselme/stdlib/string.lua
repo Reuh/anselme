@@ -1,7 +1,7 @@
 --- # Strings
 -- @titlelevel 3
 
-local utf8 = utf8 or require("lua-utf8")
+local utf8 = utf8 or (love and require("utf8") or require("lua-utf8"))
 local ast = require("anselme.ast")
 local String, Number = ast.String, ast.Number
 

@@ -38,7 +38,18 @@ LuaText = class {
 	-- @defer lua text
 	__tostring = function(self)
 		return self.raw:format(self._state)
-	end
+	end,
+
+	-- Returns a simple table representation of this LuaText.
+	-- This contains no metatable, method, or cycle; only the list part of this LuaText.
+	-- { text = "string", tags = { tag_name = value, ... } }
+	to_simple_table = function(self)
+		local t = {}
+		for _, part in ipairs(self) do
+			table.insert(t, part)
+		end
+		return t
+	end,
 }
 
 --- TextEventData represent the data returned by an event with the type `"text"`.
@@ -75,9 +86,9 @@ local TextEventData
 TextEventData = class {
 	-- [1] = LuaText, ...
 
-	--- Returns a list of TextEventData where the first part of each LuaText of each TextEventData has the same value for the tag `tag_name`.
+	--- Returns a list of TextEventData where the first part of each LuaText of each TextEventData has the same value for the tag `tag_key`.
 	--
-	-- In other words, this groups all the LuaTexts contained in this TextEventData using the `tag_name` tag and returns a list containing these groups.
+	-- In other words, this groups all the LuaTexts contained in this TextEventData using the `tag_key` tag and returns a list containing these groups.
 	--
 	-- For example, with the following Anselme script:
 	-- ```
@@ -93,10 +104,10 @@ TextEventData = class {
 	-- * the first with the texts "A" and "B"; both with the tag `speaker="John"`
 	-- * the second with the text "C"; with the tag `speaker="Lana"`
 	-- * the last with the text "D"; wiith the tag `speaker="John"`
-	group_by = function(self, tag_name)
+	group_by = function(self, tag_key)
+		if type(tag_key) == "string" then tag_key = to_anselme(tag_key) end
 		local l = {}
 		local current_group
-		local tag_key = to_anselme(tag_name)
 		local last_value
 		for _, luatext in ipairs(self) do
 			local list = luatext.raw.list
@@ -111,7 +122,18 @@ TextEventData = class {
 			end
 		end
 		return l
-	end
+	end,
+
+	-- Returns a simple table representation of this TextEventData.
+	-- This contains no metatable, method, or cycle; only a list of simple representation of LuaText (see LuaText:to_simple_table).
+	-- { lua_text_1_simple, lua_text_2_simple, ... }
+	to_simple_table = function(self)
+		local t = {}
+		for _, lua_text in ipairs(self) do
+			table.insert(t, lua_text:to_simple_table())
+		end
+		return t
+	end,
 }
 
 local Text

@@ -57,7 +57,18 @@ local ChoiceEventData = class {
 	-- A choice must be selected after receiving a choice event and before calling `:step` again.
 	choose = function(self, choice)
 		self._selected = choice
-	end
+	end,
+
+	-- Returns a simple table representation of this TextEventData.
+	-- This contains no metatable, method, or cycle; only a list of simple representation of LuaText (see LuaText:to_simple_table).
+	-- { lua_text_1_simple, lua_text_2_simple, ... }
+	to_simple_table = function(self)
+		local t = {}
+		for _, lua_text in ipairs(self) do
+			table.insert(t, lua_text:to_simple_table())
+		end
+		return t
+	end,
 }
 
 local Choice
@@ -86,7 +97,7 @@ Choice = ast.abstract.Runtime(Event) {
 		for _, c in event_buffer:iter(state) do
 			table.insert(l, c.text:to_lua(state))
 		end
-		return l
+		return { l }
 	end,
 	post_flush_callback = function(self, state, event_buffer, data)
 		local choice = data._selected

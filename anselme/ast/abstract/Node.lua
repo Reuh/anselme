@@ -1,7 +1,7 @@
 local class = require("anselme.lib.class")
 local fmt = require("anselme.common").fmt
 local binser = require("anselme.lib.binser")
-local utf8 = utf8 or require("lua-utf8")
+local utf8 = utf8 or (love and require("utf8") or require("lua-utf8"))
 local unpack = table.unpack or unpack
 
 -- NODES SHOULD BE IMMUTABLE AFTER CREATION IF POSSIBLE!

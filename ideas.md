@@ -4,19 +4,13 @@ Loosely ordered by willingness to implement.
 
 ---
 
-Translation.
-
-Do some more fancy scope work to allow the translation to access variables defined in the translation file?
+Redundant `TextEventData:group_by` and `stdlib.group text by tag`: there can be only one.
 
 ---
 
-Server API.
+Translation.
 
-To be able to use Anselme in another language, it would be nice to be able to access it over some form of IPC.
-
-No need to bother with networking I think. Just do some stdin/stdout handling, maybe use something like JSON-RPC: https://www.jsonrpc.org/specification (reminder: will need to add some metadata to specify content length, not aware of any streaming json lib in pure Lua - here's a rxi seal of quality library btw: https://github.com/rxi/json.lua). Or just make our own protocol around JSON.
-Issue: how to represent Anselme values? they will probably contain cycles, needs to access their methods, etc.
-Probably wise to look into how other do it. LSP: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+Do some more fancy scope work to allow the translation to access variables defined in the translation file?
 
 ---
 

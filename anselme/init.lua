@@ -19,20 +19,20 @@
 --
 -- -- run the script
 -- while run_state:active() do
--- 	local e, data = run_state:step()
--- 	if e == "text" then
+-- 	local event, data = run_state:step()
+-- 	if event == "text" then
 -- 		for _, l in ipairs(data) do
 -- 			print(l)
 -- 		end
--- 	elseif e == "choice" then
+-- 	elseif event == "choice" then
 -- 		for i, l in ipairs(data) do
 -- 			print(("%s> %s"):format(i, l))
 -- 		end
 -- 		local choice = tonumber(io.read("l"))
 -- 		data:choose(choice)
--- 	elseif e == "return" then
+-- 	elseif event == "return" then
 -- 		run_state:merge()
--- 	elseif e == "error" then
+-- 	elseif event == "error" then
 -- 		error(data)
 -- 	end
 -- end

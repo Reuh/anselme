@@ -1,4 +1,4 @@
--- TODO: upstream
+-- NOTE: Modified to serialize function upvalues.
 
 -- binser.lua
 
