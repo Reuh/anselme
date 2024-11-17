@@ -5,6 +5,8 @@ local ArgumentTuple, Struct
 
 local to_anselme = require("anselme.common.to_anselme")
 
+local group_text_by_tag_identifier
+
 --- A Lua-friendly representation of an Anselme Text value.
 -- They appear in both TextEventData and ChoiceEventData to represent the text that has to be shown.
 --
@@ -191,11 +193,17 @@ Text = Runtime(Event) {
 		for _, text in event_buffer:iter(state) do
 			table.insert(l, text:to_lua(state))
 		end
-		return l
+		if state.scope:defined(group_text_by_tag_identifier) then
+			local tag_key = state.scope:get(group_text_by_tag_identifier)
+			return l:group_by(tag_key)
+		else
+			return { l }
+		end
 	end,
 }
 
 package.loaded[...] = Text
 ArgumentTuple, Struct = ast.ArgumentTuple, ast.Struct
+group_text_by_tag_identifier = ast.Identifier:new("_group_text_by_tag")
 
 return Text

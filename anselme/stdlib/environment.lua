@@ -16,7 +16,20 @@ return {
 			if l:truthy() then
 				return Boolean:new(env:defined(state, s:to_identifier()))
 			else
-				return Boolean:new(env:defined_in_current(state, s:to_identifier()))
+				return Boolean:new(env:defined_in_current(state, s:to_symbol()))
+			end
+		end
+	},
+	{
+		--- Returns true if the variable named `var` is defined in in the current scope, false otherwise.
+		--
+		-- If `search parent` is true, this will also search in parent scopes of the current scope.
+		"defined", "(var::is string, search parent::is boolean=true)",
+		function(state, s, l)
+			if l:truthy() then
+				return Boolean:new(state.scope:defined(s:to_identifier()))
+			else
+				return Boolean:new(state.scope:defined_in_current(s:to_symbol()))
 			end
 		end
 	},

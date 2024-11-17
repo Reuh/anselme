@@ -650,19 +650,43 @@ _defined at line 21 of [anselme/stdlib/string.lua](../anselme/stdlib/string.lua)
 
 Concatenate two texts, returning a new text value.
 
-_defined at line 16 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"_+_", "(a::is text, b::is text)",`
+_defined at line 19 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"_+_", "(a::is text, b::is text)",`
 
 ### txt::is text !
 
 Write a text event in the event buffer using this text.
 
-_defined at line 30 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"_!", "(txt::is text)",`
+_defined at line 33 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"_!", "(txt::is text)",`
 
 ### tag (txt::is text, tags::is struct)
 
 Create and return a new text from `text`, with the tags from `tags` added.
 
-_defined at line 38 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"tag", "(txt::is text, tags::is struct)",`
+_defined at line 41 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"tag", "(txt::is text, tags::is struct)",`
+
+### group text by tag (tag::is string)
+
+Cause future text events to be each split into separate text event every time the value of the tag with the key `tag_key` changes.
+
+For example, with the following Anselme script:
+```
+group text by tag("speaker")
+speaker: "John" #
+	| A
+	| B
+speaker: "Lana" #
+	| C
+speaker: "John" #
+	| D
+```
+will produce three separate text events instead of one:
+* the first with the texts "A" and "B"; both with the tag `speaker="John"`
+* the second with the text "C"; with the tag `speaker="Lana"`
+* the last with the text "D"; wiith the tag `speaker="John"`
+
+This setting affect will affect the whole state.
+
+_defined at line 67 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"group text by tag", "(tag::is string)",`
 
 ### write choice (text::is text, fn=attached block(keep return=true, default=($()())))
 
@@ -678,13 +702,13 @@ write choice(| Choice |, $42)
 
 If we are currently resuming to an anchor contained in `fn`, `fn` is directly called and the current choice event buffer will be discarded on flush, simulating the choice event buffer being sent to the host game and this choice being selected.
 
-_defined at line 57 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"write choice", "(text::is text, fn=attached block(keep return=true, default=($()())))",`
+_defined at line 91 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"write choice", "(text::is text, fn=attached block(keep return=true, default=($()())))",`
 
 ### original -> translated
 
 Add a translation so `original` is replaced with `translated`.
 
-_defined at line 74 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"_->_", "(original::is(\"quote\"), translated::is(\"quote\"))",`
+_defined at line 108 of [anselme/stdlib/text.lua](../anselme/stdlib/text.lua):_ `"_->_", "(original::is(\"quote\"), translated::is(\"quote\"))",`
 
 
 # Symbols
@@ -1135,23 +1159,31 @@ If `search parent` is true, this will also search in parent scopes of the enviro
 
 _defined at line 14 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"defined", "(env::is environment, var::is string, search parent::is boolean=false)",`
 
+### defined (var::is string, search parent::is boolean=true)
+
+Returns true if the variable named `var` is defined in in the current scope, false otherwise.
+
+If `search parent` is true, this will also search in parent scopes of the current scope.
+
+_defined at line 27 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"defined", "(var::is string, search parent::is boolean=true)",`
+
 ### c::is environment . s::is string
 
 Gets the variable named `s` defined in the environment `c`.
 
-_defined at line 26 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"_._", "(c::is environment, s::is string)",`
+_defined at line 39 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"_._", "(c::is environment, s::is string)",`
 
 ### c::is environment . s::is string = v
 
 Sets the variable named `s` defined in the environment `c` to `v`.
 
-_defined at line 35 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"_._", "(c::is environment, s::is string) = v",`
+_defined at line 48 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"_._", "(c::is environment, s::is string) = v",`
 
 ### c::is environment . s::is symbol = v
 
 Define a new variable `s` in the environment `c` with the value `v`.
 
-_defined at line 45 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"_._", "(c::is environment, s::is symbol) = v",`
+_defined at line 58 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"_._", "(c::is environment, s::is symbol) = v",`
 
 ### import (env::is environment, symbol tuple::is tuple)
 
@@ -1164,7 +1196,7 @@ import(env, [:a, :b])
 :b = env.b
 ```
 
-_defined at line 63 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"import", "(env::is environment, symbol tuple::is tuple)",`
+_defined at line 76 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"import", "(env::is environment, symbol tuple::is tuple)",`
 
 ### import (env::is environment, symbol::is symbol)
 
@@ -1176,14 +1208,14 @@ import(env, :a)
 :a = env.a
 ```
 
-_defined at line 79 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"import", "(env::is environment, symbol::is symbol)",`
+_defined at line 92 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"import", "(env::is environment, symbol::is symbol)",`
 
 ### load (path::is string)
 
 Load an Anselme script from a file and run it.
 Returns the environment containing the exported variables from the file.
 
-_defined at line 89 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"load", "(path::is string)",`
+_defined at line 102 of [anselme/stdlib/environment.lua](../anselme/stdlib/environment.lua):_ `"load", "(path::is string)",`
 
 
 # Typed values
@@ -1336,4 +1368,4 @@ _defined at line 14 of [anselme/stdlib/wrap.lua](../anselme/stdlib/wrap.lua):_ `
 
 
 ---
-_file generated at 2024-11-09T16:02:36Z_
+_file generated at 2024-11-17T15:00:50Z_

@@ -1,6 +1,8 @@
 -- TODO: doc in other language
 
 return [[
+:@format = stdlib.format
+
 :@bloc attaché = stdlib.attached block
 
 :@afficher = stdlib.print
@@ -83,4 +85,6 @@ return [[
 :@persister = stdlib.persist
 
 :@écrire choix = stdlib.write choice
+
+:@grouper texte par tag = stdlib.group text by tag
 ]]
